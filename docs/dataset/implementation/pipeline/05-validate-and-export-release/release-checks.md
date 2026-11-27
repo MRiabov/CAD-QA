@@ -123,7 +123,9 @@ artifact, not a table in this document and a second table in code.
 
 `05` rejects an unknown field, an unknown `arithmetic`, a duplicate `id`, and a
 bound reference that does not resolve in `balance.yaml`. A policy that fails
-validation stops the export before any check runs.
+validation stops the export before any check runs. A `target` or `values` entry
+that names a cell the support table marks unsupported is a policy error, like an
+unknown key: an unsupported cell has no target and no share.
 
 The requirement sources are `R-4`, `R-7`, `R-8`, `R-9`, `R-10`, `R-11`, `R-12`,
 `R-15`, `R-19` for extraction capability coverage, `PRD-8` for the PRD section 8
@@ -171,7 +173,11 @@ emits one row per value. A check sets at most one of the two.
 
 A `coverage` row carries the supported values, the observed values, the missing
 values, and the released values the support table does not support at that step
-count.
+count. A row that names one `(dimension, value, scope)` cell, including every
+balance row, also carries `supported_cell` and `reason_code` from the support
+table. That is how a zero is classified without shipping the matrix: a supported
+cell with zero tasks is a gap, an unsupported cell with a target is a policy
+defect, and a supported cell with a capacity shortfall is a deficit.
 
 "Supported" means supported by the release implementation scope, as the support
 tables record it. A value deferred to P1 has no row at that step count, and its
@@ -336,6 +342,7 @@ Coverage and `set_equal` row:
 | `check` | The check name. |
 | `scope` | `release` or `step_<n>`. |
 | `supported` | The supported values at that scope. |
+| `supported_cell`, `reason_code` | For a row that names one cell, whether it is feasible and why not. |
 | `observed` | The values present in the release at that scope. |
 | `missing` | `supported` minus `observed`. |
 | `unexpected` | `observed` minus `supported`. |
@@ -349,6 +356,7 @@ Balance row:
 | `check` | The check name. |
 | `scope` | `release` or `step_<n>`. |
 | `value` | The dimension value, or the program or answer key for a cap on a high-cardinality quantity. |
+| `supported_cell`, `reason_code` | Whether the cell is feasible at this scope, and the support reason when it is not. |
 | `count` | The integer count. |
 | `denominator` | The integer denominator. |
 | `minimum_count`, `maximum_count` | The integer bound, or null when the bound is one-sided. |

@@ -17,7 +17,7 @@ program data when the plan has deficits.
 
 | Sub-step | Input model | Output model | Persisted artifact |
 |---|---|---|---|
-| `03a` | `CadGraph`, `ProgramMetadata`, `ProgramSelection`, dataset release targets, `DeficitLedger`, `ProgramReassignmentRequest` | `TaskQuotaPlan` | Task quota plan Parquet. |
+| `03a` | `CadGraph`, `ProgramMetadata`, `ProgramSelection`, dataset release targets, `DeficitLedger`, `ProgramReassignmentRequest` | `TaskQuotaPlan` | Task quota plan Parquet and the support table Parquet. |
 | `03b` | `CadGraph`, `TaskQuotaPlan`, `DeficitLedger` | `TaskDefinition`, `DeficitLedger` | Task definitions Parquet and failure records. |
 | `03c` | `DeficitLedger`, `TaskQuotaPlan`, family profiles, `ProgramMetadata`, `SelectionPolicy` | `ProgramReassignmentRequest`, `ProgramRequest`, or `AcceptedMiss` | Control records. |
 

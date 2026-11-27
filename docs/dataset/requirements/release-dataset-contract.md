@@ -37,12 +37,17 @@ A release directory contains:
 | `manifest.json` | Release counts, versions, hashes, split counts, and coverage summaries. | One file. |
 | `dataset-card.md` | Human-readable dataset card: scope, counts, splits, provenance, that `prompt` is the user message, and the answer conventions per answer meaning — the angle convention, the signed material change, the declared position point and topology category, the membership boundary rule, and the answer precision. | One file. |
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
-| `support/` | Five task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `clue-reduction-form-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Five files. |
 
 Internal control documents are copied into the release but are not consumer
 artifacts: `review-ledger.parquet`, `absence-ledger.parquet`, and
 `residual-ledger.parquet`. They record review provenance and are excluded from
 `release_id`.
+
+The task reasoning step support table is not a release file. It is a derived run
+artifact read by `03a` and `05`; the manifest records its schema version and
+hash, and every coverage and balance row in `checks` records the cell's
+`supported_cell` and `reason_code`. Shipping the matrix would duplicate an input and
+would not add task data.
 
 ### Dataset release review ledgers
 
@@ -430,6 +435,10 @@ dataset.
 One Parquet table is enough. Parquet supports nested lists and structs, so
 prompt metadata, clue types, choices, and answer evidence do not need extra tables.
 
+The task reasoning step support table is a different artifact at a different
+grain: one row per dimension value and task reasoning step count, not one row per
+task. It stays a run input and is not part of this table.
+
 A separate answer table is not required. The release must contain answers for
 training and scoring, and the evaluation harness selects the prompt column. The
 file boundary is not the leak boundary; column selection is.
@@ -465,7 +474,7 @@ for one row.
 | `prompt_template_version`, `prompts_yaml_sha256`, `release_seed` | The template set version and file hash, and the seed `04` rendered from. |
 | `balance_policy_version`, `balance_policy_sha256` | The balance policy version and file hash. |
 | `checks_policy_version`, `checks_policy_sha256` | The check policy version and file hash. |
-| `support_table_versions`, `support_table_sha256` | Schema version and file hash of each of the five support tables. |
+| `support_schema_version`, `support_table_sha256` | Schema version and file hash of the derived task reasoning step support table that `05` checked the release against. It is not a release file. |
 | `checks` | One or more rows per coverage and balance check in [`05` validate and export release](../implementation/pipeline/05-validate-and-export-release/release-checks.md). |
 | `known_misses` | The `checks` misses the owner accepted, with their reasons. |
 | `failure_count` | Rows in `failures.parquet`. |
@@ -553,7 +562,7 @@ distinct answers change between two releases" without shipping either table.
 | Columns | The release table columns, that `prompt` is the only LLM-facing column, and that the answer columns are for training, scoring, and audit. |
 | Counts and splits | Task count, tasks per task reasoning step count, split counts, warmup count, distinct CAD models, and distinct correct answers. Names the test set (R-14). |
 | Answer conventions | The table below. |
-| Provenance | `generator_version`, `upstream_dataset_version`, the selection identity, `balance_policy_version`, `prompt_template_version`, `release_seed`, and the support-table versions. |
+| Provenance | `generator_version`, `upstream_dataset_version`, the selection identity, `balance_policy_version`, `prompt_template_version`, `release_seed`, and the support-table schema version and hash. |
 | Known misses | Every entry in `known_misses`, with its reason, or a statement that the release has none. |
 | Regenerating this release | The inputs listed under Provenance, the entry point at [`../implementation/pipeline/00-end-to-end.md`](../implementation/pipeline/00-end-to-end.md), and the step that rebuilds each artifact from them (R-18). |
 

@@ -12,7 +12,7 @@ READ:
 - `ProgramMetadata` from `01a` → `source_id`, `source_collection`, `path_family`, `source_feature_tags`
 - `ProgramSelection` from `01b` → `rows[].tier`, `rows[].cadevolve_program_family_id`, `SelectionPolicy`
 - `balance.yaml` → the release policy
-- the support-table derivation → `supported_values`
+- the support-table derivation → `supported_values`; `03a` writes the single table to `support/support.parquet`
 - `DeficitLedger`; empty on the first pass
 - `ProgramReassignmentRequest` from `03c`
 - release targets → `dataset_release_task_count = release.tasks_min`, the exact planned task count; implementation scope
@@ -20,6 +20,7 @@ READ:
 WRITE:
 
 - `TaskQuotaPlan` `(plan_version, seed, balance_policy_version)` → the fields declared in `../../models/03-task-generation.md`
+- `support/support.parquet` → the task reasoning step support table; `TaskQuotaPlan.support_table_sha256` records its hash
 - allocation details → `DeficitLedger.entries[].allocation_detail` with an `AllocationDetail` value (`coverage_infeasible`, `answer_meaning_infeasible`, `clue_coverage_infeasible`, `identity_quota_infeasible`, `cap_conflict`, `split_capacity_short`, `family_quota_short`, `quota_target_family_unassigned`, `family_quota_target_conflict`)
 - the plan is a target; it does not prove that the corpus can supply it
 

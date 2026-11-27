@@ -527,7 +527,7 @@ citation keys and never change meaning.
   a task reasoning step count is between half and twice its share among the
   values supported at that step count. A step count with zero or one supported
   value for a dimension is coverage-only.
-- **Consequences:** The release needs the task reasoning step support tables. The
+- **Consequences:** The run derives the task reasoning step support table. The
   technical specification must define how support and the conditional share are
   computed, and must report conflicts instead of dropping coverage. Target
   category stays coverage-only at each task reasoning step count, with a
@@ -548,8 +548,8 @@ citation keys and never change meaning.
   Balance over clue reduction form is P1, once the support grid is dense enough for
   a proportional target.
 - **Consequences:** `03a` adds clue reduction form as a coverage dimension with a
-  minimum and no balance range in P0. The `clue-reduction-form-by-step` support table
-  decides which forms are required at each step count. A missing form at a step
+  minimum and no balance range in P0. The support table's `clue_reduction_form`
+  rows decide which forms are required at each step count. A missing form at a step
   count is a coverage gap, not a balance problem. Coverage-only is a concession,
   not a good property: it guarantees that each form appears, not that the forms
   are usefully mixed, so a P0 release can concentrate one clue reduction form. P1
@@ -591,10 +591,11 @@ citation keys and never change meaning.
   prompt-only view is derived when a consumer needs one. Parquet is canonical;
   JSONL is an optional export.
 - **Consequences:** The minimum artifacts are `release.parquet`,
-  `manifest.json`, `dataset-card.md`, `failures.parquet`, and `support/`. No separate answer
-  table, program table, or answer evidence table is needed initially. The evaluation
-  harness must pass only `prompt` to the LLM model. The structure is defined in
-  `requirements/release-dataset-contract.md`.
+  `manifest.json`, `dataset-card.md`, and `failures.parquet`. No separate answer
+  table, program table, or answer evidence table is needed initially. The
+  task reasoning step support table is a run input to the checks and is not a
+  release file. The evaluation harness must pass only `prompt` to the LLM model.
+  The structure is defined in `requirements/release-dataset-contract.md`.
 
 ## DS-REQ-21 — No separate answer-key container
 

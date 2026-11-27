@@ -14,11 +14,13 @@ READ:
 
 TRANSFORM:
 
-- validate `release-checks.yaml` before any check runs: known fields, known `arithmetic`, unique `id`, and every bound reference resolves in `balance.yaml`
+- validate `release-checks.yaml` before any check runs: known fields, known `arithmetic`, unique `id`, and every bound reference resolves in `balance.yaml`; a `target` or `values` entry naming an unsupported cell is an error
+- the support table is the in-scope derived table from `03a`; its hash and schema version must equal the plan's
 - `reference_share(scope, dimension, value) = policy_share(value) / sum(policy_share(x) for x in supported_values(scope, dimension))`; scope is a task reasoning step count or `release`
 - `05` holds no share of its own
 - run exactly the checks in the file; a check not in the file is not run, and a report row whose check is not in the file is a defect
 - coverage rows carry supported, observed, missing, and unexpected values; there is no whole-release coverage row for a dimension
+- a row that names one `(dimension, value, scope)` cell, including every balance row, carries `supported_cell` and `reason_code` from the support table
 - `extraction_capability_coverage` is the exception to "observed comes from the release table": its observed side is the declared capability cells with `actual_count > 0` in at least one `GraphCompletenessReport`, and both sides are drawn from the declared set so `unexpected` is empty
 - outcome is `pass | miss | superseded | not_applicable | deferred`; disposition is `enforced | reported | deferred`
 - an `enforced` miss blocks the export until the owner accepts it and it is recorded in `known_misses`; a `reported` miss never blocks; a `deferred` row measures nothing
@@ -52,7 +54,7 @@ WRITE:
 
 TRANSFORM:
 
-- one report row per check and scope value: `check_id, arithmetic, scope, dimension, value, observed, minimum_count, maximum_count, outcome, disposition, detail`
+- one report row per check and scope value: `check_id, arithmetic, scope, dimension, value, supported_cell, reason_code, observed, minimum_count, maximum_count, outcome, disposition, detail`
 - `known_misses` names the accepted enforced misses, with their reason
 - a report that disagrees with `release.parquet` is a defect, not a second opinion
 

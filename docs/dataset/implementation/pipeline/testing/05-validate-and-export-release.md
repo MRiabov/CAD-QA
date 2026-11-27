@@ -21,10 +21,11 @@ and asserts the artifacts read back the way a dataset consumer reads them.
 **Given** a release table of 12 tasks from 4 programs in 3 families, with 10 in
 train, 1 in validation, and 1 in test, and at least one row per answer format. A
 `release-checks.yaml` fixture names three checks: one enforced and passing, one reported
-and missing, and one not applicable. An external dataset manifest, the five
-support tables, a fixed generator version, the three failure partitions, a
-deficit ledger, and dataset release task review, absence, and geometry residual
-ledgers that meet the review gate.
+and missing, and one not applicable. An external dataset manifest, the task
+reasoning step support table with its schema version and hash, a `TaskQuotaPlan`
+that records the same support hash, a fixed generator version, the three failure
+partitions, a deficit ledger, and dataset release task review, absence, and
+geometry residual ledgers that meet the review gate.
 
 **When** `05` validates and exports.
 
@@ -51,7 +52,8 @@ ledgers that meet the review gate.
   `generator_version`, `upstream_dataset_version` and
   `external_dataset_manifest_sha256` copied verbatim, the balance and check
   policy versions and hashes, the prompt template version and `prompts.yaml`
-  hash, the release seed, and the support table versions and hashes;
+  hash, the release seed, the support-table schema version and hash, and the
+  support schema version and hash equal the plan's;
 - the manifest records the benchmark identity, revision, split, and
   program-set hash, and its `release_id` does not change when only the benchmark
   set changes;
@@ -64,7 +66,10 @@ ledgers that meet the review gate.
   `min(pool_size, 300)` size;
 - the manifest's `checks` rows are sorted by check name, scope, and value, so a
   different parallel schedule produces the same bytes;
-- `support/` holds the five files byte-identical to their inputs;
+- every coverage and balance row carries the cell's `supported_cell` and
+  `reason_code` copied from the support table, so a miss names whether the cell
+  is feasible;
+- the release directory has no `support/` directory;
 - every number in `dataset-card.md` equals the manifest's value;
 - `manifest.json` is the last file written, so a directory without it is not a
   release.
@@ -113,8 +118,9 @@ sorted check rows, the three review gates, and the manifest-last rule before
   more blocks; a full census passes; any `mismatch` blocks, and the ledger has no
   disposition column to waive it.
 - `test_05_no_partial_release` — a block after `release.parquet` is written leaves
-  no `manifest.json`, no `dataset-card.md`, and no `support/`, so the directory is
-  not a release.
+  no `manifest.json` and no `dataset-card.md`, so the directory is not a release.
+- `test_05_support_table_mismatch` — a support table whose hash or schema version
+  differs from the plan's blocks as an input error before any check runs.
 
 ## What this does not prove
 

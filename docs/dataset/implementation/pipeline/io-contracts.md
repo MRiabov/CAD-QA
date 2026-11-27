@@ -27,11 +27,11 @@ declarations own the field set.
 artifact; the same value is passed to `04` and `05`.
 
 Pipeline stage rows list the primary typed inputs and outputs. `05` also reads
-the task reasoning step support tables, `balance.yaml`, the external dataset
-manifest, the external benchmark program set, the failure partitions, and the
-deficit ledger; its Inputs section lists them. The task and residual dataset
-release review ledgers are control inputs in the same section; `05` writes the
-absence ledger itself.
+the task reasoning step support table, the `TaskQuotaPlan` support hash,
+`balance.yaml`, the external dataset manifest, the external benchmark program
+set, the failure partitions, and the deficit ledger; its Inputs section lists
+them. The task and residual dataset release review ledgers are control inputs in
+the same section; `05` writes the absence ledger itself.
 
 ## Sub-steps
 

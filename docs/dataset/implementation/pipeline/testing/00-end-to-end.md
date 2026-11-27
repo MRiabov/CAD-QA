@@ -36,9 +36,9 @@ root; it allocates `run0001`.
   the answer value in its evidence;
 - `manifest.json` records the generator version, the scope, the balance and check
   policy versions and hashes, the prompt template version and `prompts.yaml`
-  hash, the release seed, and the support-table schema versions and hashes;
+  hash, and the release seed;
 - `release.parquet`, `failures.parquet`, `manifest.json`, and `dataset-card.md`
-  are all written, and `support/` holds the five tables;
+  are all written, and no `support/` directory is written;
 - `run0001/run.json` exists, its `run_number` is 1, and its `run_id` recomputes
   from the canonical manifest body without the `run_id`, `run_number`, and
   `execution_environment` fields;

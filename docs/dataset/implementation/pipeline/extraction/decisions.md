@@ -331,7 +331,7 @@ change bumps `runtime_schema_version`.
   graph realizes was invisible. The completeness report is per program, so it
   passes when each program has the rows that program implies; the census is a
   function of the accepted graphs, so it records the capability as absent; the
-  support tables are derived over fixtures, so that dimension value is
+  support table is derived over fixtures, so that dimension value is
   unsupported with `no_valid_construction`. Every reader agreed and the dataset
   shrank silently.
 - **Decision:** the extraction contract declares `MustExtractCapability`, the

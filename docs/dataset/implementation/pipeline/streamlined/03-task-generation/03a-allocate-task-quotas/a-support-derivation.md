@@ -13,6 +13,7 @@ READ:
 - `ProgramMetadata` from `01a` → `source_id`, `source_collection`, `path_family`, `source_feature_tags`
 - `ProgramSelection` from `01b` → `rows[].tier`, `rows[].cadevolve_program_family_id`, `SelectionPolicy`
 - `implementation_scope` → the release scope the support derivation filters by
+- the fixture program list from [`pipeline/testing/fixtures/`](../../../testing/fixtures/) → the `program_sha256` values that define "supported"
 
 TRANSFORM:
 
@@ -22,12 +23,15 @@ TRANSFORM:
 - a fast-loop replan reuses `family_profiles` and `program_census`; a slow-loop round derives the census only for the added programs
 - `03b` reads the program's `program_census` entry; it re-derives only when the entry is absent or its `graph_identity_sha256` differs
 - `03c` reads `family_profiles`, never `program_census`
-- `supported_values(s, d)` is the support-table derivation's output, filtered by `implementation_scope`; `03a` calls the derivation in-process and does not read the support tables as data
+- `supported_values(s, d)` is the support-table derivation's output, filtered by `implementation_scope`; `03a` derives it in-process and writes the table, and does not read the table as a planning input
 - a value above the release scope has no supported row
+- a fixture program with no accepted graph fails `03a` and names the fixture
+- the plan records `support_schema_version` and `support_table_sha256`, and `05` must read the same pair
 - an in-scope value keeps its row even when no accepted graph realizes its capability; the census and `family_profiles` record what the graphs offer and are not the release gate for the missing capability
 - a capability is present only when the graph asserts the relation or measurement and its evidence is present
 - pair elements exist only for the pairs the pair emission rule allows
 
 WRITE:
 
-- (none; the census and profiles are fields of `TaskQuotaPlan`)
+- `support/support.parquet` — one row per dimension value and task reasoning step count, filtered to `implementation_scope`
+- the census and profiles are fields of `TaskQuotaPlan`

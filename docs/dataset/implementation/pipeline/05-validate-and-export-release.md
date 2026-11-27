@@ -14,7 +14,9 @@ Coverage and balance checks:
 
 - `ReleaseTable` from `04` render prompt and choices.
 - The `RenderConfig` passed to `04` render prompt and choices.
-- The five task reasoning step support tables.
+- The task reasoning step support table from `03a` allocate task quotas, with
+  its schema version and hash, and the `TaskQuotaPlan` that records the hash it
+  planned against.
 - `generator/config/balance.yaml` and `generator/config/release-checks.yaml`.
 - The external dataset manifest from `01e` write external dataset manifest.
 - The per-program `GraphCompletenessReport` set from `02c` build CAD graph.
@@ -80,8 +82,11 @@ Coverage and balance checks:
   control documents.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
-- Copy the five task reasoning step support JSON files into `support/` and
-  record their schema versions and hashes in the manifest.
+- Require the support table's schema version and SHA-256 to equal the ones
+  recorded in the `TaskQuotaPlan`, and record both in the manifest. A mismatch
+  is an input error and blocks the export. Do not copy the table into the
+  release: the coverage and balance rows carry its per-cell `supported_cell` and
+  `reason_code` instead.
 - Confirm the prompt template file validates against its
   [schema](../prompt-templates.md), then record the prompt template version,
   `prompts.yaml` hash, and `RenderConfig.release_seed` in the manifest. A
@@ -94,8 +99,8 @@ Coverage and balance checks:
 - **Go:** validation, manifest, and export.
 - Independent validation checks are parallel per row, program, or program family,
   up to `--jobs`.
-- The final release write, manifest assembly, and support-table copy are single
-  writer steps.
+- The final release write and manifest assembly are single writer steps. The
+  support-table check reads the `03a` artifact; it writes no file.
 - Parallel validation results are reduced into one summary before export, sorted
   by check name, scope, and value, so the manifest hash does not depend on the
   parallel schedule.
@@ -141,7 +146,7 @@ and records the reviewer's verdicts in the dataset release task review ledger.
 the task and geometry residual ledgers; it never renders.
 
 The sample is the cross product of clue type, answer meaning, answer format, and
-task reasoning step count, restricted to the cells the support tables support and
+task reasoning step count, restricted to the cells the support table supports and
 the release contains. Steps 6–10 use at least 30 tasks per tier, or every task if
 the tier has fewer; that is the same review the dataset PRD section 6.1
 release gate requires.
@@ -221,6 +226,9 @@ the card outline is section 8. `05` owns both.
 - Compute `release_table_sha256` from the finished `release.parquet` file, and
   record it next to `release_id`. One is the identity, the other is byte
   integrity, and they change for different reasons.
+- Record `support_schema_version` and `support_table_sha256` from the verified
+  `03a` artifact. They are validation provenance, not generation inputs, so they
+  are excluded from `release_id` like the three review-ledger hashes.
 - Record `review_ledger_sha256`, `absence_ledger_sha256`, and
   `residual_ledger_sha256` from the three ledgers. They are excluded from the
   `release_id` inputs: they are review provenance, not generation inputs, so

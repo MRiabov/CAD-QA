@@ -60,7 +60,7 @@ not product requirements.
 | [`implementation/README.md`](implementation/README.md) | Scope of implementation docs and where to start. |
 | [`implementation/artifacts.md`](implementation/artifacts.md) | Who writes and reads each dataset artifact, and how artifacts are versioned. |
 | [`implementation/planning-math.md`](implementation/planning-math.md) | Priority, coverage, balance, split, and release-cap math. |
-| [`implementation/task-step-support.md`](implementation/task-step-support.md) | Derived task reasoning step support tables used to check coverage, not generator inputs. |
+| [`implementation/task-step-support.md`](implementation/task-step-support.md) | The derived task reasoning step support table used to check coverage, not a generator input or a release file. |
 | [`implementation/prompt-templates.md`](implementation/prompt-templates.md) | The `prompts.yaml` artifact and its template schema. |
 | [`implementation/python-and-golang.md`](implementation/python-and-golang.md) | The Python and Go language boundary for the dataset generator. |
 | [`implementation/file-trees.md`](implementation/file-trees.md) | Where the replacement generator's code, tests, fixtures, and config live. |

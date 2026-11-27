@@ -243,8 +243,9 @@ path necessary to achieve the result" (`paper:57`), and Table 1 says "critical
 path" (`paper:129`).
 
 **Docs:** the release contract's required artifacts are `release.parquet`,
-`manifest.json`, `dataset-card.md`, `failures.parquet`, and the support tables
-(`release-dataset-contract.md:32–40`). The release table carries
+`manifest.json`, `dataset-card.md`, and `failures.parquet`
+(`release-dataset-contract.md:32–40`). The support table is a run input to the
+checks, not a release file. The release table carries
 `answer_evidence_json` with `evidence_refs` and `answer_equivalent_set`
 (`03b:290–305`), but not the CAD graph, the Gold query program, or the
 candidate-set trace, so the release has no per-step intermediate answers either.

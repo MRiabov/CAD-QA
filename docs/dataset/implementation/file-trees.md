@@ -121,7 +121,7 @@ generator/
       extraction.go                        CadQuery AST and runtime result models, FailureTombstone
       graph.go                             CadGraph, GraphCompletenessReport, graph entity, relation, and measurement models
       task.go                              TaskQuotaPlan, QuotaTarget, ProgramCapabilityCensus, TaskDefinition, DeficitLedger, control records
-      release.go                           RenderConfig, PromptTemplateSet, ReleaseTable, ReleaseRow, ReleaseArtifacts, ReleaseManifest, CheckReport, SupportTable
+      release.go                           RenderConfig, PromptTemplateSet, ReleaseTable, ReleaseRow, ReleaseArtifacts, ReleaseManifest, CheckReport, TaskReasoningStepSupportRow
       cross_cutting.go                     FailureRecord, RunManifest, StageCompletionMarker, TolerancePolicy, shared enums
       iocontracts_test.go
     run/                                   package run
@@ -240,7 +240,7 @@ pipeline stages import each: `03a` and `03b` share the program capability
 census, and `03a` and the witness test share the support table.
 `reference_share.go` is in the support-table package because the conditional
 release share is a function of the supported value set; `05` calls it against
-the persisted tables, and `03a` calls it in-process.
+the persisted table, and `03a` calls it in-process.
 
 The `03a`, `03b`, `02c`, and `05` doc folders mirror the Go package folders
 under `internal/stages/`.
@@ -396,10 +396,11 @@ are read by path and recorded by hash, not embedded in the binary.
 Fixtures stay in the docs tree because they are reviewed like code and the test
 contract owns their path. A test reads them by path; it does not copy them.
 
-The support table is a fixture, not a release artifact. The five files under a
-release's `support/` are generated from the constructor over the coverage
-fixture set; `05` copies them into the release and records their schema versions
-and hashes in `manifest.json`.
+The support table is a fixture and a run artifact, not a release artifact. The
+checked-in expected table is reviewed; `03a` produces the scope-filtered table
+from the constructor over the coverage fixture set, and `05` reads it and records
+its schema version and hash in `manifest.json` without copying it into the
+release.
 
 ## Tools and manual verification
 
@@ -508,7 +509,8 @@ This section is the file and package bootstrap order within those work items.
    `graph_persistence.go`, and `graph_completeness.go`.
 4. `stages/03-task-generation/program-capability-census/`, `03b`,
    `stages/03-task-generation/task-reasoning-step-support-table/` with
-   `reference_share.go`, because the support table is what `03a` reads.
+   `reference_share.go`, because `03a` derives and writes the support table and
+   `05` reads it.
 5. `03a`, `03c`, `04`, `05`, `end-to-end`, all under `internal/stages/` except
    `end-to-end`.
 6. `dataset_browser.py`, `run_report.py`, `residual_sample.py`, and the

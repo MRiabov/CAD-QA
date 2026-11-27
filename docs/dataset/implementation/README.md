@@ -20,7 +20,7 @@ between pipeline stages is
 |---|---|
 | [`artifacts.md`](artifacts.md) | Artifact ownership, identity, and lifecycle. |
 | [`planning-math.md`](planning-math.md) | Priority, coverage, balance, split, and cap math. |
-| [`task-step-support.md`](task-step-support.md) | Derived task reasoning step support tables used for coverage checks. |
+| [`task-step-support.md`](task-step-support.md) | The derived task reasoning step support table used for coverage checks and the balance denominator. |
 | [`failure-record.md`](failure-record.md) | The row schema for a rejected program or task, and the rules that merge it. |
 | [`run-contract.md`](run-contract.md) | The run manifest, incremental Parquet persistence, pipeline stage completion markers, cache, resume, command-line interface, and exit codes. |
 | [`prompt-templates.md`](prompt-templates.md) | The `generator/config/prompts.yaml` artifact and its schema: template IDs, typed placeholders, label tables, variants, and validation. |

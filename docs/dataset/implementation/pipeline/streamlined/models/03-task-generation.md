@@ -260,6 +260,8 @@ type TaskQuotaPlan struct { // Parquet
 	Seed                           int64                            `parquet:"seed"`
 	BalancePolicyVersion           int                              `parquet:"balance_policy_version"`
 	BalancePolicySHA256            string                           `parquet:"balance_policy_sha256"`
+	SupportSchemaVersion           string                           `parquet:"support_schema_version"`
+	SupportTableSHA256             string                           `parquet:"support_table_sha256"`
 	TaskReasoningStepQuotas        map[int]int                      `parquet:"task_reasoning_step_quotas"`
 	QuotaTargets                   []QuotaTarget                    `parquet:"quota_targets"`
 	ClueQuotas                     []ClueQuota                      `parquet:"clue_quotas"`

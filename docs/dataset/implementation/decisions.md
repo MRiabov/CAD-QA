@@ -69,7 +69,7 @@ grouping is editorial; the numbers are the citation keys and never change meanin
 - **Consequences:** Pipeline stages exchange columnar tables, not JSON rows.
   Large tables are partitioned by program family or release where useful. The release
   artifacts are `release.parquet`, `failures.parquet`, `manifest.json`,
-  `dataset-card.md`, and `support/`. Schema versions are recorded in Parquet
+  `dataset-card.md`, and the review ledgers. Schema versions are recorded in Parquet
   metadata and the manifest.
 
 ## DS-ADR-04 — The CAD graph is an immutable Parquet artifact, not a relational table
@@ -487,3 +487,37 @@ grouping is editorial; the numbers are the citation keys and never change meanin
   disposition changes is a contract change, not a runtime choice. The Go
   `FailureRecord` struct, its validation, its merge comparison, and its Parquet
   round trip carry the column; no second reason list is introduced.
+
+## DS-ADR-18 — The task reasoning step support table is a run artifact, not a release file
+
+- **Status:** accepted (2026-11-27).
+- **Context:** `MC-70` found five support files with no producer and two row
+  schemas: [`task-step-support.md`](task-step-support.md#the-produced-table)
+  carried `supported`, `implementation_scope`, and `reason_code`, while the `05`
+  typed model carried only `{Dimension, Value}`. The release contract listed `support/` as a
+  required artifact, yet the table is derived over coverage fixtures and exists
+  to judge the release, not to be shipped with it. The five files encoded the
+  dimension in the filename, which is why they had five schemas and five
+  hashes. The release table is one row per task; the support table is one row
+  per dimension value and task reasoning step count, so the two cannot share a
+  Parquet schema.
+- **Decision:** One Parquet table at
+  `<run>/03a-allocate-task-quotas/support/support.parquet`, one row per
+  `(dimension, dimension_value, task_reasoning_step_count)`, carrying
+  `supported`, `implementation_scope`, `reason_code`, and
+  `witness_program_sha256`. `03a` writes it and records
+  `support_table_sha256` in the plan; `05` reads it, requires the hash and schema
+  version to match the plan, and records them in the manifest. It is not copied
+  into the release. Every coverage and balance row carries `supported_cell` and
+  `reason_code`, so the per-cell result, not the matrix, is what the release
+  publishes. The reviewed expected table stays
+  `pipeline/testing/support-table.json`. The table carries no target, quota, or
+  task count.
+- **Consequences:** `MC-70` is resolved by deleting the five-file release copy,
+  not by defining five files. The row schema in `task-step-support.md` is the
+  one schema; the `{Dimension, Value}` schema is removed. A changed support table
+  changes the plan hash, so a stale plan cannot be checked against a new table.
+  A `balance.yaml` target naming an unsupported cell is a policy error. A
+  fixture without an accepted graph fails `03a` rather than reading as
+  unsupported. The P0-W2 end-to-end support assertion moves to P0-W5, where the
+  derivation and fixtures exist.

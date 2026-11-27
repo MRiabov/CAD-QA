@@ -25,6 +25,11 @@ entry is not used.
 scope, not a scope file or a second grammar typed model. A value above the release
 scope has no quota target.
 
+`test_03a_support_table_identity` — `03a` writes the support table before the
+quota plan part, the plan records its SHA-256, and a plan or table whose hash
+differs from the other is rejected. A fixture program with no accepted graph
+fails `03a` and names the fixture rather than marking its cells unsupported.
+
 `test_03a_scope_outlives_the_corpus` — an in-scope value whose capability no
 accepted graph realizes keeps its supported row and its quota target. The census
 and `family_profiles` record the capability as absent, and the missing cell is
@@ -36,5 +41,5 @@ derivation before `03a` exists.
 
 ## What this does not prove
 
-- That the support tables are correct. That is
+- That the support table is correct. That is
   [`../../00-support-tables.md`](../../00-support-tables.md).

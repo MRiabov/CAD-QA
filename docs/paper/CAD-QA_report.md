@@ -399,7 +399,7 @@ The implementation follows this structure:
 <!--
 - `04 render prompt and choices` turns typed task definitions into prompts and multiple-choice candidates; every LLM-facing string is data in generator/config/prompts.yaml, never hardcoded.
 - A template change bumps the prompt version and hash; the prompt is the user message, no system prompt is shipped.
-- `05 validate and export release` runs release checks (counts, coverage, balance, leakage, answer evidence, support tables) and writes release.parquet, manifest, Dataset card, failures, support.
+- `05 validate and export release` runs release checks (counts, coverage, balance, leakage, answer evidence) and writes release.parquet, manifest, Dataset card, failures. The support table is a run input to the coverage checks, not a release file.
 - No partial release: a failed row fails the release build, not the published artifact.
 -->
 

@@ -94,6 +94,7 @@ type RunManifest struct { // JSON: run.json
 	ReleaseSeed         int64             `json:"release_seed"`
 	JournalShardCount   int               `json:"journal_shard_count"` // default 16
 	ExternalBenchmark   *ExternalBenchmark `json:"external_benchmark"`
+	SupportFixtures     SupportFixtures   `json:"support_fixtures"`
 	ComponentVersions   ComponentVersions `json:"component_versions"`
 	ExecutionEnvironment ExecutionEnvironment `json:"execution_environment"` // audit, not run_id
 	TolerancePolicy     TolerancePolicy   `json:"tolerance_policy"`
@@ -106,6 +107,11 @@ type ExternalDatasetRef struct {
 	URI           string `json:"uri"`
 	Revision      string `json:"revision"`
 	SchemaVersion string `json:"schema_version"`
+}
+
+type SupportFixtures struct {
+	FixtureSetSHA256 Sha256 `json:"fixture_set_sha256"`
+	Count            int    `json:"count"`
 }
 
 type SelectionRef struct {
@@ -134,6 +140,7 @@ type ComponentVersions struct {
 	GraphBuilder             string `json:"graph_builder"`
 	Planner                  string `json:"planner"`
 	Constructor              string `json:"constructor"`
+	SupportDerivation        string `json:"support_derivation"`
 	DeficitController        string `json:"deficit_controller"`
 	Renderer                 string `json:"renderer"`
 	Exporter                 string `json:"exporter"`

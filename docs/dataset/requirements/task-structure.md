@@ -409,10 +409,11 @@ and P2 values. For each step count in the release, the dataset must contain:
 
 A **task reasoning step support table** records which values the constructor
 produced at least one valid definition for at each step count, and a reason when
-it produced none. The five tables are derived from the constructor over the
-coverage fixture set; they are not authored as an independent input, and they are
-not a description of what the task grammar permits. They are part of the release
-documentation and are versioned with the generator.
+it produced none. The table is derived from the constructor over the coverage
+fixture set; it is not authored as an independent input, and it is not a
+description of what the task grammar permits. It is a run artifact, versioned
+with the generator; the checked-in expected table is the reviewed oracle, and the
+release records the produced table's schema version and hash.
 
 Support is an observation. A value the constructor can produce but no fixture
 shows is not required by a release, and that is the cost of having one

@@ -31,7 +31,7 @@ authoritative end-to-end document; a pipeline stage's own doc owns its contract.
 | `02` | `NormalizedProgram` | `CadGraph` |
 | `03` | `CadGraph`, `TaskQuotaPlan`, `DeficitLedger` | `TaskDefinition`, `DeficitLedger`, control records |
 | `04` | `TaskDefinition`, `NormalizedProgram`, `RenderConfig` | `ReleaseTable` |
-| `05` | `ReleaseTable`, `RenderConfig`, policy files, support tables, failure partitions | `ReleaseArtifacts` |
+| `05` | `ReleaseTable`, `RenderConfig`, policy files, the task reasoning step support table, failure partitions | `ReleaseArtifacts` |
 
 ## Rules
 
@@ -39,4 +39,4 @@ authoritative end-to-end document; a pipeline stage's own doc owns its contract.
 - A pipeline stage reads only the artifacts its doc lists. It does not reach into another pipeline stage's private intermediate state.
 - A rejection is data: it becomes a failure row or a deficit entry, never an exception across a pipeline stage boundary.
 - The same inputs, versions, and `journal_shard_count` produce byte-identical parts and the same `run_id`.
-- The five task reasoning step support tables are derived outside this folder. `03a` calls the derivation; `05` reads the tables it writes.
+- The task reasoning step support table is derived outside this folder. `03a` derives it, writes it as a run artifact, and records its hash in the plan; `05` reads that table, verifies the hash, and does not copy it into the release.

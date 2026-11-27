@@ -32,6 +32,9 @@ Load rules:
 - Every key is required except `min`, `max`, `target`, and `values`. A missing
   `min` means no plan minimum, a missing `max` means no cap, and a missing
   `target` means an equal share among the supported values.
+- A `target` or `values` entry that names a value the support table marks
+  unsupported at the scoped task reasoning step count is an error, like an
+  unknown key. An unsupported value has no quota target and no share.
 - An unknown key is an error at every level. A typo must not fall back to a
   default.
 - `task_reasoning_step_share` covers every task reasoning step count in the
@@ -57,3 +60,7 @@ is the dimension value's global share divided by the sum of the global shares of
 values supported at that task reasoning step count. The global quota share is the
 quota share target for that dimension value. When the target does not name a
 share, use an equal share among implemented values in that quota dimension.
+
+The supported set is the task reasoning step support table's in-scope rows.
+`03a` plans only into supported cells, and `05` computes the same denominator
+from the same table; neither holds a second feasible set.

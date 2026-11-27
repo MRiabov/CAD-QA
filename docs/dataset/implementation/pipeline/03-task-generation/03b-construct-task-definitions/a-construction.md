@@ -305,9 +305,9 @@ to loop inside `03b`. A batch that exhausts its cost budget records
 
 ## Relationship to task reasoning step support
 
-The **task reasoning step support tables** are a separate derived QA baseline.
-They are computed from the rules in this document and are not an input to `03b`.
-They are used to check release coverage in
+The **task reasoning step support table** is a separate derived QA baseline.
+It is computed from the rules in this document and is not an input to `03b`.
+It is used to check release coverage and to define the balance denominator in
 [`../../../task-step-support.md`](../../../task-step-support.md).
 
 ## Deficits

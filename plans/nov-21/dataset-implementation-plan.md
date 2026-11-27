@@ -227,7 +227,8 @@ to change.
   `plans/nov-19/03b-task-construction-design.md`: final solid state target,
   volume answer, number format, one step, no clue search.
 - `04` renders from `prompts.yaml`; `05` exports `release.parquet`,
-  `failures.parquet`, `manifest.json`, the dataset card, and `support/`.
+  `failures.parquet`, `manifest.json`, and the dataset card. The support table
+  and its `05` assertion belong to `P0-W5`; the W2 export does not require them.
 - `tools/manual-verification/dataset_browser.py` opens the skeleton row: the final
   solid state, the prompt text, and the gold answer. It is the owner's first
   verification point and the same tool serves `P0-W4`. Its approval action
@@ -367,7 +368,8 @@ must do, and whether the P0 vocabulary needs to shrink.
 ## P0-W5 — `03a` and `03c`
 
 - `03a`: quota allocation, the conditional share, the support-table derivation
-  and its persisted tables, the split assignment, and the warmup label.
+  and its single run artifact (`support/support.parquet`, not a release copy),
+  the split assignment, and the warmup label.
 - `03c`: the seven deficit classes, the fast loop (`03a` → `03b`), the slow loop
   (`01b` → `01c` → `01d` → `02` → `03a` → `03b`), the three-round 20% stop rule,
   and the deficit ledger.

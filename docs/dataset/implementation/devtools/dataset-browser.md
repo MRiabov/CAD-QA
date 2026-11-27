@@ -25,7 +25,7 @@ documents that are not task rows:
 | View | Input | What a person does |
 |---|---|---|
 | Tasks | release table, or gold oracles | Opens one task: prompt, gold answer, and the final solid state with the target and clue-bound entities in distinct colours. |
-| Review queue | release table and the five support tables | Works the sample in coverage-gap order. It is a sort over the Tasks view, not a second list. |
+| Review queue | release table and the run's task reasoning step support table | Works the sample in coverage-gap order. It is a sort over the Tasks view, not a second list. |
 | Dataset release absence ledger | `absence-ledger.parquet` | Reads why each absent program, capability, or capacity was dropped. Read-only. |
 | Dataset release geometry residual ledger | `residual-ledger.parquet` | Reads the CAD graph kernel-oracle differential result per drawn program. Read-only. |
 
@@ -92,25 +92,27 @@ executes the program: run it only on a release you generated, or on the
 checked-in gold records. Gold rows take their split and subset from the input
 (`gold`/`oracle`), not from a release column.
 
-The review queue also reads the five support tables under `support/`, which the
-release carries. The clue-coloured scene additionally reads the `TaskDefinition`
+The review queue also reads the task reasoning step support table from the run
+(`03a-allocate-task-quotas/support/support.parquet`); it is not copied into the
+release. The clue-coloured scene additionally reads the `TaskDefinition`
 set and the CAD graph: the release row does not carry the clue-to-entity binding.
 The browser matches a graph entity to the shape by the geometric fingerprint —
 face centroid, area, normal, and bounding box; edge endpoints and length; vertex
 point — and two entities in one state and category with the same fingerprint are
 rejected at graph build, so the match is unique.
 
-When a release has already exported, `release.parquet`, the three ledgers, and
-`support/` sit in the release directory. The browser reads them from there;
-`--absence-ledger` and `--residual-ledger` override the paths while the release
-is still being reviewed.
+When a release has already exported, `release.parquet` and the three ledgers sit
+in the release directory. The browser reads them from there; `--absence-ledger`
+and `--residual-ledger` override the paths while the release is still being
+reviewed, and `--support-table` points at the run's support table when the run
+directory has moved.
 
 ## Review queue
 
 The queue applies the sampling matrix in the
 [`05` review gate](../pipeline/05-validate-and-export-release.md#review-gate):
 the cross product of clue type, answer meaning, answer format, and task
-reasoning step count, restricted to the cells the support tables support and the
+reasoning step count, restricted to the cells the support table supports and the
 release contains. The matrix rule has one home in `05`; the browser only orders
 the tasks the rule selects.
 

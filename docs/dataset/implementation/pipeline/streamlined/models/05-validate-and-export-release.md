@@ -14,7 +14,6 @@ type ReleaseArtifacts struct { // the release directory, identity release_id
 	Failures      []FailureRecord `json:"-"`
 	Manifest      ReleaseManifest `json:"-"`
 	DatasetCard   string          `json:"-"`
-	SupportTables []SupportTable  `json:"-"`
 }
 ```
 
@@ -53,8 +52,8 @@ type ReleaseManifest struct { // JSON: manifest.json
 	BalancePolicySHA256               string              `json:"balance_policy_sha256"`
 	ChecksPolicyVersion               int                 `json:"checks_policy_version"`
 	ChecksPolicySHA256                string              `json:"checks_policy_sha256"`
-	SupportTableVersions              map[string]string   `json:"support_table_versions"`
-	SupportTableSHA256                map[string]string   `json:"support_table_sha256"`
+	SupportSchemaVersion              string              `json:"support_schema_version"`
+	SupportTableSHA256                string              `json:"support_table_sha256"`
 	Checks                            []CheckReportRow    `json:"checks"`
 	KnownMisses                       []KnownMiss         `json:"known_misses"`
 	ReviewLedgerSHA256                string              `json:"review_ledger_sha256"`
@@ -72,7 +71,9 @@ type ReleaseManifest struct { // JSON: manifest.json
 `dataset release task review ledger`, the `dataset release absence ledger`, and
 the `dataset release geometry residual ledger`, and excludes them from the identity. The
 external benchmark fields are validation provenance and are excluded for the
-same reason.
+same reason. `support_schema_version` and `support_table_sha256` are also
+validation provenance: the table is a run input that `05` verifies, not a
+release artifact, so it is excluded from `release_id`.
 
 ## ExternalBenchmarkProgramSet (Parquet)
 
@@ -115,6 +116,8 @@ type CheckReportRow struct {
 	Scope        string        `json:"scope"`      // a step count or "release"
 	Dimension    string        `json:"dimension"`
 	Value        string        `json:"value"`
+	SupportedCell *bool        `json:"supported_cell"` // copied from the support table; null when the check has no support cell
+	ReasonCode   *string       `json:"reason_code"` // copied from the support table; null when supported or not applicable
 	Observed     string        `json:"observed"`
 	MinimumCount *int          `json:"minimum_count"`
 	MaximumCount *int          `json:"maximum_count"`
@@ -135,23 +138,37 @@ type KnownMiss struct {
 A report row whose check is not listed in `release-checks.yaml` is a defect. The rows
 are sorted by check name, scope, and value before the manifest is written.
 
-## SupportTable
+## TaskReasoningStepSupportRow (Parquet)
+
+`03a` writes the table to
+`<run>/03a-allocate-task-quotas/support/support.parquet`. It is a run input to
+`05`, not a release file: `05` verifies it against the plan and records its
+schema version and hash, but never copies it into the release. One row per
+dimension value and task reasoning step count.
 
 ```go
-type SupportTable struct { // JSON: support/<dimension>-by-step.json
-	Name          string                    `json:"name"`
-	SchemaVersion string                    `json:"schema_version"`
-	SHA256        string                    `json:"sha256"`
-	Rows          map[int][]SupportedValue  `json:"rows"` // task reasoning step count → values
+type TaskReasoningStepSupportRow struct {
+	Dimension              SupportDimension     `json:"dimension"`
+	Value                  string               `json:"dimension_value"`
+	TaskReasoningStepCount int16                `json:"task_reasoning_step_count"`
+	Supported              bool                 `json:"supported"`
+	ImplementationScope    ImplementationScope  `json:"implementation_scope"`
+	ReasonCode             *SupportReason       `json:"reason_code"`
+	WitnessProgramSHA256   *string              `json:"witness_program_sha256"`
 }
 
-type SupportedValue struct {
-	Dimension string `json:"dimension"`
-	Value     string `json:"value"`
-}
+type SupportDimension string // target_category | clue_type | clue_reduction_form | answer_meaning | answer_format
+
+type SupportReason string // the closed set in task-step-support.md
 ```
 
-The five tables are `target-category-by-step.json`, `clue-type-by-step.json`,
-`clue-reduction-form-by-step.json`, `answer-meaning-by-step.json`, and
-`answer-format-by-step.json`. They are derived by the support-table derivation
-and are not generator inputs.
+`ReasonCode` and `WitnessProgramSHA256` are mutually exclusive by `Supported`:
+a supported row carries the witness fixture and a null reason, an unsupported
+row carries a reason and a null witness. The table carries no target share,
+quota, or task count; those are `balance.yaml` and `checks`. Table metadata is
+`schema_version`, `vocabulary_version`, `constructor_version`,
+`derivation_version`, `implementation_scope`, and `fixture_set_sha256`. The file
+SHA-256 is the identity recorded in the plan and the manifest.
+
+The expected table is `pipeline/testing/support-table.json`, reviewed and
+scope-independent; the Parquet row above is the produced, scope-filtered form.

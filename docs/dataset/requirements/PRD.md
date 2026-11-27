@@ -275,7 +275,7 @@ to a later implementation scope is not a coverage gap in the current release.
 | ID | Requirement | How the user can tell |
 |---|---|---|
 | **R-7** | The dataset balances answer formats at every task reasoning step count. | Every answer format in section 5 appears at every task reasoning step count where it is supported. No format is more than twice or less than half its share among the formats supported at that task reasoning step count. Over the release, each format is between 5% and 25% of tasks. |
-| **R-8** | The dataset covers all target categories, clue types, clue reduction forms, and answer meanings. | Every task target category, clue type, clue reduction form, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support tables record which values cannot occur at that step count and why. |
+| **R-8** | The dataset covers all target categories, clue types, clue reduction forms, and answer meanings. | Every task target category, clue type, clue reduction form, and answer meaning supported at a task reasoning step count appears at that task reasoning step count. A value that is valid, implemented by the release, and missing is a gap; the task reasoning step support table records which values cannot occur at that step count and why. |
 | **R-9** | The dataset covers the full task reasoning step count range. | Steps 1 through 5 all appear in the target mix in section 8, with steps 3 and 4 carrying most benchmark tasks. Steps 6 through 10 appear only when the 6–10 release gate in section 6.1 passes; the release report names the range it covers. |
 | **R-10** | The dataset is diverse. | It draws from at least one thousand distinct CAD models (P0). No single CAD model is above 1% of tasks (P1). |
 | **R-11** (P1) | The dataset has varied answers. | At least one thousand different correct answers appear, and no correct answer is above 1% of tasks. |
@@ -393,7 +393,7 @@ change.
 | Validation dataset | Tasks and correct answers for tuning. | P0 |
 | Test dataset | Held-out tasks and correct answers for the final result. | P0 |
 | Warmup subset | Labeled 1-step tasks for warmup. | P0 |
-| Task reasoning step support tables | Which target categories, clue types, clue reduction forms, answer meanings, and answer formats are supported at each task reasoning step count and implementation scope, and why not. | P0 |
+| Task reasoning step support table | Which target categories, clue types, clue reduction forms, answer meanings, and answer formats are supported at each task reasoning step count and implementation scope, and why not. It is derived during the run; the manifest records its schema version and hash, and every coverage and balance row records the cell's support status. | P0 |
 | Dataset card | A plain description of what the dataset contains, how it was made, what it is for, and what it is not for. | P0 |
 | Evaluation material | The correct answers and instructions needed to score an LLM model. | P0 |
 | Documentation | How to reproduce the dataset release and how to review it. | P1 |
@@ -411,7 +411,9 @@ The dataset is done when:
 2. the first benchmark dataset release of at least ten thousand tasks meets the
    coverage and balance targets at every task reasoning step count in section 8,
    or every miss is documented and accepted by the owner;
-3. the task reasoning step support tables are published and reviewed;
+3. the task reasoning step support table is derived and reviewed with the
+   release, and every coverage and balance row carries the cell's support status
+   and reason;
 4. a labeled warmup subset exists;
 5. training, validation, and test sets do not share a CAD model;
 6. a reviewer can read sampled tasks covering every task reasoning step count,

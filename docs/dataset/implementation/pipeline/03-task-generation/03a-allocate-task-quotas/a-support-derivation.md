@@ -22,16 +22,35 @@ deficits reads `family_profiles` rather than the census.
 
 ## Support-table derivation
 
-`03a` calls the same derivation that writes the task reasoning step support
-tables; it does not read the tables as data (`TG-4`). The derivation is defined
-in [`../../../task-step-support.md`](../../../task-step-support.md).
+`03a` derives and writes the single task reasoning step support table; it does
+not read the table as a planning input (`TG-4`). The derivation is defined in
+[`../../../task-step-support.md`](../../../task-step-support.md).
 
 - `supported_values(task_reasoning_step_count, quota_dimension)` is the
-  support-table derivation's output. `03a` calls that derivation in-process;
-  `05` validate and export release reads the tables it writes. There is one
-  derivation, not a scope file plus a grammar model. The derivation takes
-  `implementation_scope` from the requirement marks, so a value above the
-  release scope has no row.
+  support-table derivation's output. `03a` derives it in-process before it
+  allocates quotas, writes the table, and records its schema version and hash in
+  `TaskQuotaPlan`; `05` validate and export release reads the written table and
+  verifies both. There is one derivation, not a scope file plus a grammar model.
+  The derivation takes `implementation_scope` from the requirement marks, so a
+  value above the release scope has no row.
+
+## Producer and artifact
+
+`03a` writes one Parquet table to
+`<run>/03a-allocate-task-quotas/support/support.parquet`, one row per dimension
+value and task reasoning step count, with the row schema in
+[`../../../task-step-support.md`](../../../task-step-support.md#the-produced-table).
+
+- The fixture programs are pool programs, so their graphs are part of the `02c`
+  output. A fixture with no accepted graph fails `03a` and names the fixture.
+  It is not marked unsupported, because a rejected program must not look like a
+  grammar limit.
+- The table is filtered to the run's `implementation_scope`; no row above the
+  scope is written.
+- `03a` writes the table and records `support_schema_version` and
+  `support_table_sha256` in `TaskQuotaPlan`.
+- The table is not copied into the release. It is a run input to the coverage and
+  balance checks, and their rows carry `supported_cell` and `reason_code`.
 
 ## What the census cannot see
 

@@ -14,6 +14,7 @@ are one number, so the plan cannot promise fewer tasks than the release requires
 |---|---|
 | `plan_version`, `parent_plan_version`, `seed` | Version, previous version, and deterministic ordering seed. |
 | `balance_policy_version`, `balance_policy_sha256` | The balance policy the plan was computed from. A changed policy produces a new plan version. |
+| `support_schema_version`, `support_table_sha256` | The support table the plan was computed from. `05` requires the table it reads to match both. |
 | `task_reasoning_step_quotas` | Target task count for each task reasoning step count. |
 | `quota_targets` | Quota targets: task reasoning step count, quota dimension, dimension value, minimum, target count, maximum, and priority. |
 | `clue_quotas` | Clue quotas counted over clue occurrences. |

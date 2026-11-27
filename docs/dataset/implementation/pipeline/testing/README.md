@@ -34,7 +34,7 @@ they own rationale and field mechanics, not a pipeline stage contract. `fixtures
 | [`00-testing-strategy.md`](00-testing-strategy.md) | The shared rules and the inventory. | draft |
 | [`00-end-to-end.md`](00-end-to-end.md) | The whole chain, `01a` to `05`. | draft |
 | [`00-run-contract.md`](00-run-contract.md) | The run manifest, Parquet parts, resume, cache, and exit codes, a cross-cutting contract. | draft |
-| [`00-support-tables.md`](00-support-tables.md) | The support tables, a cross-cutting observation. | draft |
+| [`00-support-tables.md`](00-support-tables.md) | The support table, a cross-cutting observation. | draft |
 | [Typed model declarations](00-declaration-audit.md) | The typed model index, field resolution, and pipeline stage boundary audit. | draft |
 | [`01a-read-cadevolve-metadata.md`](01a-read-cadevolve-metadata.md) | `01a` read CADEvolve metadata. | draft |
 | [`01b-select-program-pool.md`](01b-select-program-pool.md) | `01b` select program pool. | draft |

@@ -1,29 +1,37 @@
-# Task reasoning step support tables
+# Task reasoning step support table
 
-**Status:** draft, 2026-10-21. This document defines the derived QA baseline used
-to check a release. It is not a pipeline stage and not a generator input.
+**Status:** draft, 2026-11-27. This document defines the derived QA baseline used
+to check a release. It is a run artifact consumed by `03a` allocate task quotas
+and `05` validate and export release; it is not a release file.
 
 ## Role
 
-The **task reasoning step support tables** record which target categories, clue type
-values, clue reduction forms, answer meanings, and answer formats the constructor
+The **task reasoning step support table** records which target categories, clue type,
+clue reduction forms, answer meanings, and answer formats the constructor
 produced at each task reasoning step count over the coverage fixture set.
 
-They exist to check the dataset:
+It exists to check the dataset:
 
 - a supported value missing from the release is a coverage gap;
 - a value present in the release but marked unsupported is a generator or
   specification defect;
 - actual task counts are a separate coverage question.
 
-The tables are derived from the constructor, using the rules in
-[`pipeline/03-task-generation/03b-construct-task-definitions/README.md`](pipeline/03-task-generation/03b-construct-task-definitions/README.md). They are not
-hand-authored, and `03` does not read them to decide what to attempt.
+It also defines the set of cells the release is balanced over. The conditional
+release share divides by the values supported at a task reasoning step count
+([`03a`/`b-balance.md`](pipeline/03-task-generation/03a-allocate-task-quotas/b-balance.md#conditional-share)),
+so a cell the table does not support has no quota target and no share. A
+`balance.yaml` target that names an unsupported cell is a policy defect, not a
+zero.
+
+The table is derived from the constructor, using the rules in
+[`pipeline/03-task-generation/03b-construct-task-definitions/README.md`](pipeline/03-task-generation/03b-construct-task-definitions/README.md). It is not
+hand-authored, and `03b` does not read it to decide what to attempt.
 
 The derivation takes `implementation_scope` from the requirement priority
 marks. That derivation is the implementation-scope filter: a value above the
 release scope has no row, so it is neither planned nor accepted. `03a`
-allocate task quotas calls the same derivation, so the plan and these tables
+allocates task quotas from the same derivation, so the plan and these rows
 cannot disagree.
 
 ## Derivation
@@ -83,58 +91,73 @@ not a test detail.
   CadQuery, `02c` build CAD graph, written to the run's artifact directory. No
   Parquet enters the repository, so a graph schema change regenerates the graph
   instead of invalidating a binary fixture.
+- Because a fixture is a pool program, its graph is part of the `02c` output the
+  run already builds. A fixture with no accepted graph is a run defect: `03a`
+  fails and names the fixture, rather than marking its cells unsupported. A
+  rejected program must not look like a grammar limit.
 
 The fixture set follows the vocabulary, not the cell count. A new value adds
 rows to the table; if no fixture can produce them, the test names the missing
 capability and the set grows by one program.
 
-## The checked-in table
+## Expected table and produced table
 
-The expected table is `pipeline/testing/support-table.json`, one row per
-dimension value and task reasoning step count. It is reviewed like code:
-a diff claims that a value became possible or impossible, and the reviewer asks
-which fixture or rule changed.
+There are two artifacts, and they are different things:
 
-The table is not re-derived on every run. A table that follows the current pool
-would change whenever a program was added or removed, which would make coverage
-gaps and specification defects indistinguishable. The pool is used once, when a
-fixture or an expected row is added.
+- **Expected table.** `pipeline/testing/support-table.json`, reviewed like code.
+  It carries the full vocabulary with `implementation_scope` per row, so it is
+  scope-independent. A diff claims that a value became possible or impossible,
+  and the reviewer asks which fixture or rule changed.
+- **Produced table.** `<run>/03a-allocate-task-quotas/support/support.parquet`,
+  written by `03a` from the same derivation and filtered to the run's
+  implementation scope. `05` reads this table; the release directory does not
+  contain it.
+
+The expected table is not re-derived on every run. A table that follows the
+current pool would change whenever a program was added or removed, which would
+make coverage gaps and specification defects indistinguishable. The pool is
+used once, when a fixture or an expected row is added.
 
 An absent cell means the fixture set produced no valid definition for it; it does
 not prove that no valid definition exists. Every absent cell carries a reason code
 from the closed set below, so an absence is explained rather than left blank.
 
-## Files
+## The produced table
 
-The release carries five files under `support/`:
+The table is one Parquet file, one row per dimension value and task reasoning
+step count:
 
-```text
-support/target-category-by-step.json
-support/clue-type-by-step.json
-support/clue-reduction-form-by-step.json
-support/answer-meaning-by-step.json
-support/answer-format-by-step.json
-```
-
-Each file has a versioned envelope and typed rows:
-
-```json
-{
-  "schema_version": "1",
-  "rows": [
-    {
-      "task_reasoning_step_count": 1,
-      "target_category": "solid_state",
-      "supported": true,
-      "implementation_scope": "P0",
-      "reason_code": null
-    }
-  ]
+```go
+type TaskReasoningStepSupportRow struct {
+	Dimension              SupportDimension `parquet:"dimension"`
+	Value                  string           `parquet:"dimension_value"`
+	TaskReasoningStepCount int16            `parquet:"task_reasoning_step_count"`
+	Supported              bool             `parquet:"supported"`
+	ImplementationScope    ImplementationScope `parquet:"implementation_scope"`
+	ReasonCode             *SupportReason   `parquet:"reason_code,optional"`
+	WitnessProgramSHA256   *string          `parquet:"witness_program_sha256,optional"`
 }
 ```
 
-The row field is named after the file: `target_category`, `clue_type`,
-`clue_reduction_form`, `answer_meaning`, or `answer_format`.
+`dimension` is one of `target_category`, `clue_type`, `clue_reduction_form`,
+`answer_meaning`, or `answer_format`. One column carries the dimension, so the
+table has one schema and one schema version instead of one file and one schema
+per dimension.
+
+`witness_program_sha256` names the fixture that produced the definition. It is
+non-null exactly when `supported` is true. When several fixtures produce one,
+the witness is the lexicographically smallest `program_sha256`, so a rerun
+writes the same row. It is a reference, not a count: a supported cell means "at
+least one", not "enough for a quota". Capacity is the program capability census
+and the deficit ledger, not this table.
+
+The table carries no target share, quota, or task count. Balance numbers stay in
+`balance.yaml`, and actual counts are the release checks; a copy here would be a
+second home that drifts.
+
+Table metadata: `schema_version`, `vocabulary_version`, `constructor_version`,
+`derivation_version`, `implementation_scope`, and `fixture_set_sha256` over the
+sorted fixture program hashes. The file SHA-256 is the artifact identity.
 
 `reason_code` is a low-cardinality enum, not free text. It is null when the row
 is supported. Unsupported rows use one of:
@@ -147,9 +170,23 @@ is supported. Unsupported rows use one of:
 - `ambiguous_target`;
 - `no_valid_construction`.
 
-The five files are generated from the constructor over the coverage fixture set.
-`05` copies them into the release and `manifest.json` records their schema
-versions and hashes.
+The list is a precedence order: when more than one reason applies to a cell, the
+row carries the first one, so the table is deterministic.
+
+## Producer and readers
+
+- `03a` derives the rows in-process from the constructor over the fixture set and
+  writes the produced table before it allocates quotas. It records
+  `support_schema_version` and `support_table_sha256` in the `TaskQuotaPlan`.
+- `05` reads the produced table, requires its SHA-256 and schema version to equal
+  the ones in the plan, and records both in `manifest.json`. A mismatch is an
+  input error and blocks the export.
+- The dataset browser reads the produced table from the run to order its review
+  queue; it does not read a release copy.
+- No pipeline stage copies the table into the release. The table is an input to
+  the coverage and balance checks, and the checks carry its per-cell result:
+  every `coverage` and balance row records `supported_cell` and `reason_code`, so a
+  reader sees why a cell is absent without the matrix.
 
 ## Validation use
 
@@ -171,7 +208,10 @@ task quota planning.
 
 ## What this is not
 
-- It is not a generator input.
-- It is not a task quota planning policy.
+- It is not a committed generator input; it is derived inside the run.
+- It is not a task quota planning policy. `balance.yaml` is.
+- It is not a coverage or balance report. The `checks` rows in `manifest.json`
+  are.
+- It is not a release file. It is not shipped in the release directory.
 - It does not prove that the corpus contains enough instances.
 - It is not the valid-task set.

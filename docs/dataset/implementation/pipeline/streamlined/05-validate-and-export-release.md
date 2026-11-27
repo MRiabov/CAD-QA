@@ -12,7 +12,7 @@ READ:
 
 - `ReleaseTable` from `04`
 - `RenderConfig` passed to `04` and `05` → `PromptTemplateSet`, `release_seed`
-- five task reasoning step support tables
+- the task reasoning step support table from `03a`, and the `TaskQuotaPlan` field that records its hash
 - `balance.yaml` and `release-checks.yaml`
 - `ExternalDatasetManifest` from `01e`
 - `GraphCompletenessReport` per program from `02c` → `disposition`, missing, orphan, and unclassified counts
@@ -23,7 +23,7 @@ READ:
 
 WRITE:
 
-- `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/target-category-by-step.json`, `support/clue-type-by-step.json`, `support/clue-reduction-form-by-step.json`, `support/answer-meaning-by-step.json`, `support/answer-format-by-step.json`
+- `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`
 - `ReleaseArtifacts` `(release_id)`
 - write the release into `release/.tmp-<release_id>/` and rename it to `release/<release_id>/`; replace `release/current` by an atomic symlink rename
 - failure partition `05_validate_and_export_release`
@@ -102,7 +102,7 @@ TRANSFORM:
 - copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the external dataset manifest
 - record `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, and `checks_policy_sha256`
 - record prompt template version, `prompts.yaml` SHA-256, and `RenderConfig.release_seed`
-- copy the five support JSON files and record their schema versions and hashes
+- require the support table schema version and hash to equal the plan's, and record both in the manifest; never copy the table into the release
 - validate the benchmark set against the run manifest: file hash equals `external_benchmark.program_set_sha256`, the schema version equals `component_versions.external_benchmark_program_set_schema`, every row names the declared split, and every row carries `component_versions.normalization`; a mismatch is an input error
 - transfer overlap (R-16): a release row whose `program_sha256` is in the set blocks; name the benchmark program and the release tasks; never accept a miss into `known_misses`. The P1 same-CAD-model comparison is a graph-reading audit, not part of `05`; the set carries `ast_normalized_sha256` and `final_shape_hash` for it.
 - record the benchmark identity, revision, split, and program-set hash as validation provenance, excluded from `release_id`
@@ -110,10 +110,10 @@ TRANSFORM:
 - copy the three ledgers into the release as internal control documents
 - write the dataset card from the manifest; every number is copied
 - write `manifest.json` last, after the checks and the review gate pass
-- `manifest.json` fields, per the release contract section 7: `release_id`, `schema_version`, `created_at`, `implementation_scope`, `generator_version`, `upstream_dataset_version`, `external_dataset_manifest_sha256`, `release_table_sha256`, `external_benchmark_id`, `external_benchmark_revision`, `external_benchmark_split`, `external_benchmark_program_set_sha256`, `task_count`, `split_counts`, `program_family_count`, `program_family_split_counts`, `task_reasoning_step_counts`, `warmup_task_count`, `distinct_cad_model_count`, `answer_set_sha256`, `prompt_template_version`, `prompts_yaml_sha256`, `release_seed`, `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, `checks_policy_sha256`, `review_ledger_sha256`, `absence_ledger_sha256`, `residual_ledger_sha256`, `support_table_versions`, `support_table_sha256`, `checks`, `known_misses`, `failure_count`
+- `manifest.json` fields, per the release contract section 7: `release_id`, `schema_version`, `created_at`, `implementation_scope`, `generator_version`, `upstream_dataset_version`, `external_dataset_manifest_sha256`, `release_table_sha256`, `external_benchmark_id`, `external_benchmark_revision`, `external_benchmark_split`, `external_benchmark_program_set_sha256`, `task_count`, `split_counts`, `program_family_count`, `program_family_split_counts`, `task_reasoning_step_counts`, `warmup_task_count`, `distinct_cad_model_count`, `answer_set_sha256`, `prompt_template_version`, `prompts_yaml_sha256`, `release_seed`, `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, `checks_policy_sha256`, `review_ledger_sha256`, `absence_ledger_sha256`, `residual_ledger_sha256`, `support_schema_version`, `support_table_sha256`, `checks`, `known_misses`, `failure_count`
 
 WRITE:
 
-- `ReleaseArtifacts` `(release_id)` → `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`, `review-ledger.parquet`, `absence-ledger.parquet`, `residual-ledger.parquet`
+- `ReleaseArtifacts` `(release_id)` → `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `review-ledger.parquet`, `absence-ledger.parquet`, `residual-ledger.parquet`
 - `ReleaseManifest` → the fields above
 - the release directory is staged and renamed; `release/current` is replaced atomically

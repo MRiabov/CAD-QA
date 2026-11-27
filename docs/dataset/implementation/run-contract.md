@@ -95,7 +95,8 @@ run directory and recomputes only the `02b` units whose environment changed.
 | `release_seed` | integer | `RenderConfig.release_seed` for `04` render prompt and choices. |
 | `journal_shard_count` | integer | Number of journal shards. A unit belongs to `sha256(pass_key) mod journal_shard_count`. Part of `run_id`; changing it is a new run. |
 | `external_benchmark` | struct, nullable | `uri`, `id`, `revision`, `split`, and `program_set_sha256`. Required when `05` validate and export release runs. `program_set_sha256` is the SHA-256 of the file bytes. The artifact contract is in `05` validate and export release. |
-| `component_versions` | struct | `metadata_reader`, `selection`, `fetcher`, `normalization`, `external_dataset_manifest_schema`, `external_benchmark_program_set_schema`, `ast_extractor`, `runtime_extractor`, `canonicalization`, `graph_builder`, `planner`, `constructor`, `deficit_controller`, `renderer`, `exporter`, `graph_schema`, `task_definition_schema`, `release_schema`, `cadquery`, `ocp`, `python`, and `go`. |
+| `support_fixtures` | struct | `fixture_set_sha256` over the sorted fixture `program_sha256` values committed under `pipeline/testing/fixtures/`, and `count`. The task reasoning step support table is a function of this set, so the set enters `run_id`. |
+| `component_versions` | struct | `metadata_reader`, `selection`, `fetcher`, `normalization`, `external_dataset_manifest_schema`, `external_benchmark_program_set_schema`, `ast_extractor`, `runtime_extractor`, `canonicalization`, `graph_builder`, `planner`, `constructor`, `support_derivation`, `deficit_controller`, `renderer`, `exporter`, `graph_schema`, `task_definition_schema`, `release_schema`, `cadquery`, `ocp`, `python`, and `go`. |
 | `execution_environment` | struct | The `02b` execute CadQuery environment record: `os_arch` (for example `linux/amd64`), `timeout_seconds`, `memory_limit_bytes`, `worker_preload` (boolean), and `worker_request_limit`. It never contains a hostname, PID, container ID, kernel version, CPU model, or timestamp. Recorded for audit; enters the `02b` unit identity, not `run_id`. |
 | `tolerance_policy` | `TolerancePolicy` | The six entries defined in `graph-persistence.md`. |
 | `tolerance_policy_version` | integer | Policy version. |
@@ -185,6 +186,7 @@ the run directories.
     stage.json
   03a-allocate-task-quotas/
     parts/task-quota-plan-<plan_version>.parquet
+    support/support.parquet
     stage.json
   03b-construct-task-definitions/
     parts/shard-<nn>-<sequence>-<sha256>.parquet
@@ -201,7 +203,6 @@ the run directories.
       failures.parquet
       manifest.json
       dataset-card.md
-      support/
     current -> release/<release_id>
     stage.json
 ```
@@ -226,9 +227,10 @@ rows of one or more units. A pipeline stage's logical table is the union of
 its parts; readers apply that pipeline stage's stable sort order after reading
 the union.
 
-The external dataset manifest and the release directory are control and release
-artifacts rather than Parquet parts. They follow the same temp-then-rename rule,
-and the completion marker names them in `outputs`.
+The external dataset manifest, the task reasoning step support table, and the
+release directory are control and release artifacts rather than Parquet parts.
+They follow the same temp-then-rename rule, and the completion marker names them
+in `outputs`.
 
 ### 4.1 Write rule
 
@@ -479,10 +481,10 @@ uses the unit's content identity, never the shard file hash.
 | `02a` | `program_sha256`, `ast_extractor` version, `canonicalization` version. |
 | `02b` | The cache key in `runtime.md`: program hash, AST extraction result hash, extractor, AST extraction, runtime, and canonicalization versions, Python, CadQuery, and OCP versions, timeout, memory limit, and execution environment identifier. |
 | `02c` | `ast_extraction_result_sha256`, `runtime_extraction_result_sha256`, `graph_schema` version, `graph_builder` version, tolerance policy hash, `implementation_scope`. The tuple is stored as the program's `graph_identity_sha256`. |
-| `03a` | `02c` pipeline stage parts hash, `01a` metadata part hash, `01b` selection part hash, support table versions and hashes, balance policy hash, current `DeficitLedger` hash, parent plan hash, `plan_seed`, `planner` version. |
+| `03a` | `02c` pipeline stage parts hash, `01a` metadata part hash, `01b` selection part hash, constructor version, support derivation version, fixture set hash, balance policy hash, current `DeficitLedger` hash, parent plan hash, `plan_seed`, `planner` version. The support table hash is an output recorded in the plan, not an identity input. |
 | `03b` | `program_sha256`, `graph_identity_sha256`, `task_definition_schema` version, `constructor` version, `construction_seed`, `quota_target_key`. The `03a` plan part hash is a work-list input, not identity. |
 | `04` | `definition_sha256`, prompt template version, `prompts.yaml` hash, `release_seed`, `release_schema` version, `renderer` version. |
-| `05` | `04` pipeline stage parts hash, `01d`, `02a`, `02b`, `02c`, and `03b` failure parts hashes, `01e` external dataset manifest hash, support table versions and hashes, prompt template version, `prompts.yaml` hash, balance policy hash, checks policy hash, external benchmark hash, `release_schema` version, `exporter` version. |
+| `05` | `04` pipeline stage parts hash, `01d`, `02a`, `02b`, `02c`, and `03b` failure parts hashes, `01e` external dataset manifest hash, support table hash, prompt template version, `prompts.yaml` hash, balance policy hash, checks policy hash, external benchmark hash, `release_schema` version, `exporter` version. |
 
 A changed input for one program invalidates that program's downstream per-program
 units, not every unit of a per-program pipeline stage. A global pipeline stage

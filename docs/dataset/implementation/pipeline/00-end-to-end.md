@@ -49,7 +49,7 @@ CADEvolve Parquet cache
   → task definitions with gold answers
   → [deficit loops: 03c → 03a → 03b, or 03c → 01b/01c/01d/02 → 03a → 03b]
   → release table with prompts and choices
-  → release.parquet + failures.parquet + manifest + dataset card + support/
+  → release.parquet + failures.parquet + manifest + dataset card
 ```
 
 ## Supporting docs

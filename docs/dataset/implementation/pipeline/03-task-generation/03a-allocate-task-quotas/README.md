@@ -14,7 +14,8 @@ definitions are generated.
   and `ProgramSelection` from `01b`, the support-table derivation, the balance
   policy (`balance.yaml`), the current `DeficitLedger` (empty on the first plan),
   and `ProgramReassignmentRequest` records from `03c`.
-- Output: `TaskQuotaPlan`.
+- Output: `TaskQuotaPlan` and the derived task reasoning step support table at
+  `support/support.parquet`.
 
 The plan's `seed` is the run's `plan_seed`; the run manifest records it. A plan
 revision is a new Parquet part keyed by `plan_version`, and resume reads the

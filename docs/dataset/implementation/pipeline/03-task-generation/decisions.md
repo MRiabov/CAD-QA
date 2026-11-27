@@ -74,7 +74,7 @@ that owns them.
   provenance block names which. Assignment changes are visible in the plan and
   the release row, not in the definition hash.
 
-## TG-4 — `03` writes task definitions; task reasoning step support tables are a QA projection
+## TG-4 — `03` writes task definitions; the task reasoning step support table is a QA projection
 
 - **Status:** accepted (2026-10-21).
 - **Context:** The task reasoning step support tables had become a hand-authored
@@ -82,13 +82,16 @@ that owns them.
   inverted the source of truth: a value is feasible because the task rules can
   construct it, not because a support row allows it.
 - **Decision:** `03` defines task definitions and emits persisted
-  `TaskDefinition` records. The task reasoning step support tables are derived
-  from those rules as a separate QA baseline. They are not a pipeline stage and
-  not a generator input; `03a` plans, `03b` constructs, `04` renders, and
-  `03a`/`05` use the tables to check the release.
-- **Consequences:** `03` does not read the task reasoning step support tables as
-  data. `03a` calls the same derivation that writes them, so the plan and the QA
-  projection cannot disagree; `05` reads the persisted tables. A supported value
+  `TaskDefinition` records. The task reasoning step support table is derived
+  from those rules as a separate QA baseline. It is not a pipeline stage and
+  not a generator input; `03a` derives it, writes it as a run artifact, and
+  plans from it; `03b` constructs, `04` renders, and `05` reads the table to
+  check the release.
+- **Consequences:** `03` does not read the task reasoning step support table as
+  data. `03a` calls the derivation that writes it, so the plan and the QA
+  projection cannot disagree; `05` reads the persisted table and verifies its
+  hash. The table is not copied into the release; coverage and balance rows carry
+  its per-cell support status. A supported value
   missing from the dataset is a coverage gap; a released value the table marks
   unsupported is a specification or generator defect. Dataset quantity remains a separate
   coverage question.

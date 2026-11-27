@@ -15,10 +15,10 @@ construct task definitions uses.
 balance policy fixture that is deliberately small and readable: 1,000 tasks,
 step shares 0.25, 0.25, and 0.50, split shares 0.70, 0.15, and 0.15, answer
 meaning shares 0.20 for identity, 0.50 for length, and 0.30 for area, and caps
-wide enough to be feasible. The support-table fixture marks two task target
-categories, two answer formats, three answer meanings, and three clue types at
-step count 3, and one clue reduction form at step count 1 and three at step count
-3. The graphs support every value the fixture marks.
+wide enough to be feasible. The support-table derivation over the fixture marks
+two task target categories, two answer formats, three answer meanings, and three
+clue types at step count 3, and one clue reduction form at step count 1 and three
+at step count 3. The graphs support every value the fixture marks.
 
 **When** `03a` plans with a fixed seed.
 

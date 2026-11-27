@@ -84,10 +84,10 @@ are the executable units.
 Every doc in this table is written. A missing row would be a missing test, not a
 pipeline stage without tests.
 
-`00-support-tables.md` is one cross-cutting test: the support tables are an
-observation over the fixture set, not a pipeline stage output. `00-run-contract.md`
-is the other: the run manifest, Parquet parts, resume rule, and exit codes span
-every pipeline stage.
+`00-support-tables.md` is one cross-cutting test: the support table is an
+observation over the fixture set, derived by `03a`, not `03b`'s output.
+`00-run-contract.md` is the other: the run manifest, Parquet parts, resume rule,
+and exit codes span every pipeline stage.
 
 ## Typed model and structure checks
 

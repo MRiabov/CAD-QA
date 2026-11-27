@@ -57,7 +57,7 @@ cross-boundary audit: a read outside it is a boundary defect, not an optimizatio
 | `03b` | `CadGraph`, `TaskQuotaPlan` (with `QuotaTarget`, `ProgramCapabilityCensus`), `DeficitLedger` | `TaskDefinition`, `DeficitLedger` | `ReleaseTable`, `RenderConfig` |
 | `03c` | `DeficitLedger`, `TaskQuotaPlan`, `ProgramMetadata`, `SelectionPolicy` | `ProgramReassignmentRequest`, `ProgramRequest`, `AcceptedMiss` | `TaskDefinition`, `ReleaseTable` |
 | `04` | `TaskDefinition`, `NormalizedProgram`, `RenderConfig` | `ReleaseTable` | `CadGraph`, `TaskQuotaPlan`, failure partitions |
-| `05` | `ReleaseTable`, `RenderConfig`, policy files, support tables, `GraphCompletenessReport`, failure partitions, `ExternalDatasetManifest`, `ExternalBenchmarkProgramSet`, run manifest, `DeficitLedger`, dataset release task review, absence, and geometry residual ledgers | `ReleaseArtifacts` | `CadGraph`, `TaskDefinition`, `TaskQuotaPlan` |
+| `05` | `ReleaseTable`, `RenderConfig`, policy files, the task reasoning step support table, `GraphCompletenessReport`, failure partitions, `ExternalDatasetManifest`, `ExternalBenchmarkProgramSet`, run manifest, `DeficitLedger`, dataset release task review, absence, and geometry residual ledgers | `ReleaseArtifacts` | `CadGraph`, `TaskDefinition`, `TaskQuotaPlan` |
 
 `05` reads `answer_evidence` only through the release row. It does not read the
 task definition: the release carries the answer-equivalent count and shared
@@ -72,7 +72,7 @@ answer that the check needs.
 | [`02c-build-cad-graph.md`](02c-build-cad-graph.md) | `02c` `CadGraph`, `GraphCompletenessReport`, graph entity/relation/measurement tables, and attribute enums. |
 | [`03-task-generation.md`](03-task-generation.md) | `ProgramCapabilityCensus`, `TaskQuotaPlan`, `DeficitLedger`, `TaskDefinition`, control records, answer typed models (`AnswerValue`, `AnswerTolerance`, `AnswerEvidence`). |
 | [`04-render-prompt-and-choices.md`](04-render-prompt-and-choices.md) | `RenderConfig`, `PromptTemplateSet`, `ReleaseTable`, `ReleaseRow`. |
-| [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | `ReleaseArtifacts`, `ReleaseManifest`, `CheckReport`, `SupportTable`. |
+| [`05-validate-and-export-release.md`](05-validate-and-export-release.md) | `ReleaseArtifacts`, `ReleaseManifest`, `CheckReport`, `TaskReasoningStepSupportRow`. |
 | [`cross-cutting.md`](cross-cutting.md) | `FailureRecord`, `RunManifest`, `StageCompletionMarker`, `TolerancePolicy`, shared enums. |
 
 ## Declaration conventions

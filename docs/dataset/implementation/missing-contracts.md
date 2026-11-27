@@ -14,8 +14,9 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-Six entries are open, `MC-68`–`MC-72` and `MC-74`, all from the 2026-11-27
-P0-W2 audit. `MC-73` closed in the pair-answer oracle pass.
+Five entries are open: `MC-68`, `MC-69`, `MC-71`, `MC-72`, and `MC-74`, all
+from the 2026-11-27 P0-W2 audit. `MC-70` closed on 2026-11-27 with `DS-ADR-18`,
+and `MC-73` closed in the pair-answer oracle pass.
 P1 and P2 are empty. `MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66`
 closed on 2026-11-25, and `MC-64` and `MC-67` closed on 2026-11-27. The closed
 entries below are unchanged.
@@ -43,7 +44,7 @@ other open P0 entries are technical.
 
 Work order: `MC-72` first, because the M1 golden, the release column, and the
 prompt all depend on the unit vocabulary; then `MC-68` and `MC-69` (golden and
-fixture pool), then `MC-70` (support tables), then `MC-71` (the P0-W2 `05`
+fixture pool), then `MC-71` (the P0-W2 `05`
 check set). `MC-74` lands with the code it corrects.
 
 - `MC-68` — the P0-W2 end-to-end test does not name the golden record it
@@ -71,18 +72,6 @@ check set). `MC-74` lands with the code it corrects.
   includes hand-authored fixture programs, `01a` and `01b` need their metadata
   and `cadevolve_program_family_id`; if it does not, the chain cannot produce
   the golden row.
-
-- `MC-70` — the five task reasoning step support tables have no producer and
-  two row schemas. [`task-step-support.md`](task-step-support.md#files) gives
-  each row `supported`, `implementation_scope`, and `reason_code`;
-  [`SupportTable`](pipeline/streamlined/models/05-validate-and-export-release.md#supporttable)
-  carries only `{Dimension, Value}`. [`artifacts.md`](artifacts.md) names
-  "Task-step support QA" as the writer, `03a` says it calls the derivation,
-  `05` copies the files, the run contract has no path or input for them, and
-  the plan assigns the fixtures to P0-W3 and the derivation to P0-W5 while the
-  P0-W2 end-to-end test requires `support/`. Decide the writer, the run
-  path/identity, the row schema, and the skeleton's five files, or move the
-  `support/` assertion to the work item that implements the derivation.
 
 - `MC-71` — the P0-W2 `05` check set is undefined.
   [`05`](pipeline/05-validate-and-export-release.md#scope) runs every
