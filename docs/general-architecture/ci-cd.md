@@ -1,10 +1,10 @@
 # CI/CD contract
 
-**Status:** active — initial version, 2026-11-21; cache pins corrected
-2026-11-27. The workflow in `.github/workflows/ci.yml` exists. The first two
-pushes to `main` (2026-11-21 and 2026-11-25) failed before any job started
-because `astral-sh/setup-uv@v10` does not resolve; the pin is now `v10.4.0`.
-The first green run is still needed (`exists`, not `verified`).
+**Status:** active — initial version, 2026-11-21; cache pins corrected and the
+workflow verified 2026-11-27. The first two pushes to `main` (2026-11-21 and
+2026-11-25) failed before any job started because `astral-sh/setup-uv@v10`
+does not resolve. With the pin at `v10.4.0`, run `46027279335` passed all three
+jobs: `quality-and-plan` 35 s, `python` 35 s, `go` 1m 0s.
 
 ## Purpose
 
@@ -206,8 +206,11 @@ dependency sets from the same lockfile must not share a key: the GitHub cache is
 immutable, and the second save of an existing key fails with HTTP 409. The
 suffix prevents that race.
 
-`cache-python: true` also caches the managed Python 3.12 installation.
-`.python-version` is the one home for that version.
+`cache-python: true` caches a managed Python installation when uv installs
+one. On the pinned `ubuntu-24.04` image the system Python 3.12 satisfies
+`.python-version`, so uv uses `/usr/bin/python3.12` and the action skips that
+cache with a "no managed Python installation" annotation; the uv cache itself
+is still saved. `.python-version` remains the one home for the version.
 
 The cache is branch-scoped: a pull request restores from the base branch but
 writes its own entry. GitHub's default cache limit is 10 GB per repository,
@@ -229,8 +232,9 @@ the `.venv`. The uv cache is the shared layer.
 
 ## Runtime budget
 
-Measured locally on 2026-11-21. CI numbers are `[unverified — needs a GitHub
-run]`.
+Measured locally on 2026-11-21. The first CI run with empty caches (2026-11-27,
+run `46027279335`) took 35 s for `quality-and-plan`, 35 s for `python`, and
+1m 0s for `go`. A warm-cache CI rerun is still unmeasured.
 
 | Job | Warm | Cold | Target |
 |---|---|---|---|
