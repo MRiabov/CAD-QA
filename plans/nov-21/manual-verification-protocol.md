@@ -136,8 +136,11 @@ Then spot-check, not audit:
   the rejection legitimate, or is it an extractor gap wearing a corpus-defect
   label?
 - ten accepted graphs: does each contain the features its program text has?
-- the residual sample: draw it uniformly from the pinned pool with the stated
-  seed and size `3/p`; verify the draw, not only the result.
+- the dataset release geometry residual-defect sample: draw it uniformly from
+  the pinned dataset release program pool at the stated seed and size
+  `min(pool_size, 300)` at `bound_p = 0.01`; verify the draw, not only the
+  result
+  ([`review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md#dataset-release-geometry-residual-ledger)).
 
 Pass: no failure reason is unexplained; every distribution sits inside a stated
 range; every support-table cell has a witness or a reason; every rejected
@@ -196,9 +199,13 @@ them in the owner documents before the corresponding pass is evidence.
 |---|---|---|---|
 | 1 | The two-edge angle has no reference class | `graph-content.md` §4 declares the two-edge angle at P0, but no reference class names an edge and `EdgeAttributes` stores no direction (`02c` Q1) | A P0 angle kind is declared but cannot be emitted, so a task that needs one has no row |
 | 2 | The extraction-graph oracle does not calibrate the P0 clue vocabulary | Both records are `final_state`, exclude CadQuery profiles, CadQuery workplanes, `uses`, `derived_from`, effects, and selectors, and carry `capabilities: []` | The extraction calibration set covers final-state topology and per-entity measurements on two boxes; provenance, pair relations, effects, and membership are uncalibrated there (the task-construction records and the prompt examples cover the task-side vocabulary) |
-| 3 | The absence and residual review frames are unwritten | `MC-64`; `review-pack.md` has no ledger scoped to an upstream pipeline stage, and `rejection_contact_sheet.py` and `residual_sample.py` are planned | `P0-W6` cannot be evidence until the owner document names the contract |
-| 4 | The kernel-oracle capture check has no contract | The plan names it; `graph-completeness.md` now scopes it to dev-mode calibration | Production is projection-only, so this is not a release blocker; the dev-mode path still needs a tolerance rule before it is evidence |
-| 5 | No negative control is scheduled | The owner table lists reviews, not mutations | Every green check is unproven until Pass 0 runs |
+| 3 | The kernel-oracle capture check has no contract | The plan names it; `graph-completeness.md` now scopes it to dev-mode calibration | Production is projection-only, so this is not a release blocker; the dev-mode path still needs a tolerance rule before it is evidence |
+| 4 | No negative control is scheduled | The owner table lists reviews, not mutations | Every green check is unproven until Pass 0 runs |
+
+The dataset release absence and geometry residual review work closed on
+2026-11-27: the contract is in
+[`review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md),
+and `05` gates on both ledgers.
 
 ## Additions to the owner verification table
 

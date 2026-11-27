@@ -62,12 +62,15 @@ this answer match the geometry. An automated check cannot make that judgement.
 
 The first available manual verification tool is the
 [task browser](task-browser.md). The [review pack](review-pack.md) is planned; it
-adds the sampled matrix and reuses the browser's ledger writer.
+adds the task matrix and the dataset release absence and geometry residual ledgers, and reuses the
+browser's task-ledger writer.
 
 ## Tools
 
 | Tool | What it does | Status |
 |---|---|---|
-| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks or gold oracles, and records a release row's verdict in the review ledger. | `available`; approval `planned` |
-| [`review-pack.md`](review-pack.md) | Renders sampled release tasks, writes the `pending` ledger rows, and gates export on the ledger. | `planned` |
+| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks or gold oracles, and records a release row's verdict in the dataset release task review ledger. | `available`; approval `planned` |
+| [`review-pack.md`](review-pack.md) | Renders sampled release tasks, writes the dataset release task review, absence, and geometry residual ledgers, and gates export on all three. | `planned` |
+| `rejection_contact_sheet.py` | Builds the absence evidence: one oracle render and disposition per absent program, capability, or capacity, written to the dataset release absence ledger. | `planned` |
+| `residual_sample.py` | Draws `min(pool_size, 300)` programs from the pinned dataset release program pool, runs the CAD graph kernel-oracle differential, and writes the dataset release geometry residual ledger. | `planned` |
 | Don't-say checker | Enforces the glossary's Don't-say table and the identifier renames. | `available`; see [`../../../docs-conventions.md`](../../../docs-conventions.md) |

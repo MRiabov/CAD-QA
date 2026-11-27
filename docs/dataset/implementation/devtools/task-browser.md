@@ -66,8 +66,8 @@ checked-in gold records. Gold rows take their split and subset from the input
 
 ## Outputs
 
-The tool writes no release file. It writes the [review
-ledger](review-pack.md#review-ledger) for a release row the reviewer approves or
+The tool writes no release file. It writes the [dataset release task review
+ledger](review-pack.md#dataset-release-task-review-ledger) for a release row the reviewer approves or
 rejects, at
 `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet`; the
 path is the [review pack](review-pack.md) contract's, and `--review-ledger`
@@ -78,9 +78,9 @@ It caches one tessellation per program under
 that share a program share a scene. `node_modules/` and `dist/` are ignored; the
 frontend code and `pnpm-lock.yaml` are checked in.
 
-## Review ledger
+## Dataset release task review ledger
 
-The approval action appends the row the [review pack](review-pack.md#review-ledger)
+The approval action appends the row the [review pack](review-pack.md#dataset-release-task-review-ledger)
 defines: `task_id`, `definition_sha256`, `prompt_sha256`, `verdict`, `reviewer`,
 `reviewed_at`, `defect_note`, and `render_sha256`. The key is
 `(task_id, definition_sha256, prompt_sha256)`; a later row with the same key
@@ -158,7 +158,7 @@ way it renders a release program.
 The reviewer filters to a slice, opens a task, reads the prompt, orbits the
 final solid state, and checks that the gold answer is defensible and that the
 prompt names the entity the answer measures. The verdict is recorded with the
-approval control, which appends `pass` or `defect` (with the note) to the review
+approval control, which appends `pass` or `defect` (with the note) to the dataset release task review
 ledger.
 
 In gold mode the reviewer opens each record, orbits the program's final solid

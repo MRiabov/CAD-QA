@@ -209,7 +209,7 @@ generator/
         dataset_card.go                    dataset card
         release_writer.go                  staged release directory and `current`
         failure_merge.go                   failure partition merge and reconciliation
-        review_gate.go                     review ledger and sampling matrix
+        review_gate.go                     dataset release task review, absence, and geometry residual ledgers
         validate_and_export_release_test.go
     end-to-end/                            package end_to_end
       end_to_end_test.go
@@ -422,8 +422,8 @@ tools/manual-verification/
   render_task.py                           planned; one release row's render plus its printed card
   review_pack.py                           planned; `pack generate` and `pack record` from devtools/review-pack.md
   run_report.py                            planned; batch counts, distributions, timings, and pending review cells
-  rejection_contact_sheet.py               planned; one oracle render and disposition per rejected program
-  residual_sample.py                       planned; the `3/p` random pool sample
+  rejection_contact_sheet.py               planned; writes the dataset release absence ledger, one oracle render and disposition per absent program, capability, or capacity
+  residual_sample.py                       planned; draws the min(pool_size, 300) pool sample at bound_p = 0.01 and writes the dataset release geometry residual ledger
 tools/contracts/
   export_worker_schemas.py                 exists; exports the worker JSON Schema from Pydantic
 ```
@@ -440,7 +440,7 @@ records a human acceptance; the records are in
 export. `run_report.py` is the report the
 [manual-verification protocol](../../../plans/nov-21/manual-verification-protocol.md)
 requires for the batch passes. `rejection_contact_sheet.py` and
-`residual_sample.py` produce the absence and residual evidence.
+`residual_sample.py` write the dataset release absence and geometry residual ledgers that `05` gates on.
 
 A tool that becomes load-bearing moves into the package and gets a test
 contract. The task browser is the first available manual verification tool; see
@@ -457,7 +457,7 @@ artifact.
 |---|---|---|
 | `family_split_registry` | `missing`; `DA-8` records that [`artifacts.md`](artifacts.md) has no row. | Add the artifact row first. `05` writes it after a release; `03a` reads the previous release's registry. Choose whether it is a release control document or a run-level artifact, and record its hash in the release manifest. |
 | `run_report` | `missing`; the manual-verification protocol and [`graph-completeness.md`](pipeline/extraction/graph-completeness.md#8-report) both refer to it. | Choose `generator report` or `tools/manual-verification/run_report.py`. It is evidence, not a release file. |
-| Review ledger | `exists` in [`artifacts.md`](artifacts.md); `tools/manual-verification/task_browser.py` writes it from `P0-W2`, and `review_pack.py` reuses the writer from `P0-W6`. | Both write `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet`; `05` copies it into the release and records `review_ledger_sha256`. |
+| Dataset release task review ledger | `exists` in [`artifacts.md`](artifacts.md); `tools/manual-verification/task_browser.py` writes it from `P0-W2`, and `review_pack.py` reuses the writer from `P0-W6`. | Both write `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet`; `05` copies it into the release and records `review_ledger_sha256`. |
 | Evaluation material and grader | Out of scope for this tree. | [`docs/train-and-eval/`](../../train-and-eval/) owns the harness, grader, prompt-only view, answer parsing, and scoring. `04` only renders the release prompt. |
 
 `family_split_registry` is the durable
@@ -513,8 +513,8 @@ This section is the file and package bootstrap order within those work items.
 5. `03a`, `03c`, `04`, `05`, `end-to-end`, all under `internal/stages/` except
    `end-to-end`.
 6. `render_task.py`, `run_report.py`, `review_pack.py`,
-   `rejection_contact_sheet.py`, and `residual_sample.py`, as the owner
-   verification points need them.
+   `rejection_contact_sheet.py`, `residual_sample.py`, and the absence and geometry
+   residual ledgers they write, as the owner verification points need them.
 
 ## Deleted generator
 

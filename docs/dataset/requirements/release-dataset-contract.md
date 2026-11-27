@@ -39,6 +39,11 @@ A release directory contains:
 | `failures.parquet` | Rejected programs and tasks with reasons. | One per rejection; may be empty. |
 | `support/` | Five task reasoning step support tables: `target-category-by-step.json`, `clue-type-by-step.json`, `clue-reduction-form-by-step.json`, `answer-meaning-by-step.json`, `answer-format-by-step.json`. | Five files. |
 
+Internal control documents are copied into the release but are not consumer
+artifacts: `review-ledger.parquet`, `absence-ledger.parquet`, and
+`residual-ledger.parquet`. They record review provenance and are excluded from
+`release_id`.
+
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only
 LLM-facing column; the evaluation harness selects that column and does not pass
@@ -306,6 +311,9 @@ for one row.
 | `checks` | One or more rows per coverage and balance check in [`05` validate and export release](../implementation/pipeline/05-validate-and-export-release/release-checks.md). |
 | `known_misses` | The `checks` misses the owner accepted, with their reasons. |
 | `failure_count` | Rows in `failures.parquet`. |
+| `review_ledger_sha256` | SHA-256 of the dataset release task review ledger. |
+| `absence_ledger_sha256` | SHA-256 of the dataset release absence ledger. |
+| `residual_ledger_sha256` | SHA-256 of the dataset release geometry residual ledger. |
 
 The manifest is not a table. It describes the release and is never passed to
 the LLM model.
@@ -330,8 +338,8 @@ release. `created_at` is not an input, so re-exporting a generation keeps its id
 The external benchmark fields are not identity inputs. They are validation
 provenance: the benchmark set changes no release row, only whether the transfer
 overlap check passes. `05` records them in the manifest and excludes them from
-`release_id`, as it does `review_ledger_sha256`. The run manifest pins them
-because they are declared run inputs, so they are part of `run_id`
+`release_id`, as it does the three dataset release review ledger hashes. The run manifest pins
+them because they are declared run inputs, so they are part of `run_id`
 ([`run-contract.md`](../implementation/run-contract.md#2-run-identity-and-the-run-manifest)).
 
 The id names the generation, not the bytes. A table that differs while every

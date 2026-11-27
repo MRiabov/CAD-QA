@@ -22,7 +22,9 @@ and asserts the artifacts read back the way a dataset consumer reads them.
 train, 1 in validation, and 1 in test, and at least one row per answer format. A
 `release-checks.yaml` fixture names three checks: one enforced and passing, one reported
 and missing, and one not applicable. An external dataset manifest, the five
-support tables, a fixed generator version, and the three failure partitions.
+support tables, a fixed generator version, the three failure partitions, a
+deficit ledger, and dataset release task review, absence, and geometry residual
+ledgers that meet the review gate.
 
 **When** `05` validates and exports.
 
@@ -53,6 +55,13 @@ support tables, a fixed generator version, and the three failure partitions.
 - the manifest records the benchmark identity, revision, split, and
   program-set hash, and its `release_id` does not change when only the benchmark
   set changes;
+- the manifest records the hashes of the dataset release task review ledger,
+  the dataset release absence ledger, and the dataset release geometry residual ledger,
+  and the three ledgers are copied into the release as control documents;
+- the dataset release absence ledger accounts for every program failure, every zero-count
+  `MustExtractCapability` cell, and every remaining deficit entry;
+- the dataset release geometry residual ledger has one row per drawn program and meets the
+  `min(pool_size, 300)` size;
 - the manifest's `checks` rows are sorted by check name, scope, and value, so a
   different parallel schedule produces the same bytes;
 - `support/` holds the five files byte-identical to their inputs;
@@ -77,7 +86,8 @@ test recomputes the id from the documented inputs.
 
 **TDD pin:** pins the projection rechecks, the choice-pool recheck, split
 isolation, the failure merge, the count reconciliation, the manifest fields, the
-sorted check rows, and the manifest-last rule before `05` exists.
+sorted check rows, the three review gates, and the manifest-last rule before
+`05` exists.
 
 ## Failure-mode tests
 
@@ -94,7 +104,14 @@ sorted check rows, and the manifest-last rule before `05` exists.
   other than the declared one, and a normalization-version mismatch each block
   as an input error before the check runs; no manifest is written.
 - `test_05_review_gate` — a review sample missing one answer format blocks, and a
-  failed review records its reason and blocks. The pack is not a release file.
+  failed review records its reason and blocks.
+- `test_05_absence_ledger_gap` — a program failure with no absence row, a
+  zero-count capability cell with no row, and a remaining deficit entry with no
+  row each block; an `extractor_gap` disposition blocks even with a `pass`
+  verdict.
+- `test_05_residual_sample_short` — a 299-program draw from a pool of 300 or
+  more blocks; a full census passes; a mismatch without a disposition and a
+  mismatch dispositioned `extractor_gap` each block.
 - `test_05_no_partial_release` — a block after `release.parquet` is written leaves
   no `manifest.json`, no `dataset-card.md`, and no `support/`, so the directory is
   not a release.

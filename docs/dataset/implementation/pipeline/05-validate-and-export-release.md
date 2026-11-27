@@ -24,9 +24,12 @@ Coverage and balance checks:
   [`streamlined/models/05-validate-and-export-release.md`](streamlined/models/05-validate-and-export-release.md),
   and the artifact row is in [`../artifacts.md`](../artifacts.md).
 - The per-pipeline-stage failure partitions.
+- The deficit ledger from `03b` construct task definitions.
 - The run manifest, for the generator version, the release seed, the policy
   versions and hashes, and the tolerance policy hash.
-- The review ledger from the [review pack](../devtools/review-pack.md).
+- The dataset release task review ledger, the dataset release absence ledger,
+  and the dataset release geometry residual ledger from the
+  [review pack](../devtools/review-pack.md).
 
 ## Scope
 
@@ -65,9 +68,15 @@ Coverage and balance checks:
 - Record the benchmark identity, revision, split, and program-set hash in
   `manifest.json`. `05` validates the set it reads against the run manifest
   before it runs the check.
-- Hold the review gate before export against the review ledger (R-17): every
-  required sampling cell needs a current pass, and a gap or a failed review
-  blocks the export.
+- Hold the review gate before export against the three ledgers (R-17). The
+  dataset release task review ledger requires a current `pass` per required
+  sampling cell. The dataset release absence ledger requires every upstream
+  absence key to have a current `pass` with a disposition other than
+  `extractor_gap`. The dataset release geometry residual ledger requires the
+  `min(pool_size, 300)` draw and no unexplained mismatch. A gap, a `defect`, or
+  an `extractor_gap` blocks the export.
+- Copy the three dataset release review ledgers into the release as internal
+  control documents.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
   `dataset-card.md`.
 - Copy the five task reasoning step support JSON files into `support/` and
@@ -125,8 +134,9 @@ checked against the policy it names. The manifest makes the departure visible.
 
 ## Review gate
 
-The [review pack](../devtools/review-pack.md) renders a sample and writes the
-review ledger. `05` reads the ledger and never renders.
+The [review pack](../devtools/review-pack.md) renders the task sample and writes
+the dataset release task review, absence, and geometry residual ledgers. `05` reads the ledgers and never
+renders.
 
 The sample is the cross product of clue type, answer meaning, answer format, and
 task reasoning step count, restricted to the cells the support tables support and
@@ -145,10 +155,27 @@ The reviewer checks that each highlighted entity is the one the clue names, that
 the answer matches the geometry, and that the wording is clear. The render does
 the work that re-deriving the task would otherwise take.
 
-`05` blocks the export unless every required cell has a current `pass` whose
-`(definition_sha256, prompt_sha256)` matches the release row. A `defect` blocks
-until the task is re-reviewed. The ledger is internal and is not a consumer
-artifact.
+**Dataset release task review ledger.** `05` blocks the export unless every
+required cell has a current `pass` whose `(definition_sha256, prompt_sha256)`
+matches the release row. A `defect` blocks until the task is re-reviewed.
+
+**Dataset release absence ledger.** `05` derives the expected absence key set
+from the failure partitions, the `GraphCompletenessReport` set, and the deficit
+ledger. Every key needs a current `pass` with a disposition other than
+`extractor_gap`; a missing key, a `pending` row, a `defect`, or an
+`extractor_gap` blocks. The ledger is exhaustive over upstream absences, not a
+sample.
+
+**Dataset release geometry residual ledger.** `05` checks that this ledger names
+the run and the pinned dataset release program pool, draws at least
+`min(pool_size, 300)` programs at `bound_p = 0.01`, has one row per drawn
+program, and carries no unexplained mismatch. A short sample, a missing row, a
+mismatch without a disposition, or an `extractor_gap` blocks. The bound is on
+detectable CAD graph kernel-oracle differential mismatches, not on every defect
+([`review-pack.md`](../devtools/review-pack.md#dataset-release-geometry-residual-ledger)).
+
+The three ledgers are internal control documents and are not consumer artifacts.
+`05` copies them into the release and records their hashes.
 
 ## External benchmark program set
 
@@ -191,15 +218,16 @@ the card outline is section 8. `05` owns both.
 - Compute `release_table_sha256` from the finished `release.parquet` file, and
   record it next to `release_id`. One is the identity, the other is byte
   integrity, and they change for different reasons.
-- Record `review_ledger_sha256` from the review ledger. The ledger is excluded
-  from the `release_id` inputs: it is review provenance, not a generation input,
-  so re-reviewing a release does not change its identity.
+- Record `review_ledger_sha256`, `absence_ledger_sha256`, and
+  `residual_ledger_sha256` from the three ledgers. They are excluded from the
+  `release_id` inputs: they are review provenance, not generation inputs, so
+  re-reviewing a release does not change its identity.
 - Record `external_benchmark_id`, `external_benchmark_revision`,
   `external_benchmark_split`, and `external_benchmark_program_set_sha256` from
   the validated set and the run manifest. They are validation provenance, not
-  generation inputs, so they are excluded from `release_id` like
-  `review_ledger_sha256`. A different set is a different declared run input and
-  changes `run_id` (`run-contract.md`), not the release identity.
+  generation inputs, so they are excluded from `release_id` like the three
+  dataset release review ledger hashes. A different set is a different declared
+  run input and changes `run_id` (`run-contract.md`), not the release identity.
 - Copy `upstream_dataset_version` and `external_dataset_manifest_sha256` from the
   external dataset manifest. `05` does not reinterpret either value.
 - Write the dataset card from the manifest. Every number in the card is copied,

@@ -58,6 +58,8 @@ type ReleaseManifest struct { // JSON: manifest.json
 	Checks                            []CheckReportRow    `json:"checks"`
 	KnownMisses                       []KnownMiss         `json:"known_misses"`
 	ReviewLedgerSHA256                string              `json:"review_ledger_sha256"`
+	AbsenceLedgerSHA256               string              `json:"absence_ledger_sha256"`
+	ResidualLedgerSHA256              string              `json:"residual_ledger_sha256"`
 	FailureCount                      int                 `json:"failure_count"`
 }
 ```
@@ -66,9 +68,11 @@ type ReleaseManifest struct { // JSON: manifest.json
 `generator_version`, `implementation_scope`,
 `external_dataset_manifest_sha256`, `balance_policy_sha256`,
 `prompt_template_version`, `prompts_yaml_sha256`, and `release_seed`.
-`created_at` is not an input. The review gate records `review_ledger_sha256`
-and excludes it from the identity. The external benchmark fields are validation
-provenance and are excluded for the same reason.
+`created_at` is not an input. The review gate records the hashes of the
+`dataset release task review ledger`, the `dataset release absence ledger`, and
+the `dataset release geometry residual ledger`, and excludes them from the identity. The
+external benchmark fields are validation provenance and are excluded for the
+same reason.
 
 ## ExternalBenchmarkProgramSet (Parquet)
 

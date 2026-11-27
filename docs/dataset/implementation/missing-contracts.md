@@ -13,10 +13,10 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are 2 open entries: two P0 technical contracts. P1 and P2 are empty. They
-were scheduled as `P0-W1` items and are not written into their owner docs yet.
-`MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66` closed on
-2026-11-25; `MC-64` and `MC-67` remain.
+There is 1 open entry: one P0 technical contract. P1 and P2 are empty. It was
+scheduled as a `P0-W1` item and is not written into its owner doc yet.
+`MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66` closed on 2026-11-25;
+`MC-64` closed on 2026-11-27; `MC-67` remains.
 
 ## Decisions needed from the owner
 
@@ -35,8 +35,6 @@ Work order:
 
 1. `MC-67` — pair distance has no endpoint kinds and no producer; `02b` writes
    the rows from `P0-W3` on.
-2. `MC-64` — the absence and residual review frames; the review gate in `P0-W6`
-   consumes them.
 
 #### MC-67 — Pair distance declares no endpoint kinds and has no producer
 
@@ -66,26 +64,6 @@ execution budget in `P0-W3`. A class over `max_anchor_class_size` emits no rows,
 the dense rule already says. If the budget does not hold, narrowing `distance` to
 the pairs derivable exactly in Go from stored geometry is a requirement change,
 not a silent omission.
-
-#### MC-64 — The review gate has no absence or residual frame
-
-The ledger in [`devtools/review-pack.md`](devtools/review-pack.md) samples
-release rows and is keyed `(task_id, definition_sha256, prompt_sha256)`, one
-verdict per rendered task. There is no frame for "was each absent program or
-capability legitimately absent", no uniform draw from the pinned pool at the
-`3/p` size, and no ledger scoped to an upstream pipeline stage; `05` checks only
-the sampling matrix. `rejection_contact_sheet.py` and `residual_sample.py` are
-planned in [`file-trees.md`](file-trees.md#tools-and-manual-verification) and
-write no ledger cell.
-
-**Recommendation:** add two ledgers to `review-pack.md`. The absence ledger has
-one row per absent program or capability, keyed by the upstream pipeline stage
-and the subject identity, with a disposition and the evidence that supports it.
-The residual ledger has one row per program drawn uniformly from the pinned
-pool, with the sample size the `3/p` rule sets and the oracle-differential
-result. `05`'s review gate requires the absence ledger to account for every
-upstream stage deficit and the residual sample to meet its size, and the
-manifest records both hashes.
 
 ## P1
 
@@ -120,6 +98,28 @@ closed in the 2026-11-25 benchmark-program-set pass.
   disposition during reconciliation and aggregation, and the Go `FailureRecord`
   struct, validation, merge comparison, and Parquet round trip carry the column.
   The decision is `DS-ADR-17`.
+
+## Closed in the 2026-11-27 review-ledger pass
+
+- `MC-64` — the review gate has three ledgers. The dataset release task review
+  ledger is the existing sampled matrix in
+  [`devtools/review-pack.md`](devtools/review-pack.md#sampling-matrix). The
+  dataset release absence ledger is exhaustive over every upstream absence: one
+  row per absent program, capability, or capacity, keyed
+  `(pipeline_stage, subject_kind, subject_identity)`, with a
+  `FailureDisposition`, a verdict, and evidence. The dataset release geometry
+  residual ledger is a uniform draw from the pinned dataset release program
+  pool,
+  `min(pool_size, 300)` programs at `bound_p = 0.01` and 95% confidence, each run
+  through the CAD graph kernel-oracle differential. `05` derives the expected
+  absence key set from the failure partitions, the `GraphCompletenessReport`
+  set, and the deficit ledger, and blocks on a missing row, a `pending` row, a
+  `defect`, or an `extractor_gap`; it blocks a short dataset release geometry
+  residual-defect sample or an unexplained mismatch. The manifest records
+  `review_ledger_sha256`, `absence_ledger_sha256`, and
+  `residual_ledger_sha256`, and the three ledgers are internal control
+  documents. `rejection_contact_sheet.py` and `residual_sample.py` write the
+  ledgers.
 
 ## Closed in the 2026-11-25 extraction-capability-coverage pass
 

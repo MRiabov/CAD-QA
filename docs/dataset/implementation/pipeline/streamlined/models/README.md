@@ -57,7 +57,7 @@ cross-boundary audit: a read outside it is a boundary defect, not an optimizatio
 | `03b` | `CadGraph`, `TaskQuotaPlan` (with `QuotaTarget`, `ProgramCapabilityCensus`), `DeficitLedger` | `TaskDefinition`, `DeficitLedger` | `ReleaseTable`, `RenderConfig` |
 | `03c` | `DeficitLedger`, `TaskQuotaPlan`, `ProgramMetadata`, `SelectionPolicy` | `ProgramReassignmentRequest`, `ProgramRequest`, `AcceptedMiss` | `TaskDefinition`, `ReleaseTable` |
 | `04` | `TaskDefinition`, `NormalizedProgram`, `RenderConfig` | `ReleaseTable` | `CadGraph`, `TaskQuotaPlan`, failure partitions |
-| `05` | `ReleaseTable`, `RenderConfig`, policy files, support tables, `GraphCompletenessReport`, failure partitions, `ExternalDatasetManifest`, `ExternalBenchmarkProgramSet`, run manifest, review ledger | `ReleaseArtifacts` | `CadGraph`, `TaskDefinition`, `TaskQuotaPlan` |
+| `05` | `ReleaseTable`, `RenderConfig`, policy files, support tables, `GraphCompletenessReport`, failure partitions, `ExternalDatasetManifest`, `ExternalBenchmarkProgramSet`, run manifest, `DeficitLedger`, dataset release task review, absence, and geometry residual ledgers | `ReleaseArtifacts` | `CadGraph`, `TaskDefinition`, `TaskQuotaPlan` |
 
 `05` reads `answer_evidence` only through the release row. It does not read the
 task definition: the release carries the answer-equivalent count and shared
@@ -119,6 +119,7 @@ boundary defects:
 | `FamilyProfile` carried one probe success rate, but the plan allocates per family and quota target. | Added `QuotaTargetProbeSuccessRates`. |
 | `SelectionPolicy` had no version, although `01e` and the manifest record `policy_version`. | Added `Version` to `SelectionPolicy`. |
 | `ReleaseManifest` omitted `review_ledger_sha256`, which the `05` contract records and excludes from `release_id`. | Added `ReviewLedgerSHA256`; made the benchmark id and revision nullable for P0. |
+| `ReleaseManifest` carried only the dataset release task review ledger hash, while the review gate records the dataset release absence ledger and the dataset release geometry residual ledger too. | Added `AbsenceLedgerSHA256` and `ResidualLedgerSHA256`; all three are excluded from `release_id`. |
 | `02c` writes a `GraphCompletenessReport` per program, but no typed model declared it and `05` did not list it as an input. | Declared the report and its row models in the `02c` models; added it to the `05` inputs and to the `graph_completeness` check. |
 | The runtime `ResultKind` used invented values; the instrumentation ABI defines `workplane`, `workplane_list`, `shape`, `shape_list`, `list`, `scalar`, `plane`, `vector`, `edge`, `wire`, and `none`. | Corrected `ResultKind` and named the instrumentation record `RecordedAssignment`. |
 | `03a` keyed `program_census` by the graph part hash, a shard file hash. The run contract forbids a shard hash as a downstream identity input, because a sibling unit changes it. | Keyed the census by `graph_identity_sha256`. |

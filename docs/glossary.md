@@ -677,6 +677,68 @@ step count. `In code:` `DeficitLedger`. `Distinct from:` the **Task quota plan**
 
 ---
 
+### Dataset release task review ledger
+
+The append-only record of one human verdict per task in a dataset release, keyed
+`(task_id, definition_sha256, prompt_sha256)`. `In code:`
+`review-ledger.parquet`. `Distinct from:` the **Dataset release absence ledger**,
+which covers subjects that never became release rows, and the **Dataset release
+geometry residual ledger**, which records the CAD graph kernel-oracle
+differential.
+
+---
+
+### Dataset release absence ledger
+
+The exhaustive record of one disposition per subject absent from a dataset
+release — a program, capability, or capacity — keyed
+`(pipeline_stage, subject_kind, subject_identity)`. `In code:`
+`absence-ledger.parquet`. `Distinct from:` the **Dataset release task review
+ledger**, which is sampled from release rows.
+
+---
+
+### Dataset release geometry residual ledger
+
+The record of one **CAD graph kernel-oracle differential** result per program
+drawn uniformly from the **Dataset release program pool**, for the mismatches
+the release checks do not explain. `In code:` `residual-ledger.parquet`.
+`Distinct from:` the **Dataset release absence ledger**, which is exhaustive
+over known absences, and the **Dataset release task review ledger**, which is a
+human judgement.
+
+---
+
+### Dataset release geometry residual-defect sample
+
+The uniform draw of `min(pool_size, 300)` programs from the **Dataset release
+program pool** at `bound_p = 0.01`, used by the **Dataset release geometry
+residual ledger** to bound the dataset release geometry residual-defect rate:
+the share of the pool with a detectable **CAD graph kernel-oracle differential**
+mismatch that the release checks do not explain. `Distinct from:` the
+**Sampling matrix**, which is a stratified sample of release tasks.
+
+---
+
+### Dataset release program pool
+
+The `01c` program pool artifact for one dataset release run, pinned by the
+selection identity and cache revision and normalized by `01d`, from which the
+**Dataset release geometry residual-defect sample** is drawn. It is not the pool
+of test fixtures.
+
+---
+
+### CAD graph kernel-oracle differential
+
+The comparison of the persisted CAD graph with a plain CadQuery and OCP
+recomputation of the same program's final solid state, under the run tolerance
+policy. It covers final-state topology, incidence, and the declared P0
+measurements; it does not cover AST provenance, feature effects, selectors, or
+pair relations. `In code:` `residual_sample.py`.
+
+---
+
 ### Family task capacity
 
 The estimated maximum number of tasks a CADEvolve program family can supply.

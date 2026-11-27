@@ -18,7 +18,8 @@ READ:
 - `GraphCompletenessReport` per program from `02c` → `disposition`, missing, orphan, and unclassified counts
 - `ExternalBenchmarkProgramSet` from the release author: benchmark name, revision, declared split, normalization version, file hash, and one row per benchmark program with `normalized_program_text`, `program_sha256`, and the P1 `ast_normalized_sha256` and `final_shape_hash`
 - failure partitions for each pipeline stage
-- the run manifest and the review ledger
+- the deficit ledger from `03b`
+- the run manifest and the dataset release task review, absence, and geometry residual ledgers
 
 WRITE:
 
@@ -80,10 +81,11 @@ WRITE:
 
 TRANSFORM:
 
-- require a current `pass` in the review ledger for every required sampling cell; a `defect` or a missing cell blocks the export
+- dataset release task review ledger: require a current `pass` for every required sampling cell; a `defect` or a missing cell blocks the export
 - the sample covers every clue type, every answer meaning, every answer format, and every task reasoning step count in the release, up to 10; for 6–10, review at least 30 tasks per tier or every task if fewer
 - each sampled task carries the prompt, one render of the final solid state with the target and every clue-bound entity highlighted in a distinct colour and labelled with its clue number, and the gold answer
-- the pack is internal and is not a release file
+- dataset release absence ledger: derive the expected key set from the failure partitions, the `GraphCompletenessReport` set, and the deficit ledger; require a current `pass` per key with a `disposition` other than `extractor_gap`; a missing key, a `pending` row, a `defect`, or an `extractor_gap` blocks
+- dataset release geometry residual ledger: require it to name the run and the pinned dataset release program pool, meet `sample_size >= min(pool_size, 300)` at `bound_p = 0.01`, hold one row per drawn program, and carry no unexplained mismatch; a short sample, a missing row, a mismatch without a disposition, or an `extractor_gap` blocks
 
 WRITE:
 
@@ -104,12 +106,14 @@ TRANSFORM:
 - validate the benchmark set against the run manifest: file hash equals `external_benchmark.program_set_sha256`, the schema version equals `component_versions.external_benchmark_program_set_schema`, every row names the declared split, and every row carries `component_versions.normalization`; a mismatch is an input error
 - transfer overlap (R-16): a release row whose `program_sha256` is in the set blocks; name the benchmark program and the release tasks; never accept a miss into `known_misses`. The P1 same-CAD-model comparison is a graph-reading audit, not part of `05`; the set carries `ast_normalized_sha256` and `final_shape_hash` for it.
 - record the benchmark identity, revision, split, and program-set hash as validation provenance, excluded from `release_id`
+- record `review_ledger_sha256`, `absence_ledger_sha256`, and `residual_ledger_sha256`; they are review provenance and are excluded from `release_id`
+- copy the three ledgers into the release as internal control documents
 - write the dataset card from the manifest; every number is copied
 - write `manifest.json` last, after the checks and the review gate pass
-- `manifest.json` fields, per the release contract section 7: `release_id`, `schema_version`, `created_at`, `implementation_scope`, `generator_version`, `upstream_dataset_version`, `external_dataset_manifest_sha256`, `release_table_sha256`, `external_benchmark_id`, `external_benchmark_revision`, `external_benchmark_split`, `external_benchmark_program_set_sha256`, `task_count`, `split_counts`, `program_family_count`, `program_family_split_counts`, `task_reasoning_step_counts`, `warmup_task_count`, `distinct_cad_model_count`, `answer_set_sha256`, `prompt_template_version`, `prompts_yaml_sha256`, `release_seed`, `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, `checks_policy_sha256`, `support_table_versions`, `support_table_sha256`, `checks`, `known_misses`, `failure_count`
+- `manifest.json` fields, per the release contract section 7: `release_id`, `schema_version`, `created_at`, `implementation_scope`, `generator_version`, `upstream_dataset_version`, `external_dataset_manifest_sha256`, `release_table_sha256`, `external_benchmark_id`, `external_benchmark_revision`, `external_benchmark_split`, `external_benchmark_program_set_sha256`, `task_count`, `split_counts`, `program_family_count`, `program_family_split_counts`, `task_reasoning_step_counts`, `warmup_task_count`, `distinct_cad_model_count`, `answer_set_sha256`, `prompt_template_version`, `prompts_yaml_sha256`, `release_seed`, `balance_policy_version`, `balance_policy_sha256`, `checks_policy_version`, `checks_policy_sha256`, `review_ledger_sha256`, `absence_ledger_sha256`, `residual_ledger_sha256`, `support_table_versions`, `support_table_sha256`, `checks`, `known_misses`, `failure_count`
 
 WRITE:
 
-- `ReleaseArtifacts` `(release_id)` → `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`
+- `ReleaseArtifacts` `(release_id)` → `release.parquet`, `failures.parquet`, `manifest.json`, `dataset-card.md`, `support/`, `review-ledger.parquet`, `absence-ledger.parquet`, `residual-ledger.parquet`
 - `ReleaseManifest` → the fields above
 - the release directory is staged and renamed; `release/current` is replaced atomically
