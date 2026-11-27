@@ -84,10 +84,12 @@ docs/experiments/YYYY-MM-DD-<slug>.md   # dated experiment records
 `_audit/` is a throwaway, owner-private working area (for example
 `_audit/owner-audit-todo.md`). `_archive/` holds superseded docs kept as raw material.
 Neither is part of the canonical tree; both are excluded from lint. `paper/` holds the
-written manuscript (Markdown and LaTeX kept in parity); it is canonical output and is
-linted like the rest of the docs — it uses the project's domain terminology, so its
-prose follows the glossary. Literal code snippets, enum values inside `\texttt{}`, and
-bibliographic titles may carry a `dont-say: allow` marker when a term is unavoidable.
+written manuscript (Markdown and LaTeX kept in parity); it is canonical output but is
+exempt from the Markdown linter, because the manuscript is authored for the LaTeX
+submission copy and linting would rewrite its prose out of parity. It uses the project's
+domain terminology, so its prose follows the glossary. Literal code snippets, enum values
+inside `\texttt{}`, and bibliographic titles may carry a `dont-say: allow` marker when a
+term is unavoidable.
 
 ## Doc layers (roles)
 

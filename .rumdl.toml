@@ -12,6 +12,10 @@
 # arrived in rumdl 0.3 and contradict two established conventions here: tight
 # lists with no blank lines between items, and numeric citation markers such as
 # "[11]" in the research notes. Both are off rather than rewriting the docs.
+#
+# docs/paper/ is exempt: it holds the written manuscript, authored and formatted
+# for the LaTeX submission copy. Linting it would rewrite manuscript prose and
+# break parity with CA2_Riabov_final.tex, so the manuscript is not linted.
 
 [global]
 flavor = "gfm"
@@ -27,5 +31,6 @@ exclude = [
   "node_modules",
   "_archive/",
   "_audit/",
+  "docs/paper/",
 ]
 respect-gitignore = true
