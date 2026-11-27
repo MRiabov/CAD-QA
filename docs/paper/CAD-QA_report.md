@@ -25,26 +25,26 @@ following and editing. However, no training-ready datasets focused on deep
 reasoning of LLMs on complex, messy shapes exist. We present a large dataset
 that allows training foundational capabilities of LLMs in deep geometric
 reasoning, generated and validated through a CAD kernel, not requiring expensive
-expert validation. To aid in efficient training of LLMs on our dataset, each task
-carries a minimum required reasoning step count that admits validated step-by-step
-solutions. We show that frontier models are only 50–80% successful without tool
-assistance, showing headroom in geometric reasoning. We open-source the
-dataset at https://huggingface.co/MRiabov/[...].
+expert validation. To aid in efficient training of LLMs on our dataset, each
+task carries a minimum required reasoning step count that admits validated
+step-by-step solutions. We show that frontier models are only 50–80% successful
+without tool assistance, showing headroom in geometric reasoning. We
+open-source the dataset at https://huggingface.co/MRiabov/[...].
 
 ## 1. Introduction
 
 AI for CAD has seen a surge in industry in Q3 2026, with reconstruction
-capabilities being near-saturated on complex benchmarks [BenchCAD 1.0].
+capabilities being near-saturated on complex benchmarks (Zhang et al., 2026).
 Foundational, large datasets, including recent ones in 2026 such as CADEvolve
-(Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799),
-Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which
-has mostly saturated the reconstruction benchmarks, however CAD editing is still
-consistently less than half successful [citation*S* required]. Existing datasets
-also measure question answering on CAD, in particular answering about engineering
-standards following (engineering standard e.g. ISO) from CadQuery code [benchcad
-citation?], however, they are simple, rudimentary question answering, requiring
-only one lookup or knowledge of a particular standard and not deep geometric
-reasoning.
+(Elistratov et al., 2026), CADENA (Kabisov et al., 2026), Zero-To-CAD (Ataei et
+al., 2026) focus on image- and Text-to-CAD reconstruction, training on which has
+mostly saturated the reconstruction benchmarks, however CAD editing is still
+consistently less than half successful (Yuan et al., 2025; Dong et al., 2026).
+Existing datasets also measure question answering on CAD, in particular
+answering about engineering standards following (engineering standard e.g. ISO)
+from CadQuery code (Zhang et al., 2026), however, they are simple, rudimentary
+question answering, requiring only one lookup or knowledge of a particular
+standard and not deep geometric reasoning.
 
 As such, the field is still lacking a dataset that would allow ready training
 on: verification of reasoning on more complex CAD problems beyond simple
@@ -85,10 +85,10 @@ benchmarks:
   by budget.
 - We do not train a model on the dataset, nor measure transfer of improvement to
   other benchmarks; primarily due to budget.
-- The dataset covers only one CAD engine. There are now numerous B-rep kernels including
-  open-source ones [brepbench], but we deem it sufficient as CadQuery is the
-  widely adopted open-source CAD modelling application, being used in most major
-  papers [Zero-to-CAD].
+- The dataset covers only one CAD engine. There are now numerous B-rep kernels
+  including open-source ones[^brep-bench], but we deem it sufficient as CadQuery
+  is the widely adopted open-source CAD modelling application, being used in
+  most major papers (Ataei et al., 2026).
 
 We will structure our work as follows:
 1. Related work will go over the recent contributions, in particular the state
@@ -107,8 +107,8 @@ We will structure our work as follows:
 ## 2. Related Work
 
 LLMs in CAD have seen a surge in research and industry results in Q2 and Q3,
-producing twice as much literature as in Q3 a year ago in the same field. In Q3, 19
-papers were produced, with 45% focusing on generation, 20% on agent tool-use,
+producing twice as much literature as in Q3 a year ago in the same field. In Q3,
+19 papers were produced, with 45% focusing on generation, 20% on agent tool-use,
 ~20% focusing on application and ~9% on evaluation or foundational datasets.
 
 <!--
@@ -130,12 +130,15 @@ RELATED WORK: bullets only; write the prose from these
 ### 2.1 CAD generation and reconstruction
 
 Recent work has demonstrated major progress in CAD generation and
-reconstruction, partially driven by large synthetically generated datasets -
-both Zero-To-CAD and CADEvolve were released as million-scale datasets, where
-CADEvolve released a dataset of "deliberately as complex shapes as possible"
-which, in CADEvolve, was used to train a reconstruction model. A plurality of
-papers have focused on improving Text- and Image-to-CadQuery, saturating
-reconstruction benchmarks [CADENA, ConCAD], while editing is unsaturated;
+reconstruction, building on the command-sequence representation established by
+DeepCAD (Wu, Xiao and Zheng, 2021) and partly driven by large synthetically
+generated datasets: both Zero-To-CAD and CADEvolve were released as
+million-scale datasets (Ataei et al., 2026; Elistratov et al., 2026), where
+CADEvolve released a dataset of "deliberately as complex shapes as possible",
+which it used to train a reconstruction model. A plurality of papers have
+focused on improving Text- and Image-to-CadQuery, saturating reconstruction
+benchmarks (Khan et al., 2024; Rukhovich et al., 2025; Kolodiazhnyi et al.,
+2026; Kabisov et al., 2026; Zhai et al., 2026), while editing is unsaturated;
 perhaps due to editing being more complex to scale data-wise.
 
 ### 2.2 Geometry comprehension benchmarks
@@ -150,32 +153,32 @@ on text descriptions of scenes.
 
 ### 2.3 CAD comprehension benchmarks
 
-BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code,
-Code Edit, Vision QA, Code QA; so Code QA was already studied, however the
-dataset focuses on benchmarking simple question answering such as compliance to
-a standard (e.g. whether a thread size is compliant), whereas our dataset
-focuses on verification of correct geometrical reasoning, at scale and varying
-depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add
-no comprehension task. QueryCAD is an earlier similar work evaluating
-capabilities of LLMs on answering factual questions based on CAD models, but
-without CadQuery; again, without depth.
+BenchCAD (Zhang et al., 2026) has evaluated CAD generation across 4 benchmarks
+- Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied,
+however the dataset focuses on benchmarking simple question answering such as
+compliance to a standard (e.g. whether a thread size is compliant), whereas our
+dataset focuses on verification of correct geometrical reasoning, at scale and
+varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring)
+and add no comprehension task.[^benchcad-2] QueryCAD (Kienle et al., 2024) is
+an earlier similar work evaluating capabilities of LLMs on answering factual
+questions based on CAD models, but without CadQuery; again, without depth.
 
-MechReason is a benchmark evaluating multi-view and multi-hop reasoning of LLMs
-on mechanical engineering publications and papers; however it synthesizes QA
-pairs from papers and does not evaluate models on CAD programs, nor is it
-verifiable via a kernel.
+MechReason (Wang, T. et al., 2026) is a benchmark evaluating multi-view and
+multi-hop reasoning of LLMs on mechanical engineering publications and papers;
+however it synthesizes QA pairs from papers and does not evaluate models on CAD
+programs, nor is it verifiable via a kernel.
 
 ### 2.4 QA datasets and verifiable reasoning 
 
 Verifiable reasoning and evaluation by tool calling have become the de facto
-standard for factual question-answering training, with the advantage of:
+standard for factual question-answering training (Wei et al., 2022; Wei et al.,
+2025; DeepSeek-AI, 2025), with the advantage of:
 
 - Allowing stable training - no noisy LLM-as-a-judge is necessary, with
   verifiable reasoning being ubiquitous in physics, 3D and geometry datasets,
-- Allowing conciseness training - numerous studies such as
-  [https://arxiv.org/html/2606.17687v1] focus on removing redundant reasoning
-  and thus cost and latency by following the minimum required reasoning to
-  achieve the objective.
+- Allowing conciseness training - numerous studies, such as SuCo (Wang, J. et
+  al., 2026), focus on removing redundant reasoning and thus cost and latency by
+  following the minimum required reasoning to achieve the objective.
 
 ### 2.5 Research gap and justification
 
@@ -184,6 +187,7 @@ standard for factual question-answering training, with the advantage of:
 - None combines: the full CAD graph (operations, solid states, faces, edges, vertices, CadQuery profiles, CadQuery workplanes, regions), multi-clue selection with distractors, a rule-derived gold answer, a non-numeric answer contract, a no-kernel setting, and a task reasoning step curriculum.
 - Update the phrasing from CA2: the gap is depth above BenchCAD Code QA, not the existence of a comprehension task. The one-sentence version: "BenchCAD occupies the base task shape and does it well; CAD-QA occupies the depth above it, and the depth is where editing, agents and industrial use fail."
 - Evidence that the depth matters, keep to one sentence each: instruction-guided editing succeeds ~37% and industrial edit prediction 29.0%; GUI work 17.5%; cross-application 3.6%. All three bottom out in entity and constraint resolution, which is comprehension.
+- TODO(citation): cite Frontier3DBench (Lin et al., 2026, arXiv:2611.09017) here, next to the "depth matters" evidence, as the adjacent 3D-creation neighbour: 145 coding-agent tasks across objects, scenes and interactive open worlds, best overall 66.02/100, and structural consistency stays at 70–85 even for frontier models (L1 mean 72.77, best 83.27; L2 best 74.57; L3 best 86.37), not 90+. It is creation, not comprehension, so use it only as evidence that 3D structure is unsaturated. Full entry for the reference list: Lin, X., Liu, Q., Li, W., Lam, J., Wang, X., Hong, D., Gao, M., Jiang, Z., Chi, Y., Zheng, Y., Xiao, C., Yang, K. and Gao, H. (2026) 'Frontier3DBench: Benchmarking Coding Agents for 3D Creation across Objects, Scenes, and Interactive Open Worlds', arXiv preprint arXiv:2611.09017.
 - Keep CA2's three-part niche statement, not only the depth part: (1) reasoning depth beyond single-step tasks; (2) a measurable shortest required reasoning path, which is the conciseness contribution; (3) distractor-rich, non-clean problems rather than one-step textbook cases. The 2026 literature adds a fourth: an exact, non-geometric answer contract.
 - Companion document: research-gap.md states the candidate gaps, the neighbour comparison, the falsification conditions and the claims to avoid. Do not duplicate its table here; summarise and point.
 - This gap justifies the instrument; state it once and do not repeat it in later sections.
@@ -192,12 +196,12 @@ standard for factual question-answering training, with the advantage of:
 ## 3. Research Methodology
 
 Much like in software engineering, being proficient in one area, such as SQL
-queries, does not mean an agent is proficient in machine learning; nor does being
-proficient in Python make an agent proficient in Rust. Similarly, CAD requires an
-understanding of numerous operations and relations, and underexposure to some
-will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper)
-(Elistratov, 2026), where agents were not proficient in everything but modelling
-with boxes. As such, we construct a wide variety of tasks as well as
+queries, does not mean an agent is proficient in machine learning; nor does
+being proficient in Python make an agent proficient in Rust. Similarly, CAD
+requires an understanding of numerous operations and relations, and
+underexposure to some will lead to knowledge gaps as highlighted by CADEvolve
+(Elistratov et al., 2026), where agents were not proficient in everything but
+modelling with boxes. As such, we construct a wide variety of tasks as well as
 compositions and report success rates on them separately.
 
 ### 3.1 Research design, variables and hypotheses
@@ -215,10 +219,10 @@ We construct the dataset across multiple axes:
 Our hypothesis is: H1. There are limits beyond which models would show
 reasoning gaps; different per harness.
 
-As other datasets already cover simple question-answering pairs (such as looking up the
-radius of a hole), we deliberately abstain from questions not requiring deep
-geometrical reasoning, with at least 95% of our dataset containing
-geometry-focused questions.
+As other datasets already cover simple question-answering pairs (such as
+looking up the radius of a hole), we deliberately abstain from questions not
+requiring deep geometrical reasoning, with at least 95% of our dataset
+containing geometry-focused questions.
 
 ### 3.2 Dataset construction procedure
 
@@ -249,7 +253,8 @@ We report the metrics on the combination of:
 
 ### 3.4 Harnesses
 
-We use three harnesses to evaluate different CAD reasoning skills and the internal reasoning of models:
+We use three harnesses to evaluate different CAD reasoning skills and the
+internal reasoning of models:
 
 - Without access to tools (the notable advantage of this is that stronger models
   can estimate correct solutions *without* doing a tool call),
@@ -259,8 +264,8 @@ We use three harnesses to evaluate different CAD reasoning skills and the intern
   example not every CAD modelling assistant has shell access to a CAD kernel,
   but they may have access to a shell.
 - CadQuery-enabled harness - CadQuery is the most widely used CAD library, being
-  popular in the largest recent CAD datasets - Zero-To-CAD, CADEvolve and
-  others.
+  popular in the largest recent CAD datasets - Zero-To-CAD, CADEvolve and others
+  (Ataei et al., 2026; Elistratov et al., 2026).
 
 ### 3.5 Statistical analysis
 
@@ -351,7 +356,7 @@ transforms (this is useful when running transforms over 2M entities in graph
 involving substantial geometry computation and persistence), and a number of
 Python workers doing CadQuery and other processes dependent on Python.
 
-The implementation follows this structure: 
+The implementation follows this structure:
 
 1. Ingest and preprocess the CADEvolve dataset
 2. Extract the AST and CadQuery into graphs that task building and verification
@@ -470,13 +475,29 @@ CONCLUSION (300–400 words)
 
 ## References
 
-<!--
-REFERENCES
-- Harvard or APA, per the NCI Library Referencing Guide; keep the CA2 list and extend it.
-- At least 15 references in the paper; aim for the ~50 read.
-- Every entry resolved to a DOI or proceedings page; URLs go in footnotes.
-- Include: BenchCAD, Text2CAD, CAD-Recode, cadrille, CADENA, CADBench, Text2CAD-Bench, CAD-Editor, QueryCAD, GeoGramBench, DeepCAD, CADEvolve, the program-evolution dataset, plus the RLVR/verifier and tool-calling sources in docs/prior-art.md.
-- Add from the 2026-11-25 scan, with author lists taken from the arXiv metadata: DrawScore (2611.24681), RealCAD (2608.30617), CAD Bench v3 (2611.02659), CADWorld (2609.16251), EngiWorld (2609.37686), RealCADBench (2609.03773), MechReason (2609.16012), CADFather (2610.09127), CADMAGEDDON (2611.22563), VisCAD (2609.03811), ConCAD (2609.34494), PhyCAD (2611.09401), Done Is Not Correct (2611.10063), Learn the Solid (2609.11573). All are 2026 preprints unless a venue appears; label them as preprints.
-- Do not cite the Zenodo tolerant-B-rep preprint in the paper's reference list until its author list is confirmed; if the argument needs it, cite it in research-gap.md only.
-- Do not cite a benchmark number without checking its current split and metric.
--->
+References follow the Harvard (author–date) style, as in the CA2 manuscript.
+Every entry resolves to a DOI, a proceedings page or an arXiv identifier.
+
+- Ataei, M., Askari, F., Malekshan, K.R. and Jayaraman, P.K. (2026) 'Zero-to-CAD: Agentic Synthesis of Interpretable CAD Programs at Million-Scale Without Real Data', arXiv preprint arXiv:2604.24479.
+- DeepSeek-AI (2025) 'DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning', *Nature*, 645, pp. 633–638. doi: 10.1038/s41586-025-09422-z.
+- Dong, X., Li, C., Zheng, P., Han, C., Jing, J., Shen, H., Song, Y. and Yang, Z. (2026) 'HistCAD: Constraint-Aware Parametric CAD Histories for Evaluating Editability', arXiv preprint arXiv:2602.19171.
+- Elistratov, M., Barannikov, M., Ivanov, G., Khrulkov, V., Konushin, A., Kuznetsov, A. and Zhemchuzhnikov, D. (2026) 'CADEvolve: Creating Realistic CAD via Program Evolution', arXiv preprint arXiv:2602.16317.
+- Guo, Z., Yang, Z., Li, Y., Zhang, X., Gao, W., Wang, J., Li, C., Liu, X. and Jian, P. (2026) 'Can LLMs See Without Pixels? Benchmarking Spatial Intelligence from Textual Descriptions', arXiv preprint arXiv:2601.03590.
+- Kabisov, S., Savrasov, G., Elistratov, M., Rodriguez, A., Ignatiev, D., Gavrilov, N., Uzdenov, R., Boyko, A.I., Pasechnik, I., Konushin, A. and Kuznetsov, A. (2026) 'CADENA: Stepwise CAD Reverse Engineering', arXiv preprint arXiv:2608.00799.
+- Khan, M.S., Sinha, S., Sheikh, T.U., Stricker, D., Ali, S.A. and Afzal, M.Z. (2024) 'Text2CAD: Generating Sequential CAD Designs from Beginner-to-Expert Level Text Prompts', *Advances in Neural Information Processing Systems*, 37.
+- Kienle, C., Alt, B., Katic, D., Jäkel, R. and Peters, J. (2024) 'QueryCAD: Grounded Question Answering for CAD Models', arXiv preprint arXiv:2409.08704.
+- Kolodiazhnyi, M., Tarasov, D., Zhemchuzhnikov, D., Nikulin, A., Zisman, I., Vorontsova, A., Konushin, A., Kurenkov, V. and Rukhovich, D. (2026) 'cadrille: Multi-modal CAD Reconstruction with Reinforcement Learning', *International Conference on Learning Representations (ICLR)*.
+- Ma, X., Sun, T., Chen, S., Bhalgat, Y., Gu, J., Chang, A.X., Armeni, I., Laina, I., Peng, S. and Prisacariu, V.A. (2026) 'Do 3D Large Language Models Really Understand 3D Spatial Relationships?', *International Conference on Learning Representations (ICLR)*.
+- Rukhovich, D., Dupont, E., Mallis, D., Cherenkova, K., Kacem, A. and Aouada, D. (2025) 'CAD-Recode: Reverse Engineering CAD Code From Point Clouds', *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*. doi: 10.1109/ICCV51701.2025.00914.
+- Wang, J., Liang, B., Hu, C., Zhang, L., Liu, X., Zhang, M., Li, J. and Li, X. (2026) 'SuCo: Sufficiency-guided Continuous Adaptive Reasoning', *International Conference on Machine Learning (ICML)*.
+- Wang, T., An, K., Du, C., Yang, Z., Zhu, Y., Yang, X., Zhu, H., Wang, Z., Qian, F., Yang, Y. and Ren, Q. (2026) 'MechReason: Benchmarking Multi-Image Multi-Hop Reasoning in Mechanical Engineering', arXiv preprint arXiv:2609.16012.
+- Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi, E., Le, Q. and Zhou, D. (2022) 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', *Advances in Neural Information Processing Systems*, 35, pp. 24824–24837.
+- Wei, J., Sun, Z., Papay, S., McKinney, S., Han, J., Fulford, I., Chung, H.W., Passos, A.T., Fedus, W. and Glaese, A. (2025) 'BrowseComp: A Simple Yet Challenging Benchmark for Browsing Agents', arXiv preprint arXiv:2504.12516.
+- Wu, R., Xiao, C. and Zheng, C. (2021) 'DeepCAD: A Deep Generative Network for Computer-Aided Design Models', *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*, pp. 6772–6782. doi: 10.1109/ICCV48922.2021.00670.
+- Yuan, Y., Sun, S., Liu, Q. and Bian, J. (2025) 'CAD-Editor: A Locate-then-Infill Framework with Automated Training Data Synthesis for Text-Based CAD Editing', arXiv preprint arXiv:2502.03997.
+- Zhai, C., Cheng, X., Cheng, H., Guan, Z., Fan, M., Tang, Y., Feng, P. and Zeng, L. (2026) 'ConCAD: Constraint-Aware Image-to-CAD Generation with Dual-Granularity Rewards', arXiv preprint arXiv:2609.34494.
+- Zhang, H., Liu, K., Chen, M., Li, L., Yang, S., Peng, C. and Chen, H. (2026) 'BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD', arXiv preprint arXiv:2605.10865.
+
+[^brep-bench]: brep-bench, an independent community benchmark that grades exported B-rep solids rather than the kernel's own report: <https://brepbench.org> (accessed 27 November 2026).
+
+[^benchcad-2]: BenchCAD 2.0 release notes, covering the reconstruction, assembly and PCB-wiring tasks: <https://benchcad.com/blog/benchcad-2> (accessed 27 November 2026).
