@@ -14,7 +14,7 @@ HOW TO USE THESE ANNOTATIONS
 - These are notes, not prose. Delete a block once its section is written.
 - Numbers and status words below are copied from docs/ on 2026-11-25. Re-check before quoting; status vocabulary is verified / exists / missing / planned / unverified.
 - Keep one fact in one section. Cross-reference instead of repeating.
-- The report structure follows the NCI MSc Research Project Report template; the content docs are docs/dataset/requirements/, docs/dataset/implementation/, docs/train-and-eval/ and docs/experiments/.
+- The report structure follows the NCI MSc Research Project Report template; the content docs are docs/dataset/requirements/, docs/dataset/implementation/ and docs/experiments/.
 -->
 
 ## Abstract
@@ -78,7 +78,7 @@ LLMs in CAD have seen a surge in research and industry results in Q2 and Q3, pro
 <!--
 RELATED WORK: bullets only; write the prose from these
 - Per reviewed paper: approach, method, results, one strength, one limitation; group minor papers by approach.
-- Four streams: (1) CAD reconstruction and generation, (2) CAD comprehension benchmarks, (3) procedural CAD corpora and program evolution, (4) verifiable multi-hop reasoning and small-model fine-tuning.
+- Four streams: (1) CAD reconstruction and generation, (2) CAD comprehension benchmarks, (3) procedural CAD corpora and program evolution, (4) verifiable multi-hop reasoning.
 - Reuse the CA2 literature review as the skeleton (docs/paper/CA2_Riabov_final.md §2.1–2.4), then update it: BenchCAD invalidated the "no open dataset" claim, so the positioning changes from "first" to "deeper".
 - 2026-11-25 update material: research_notes/CAD AI state of the art/ (six notes: llm_cad_generation, brep_and_geometry_learning, benchmarks_and_evaluation, downstream_engineering_tasks, industry_landscape, volume_venues_and_field_map) and reports/CAD AI state of the art.md. Every arXiv ID below was checked against the notes; do not add an ID that is not in them.
 - Shape of the field, for one framing sentence: ~45% LLM/code-generation, ~20% agent and tool-use, ~16% geometry-native learning, ~20% applications, ~9% evaluation, ~5% surveys (overlapping rows). Growth is concentrated in agents (4.3×) and text-to-CAD (3.2×), not in the venues: NeurIPS 2026 accepted 4 CAD papers, CAD'26 27 total.
@@ -171,19 +171,19 @@ To evaluate different CAD reasoning skills and the internal reasoning of models:
 
 <!--
 - Binary outcomes: McNemar exact two-sided on discordant rows, plus paired bootstrap (10,000 resamples) 95% CI.
-- Multiplicity: Holm within the three H2 comparisons and separately within the three H3 comparisons.
+- Multiplicity: Holm within the harness comparisons and separately within the model comparisons.
 - Chance correction: report raw and corrected rates, never only corrected; p_chance = 1/K for labels, 1/2 for boolean, 0 otherwise.
-- Seeds: three per confirmatory training arm; report each seed and the mean; do not hide a sign flip.
+- Samples: report the sample count per task and the mean; do not hide a sign flip.
 - Power: compute MDE from the frozen split before the final test; declare anything below MDE exploratory.
-- Freeze: endpoint, arms, revision hashes, tier, n, seeds, MDE, alpha and stopping rule are fixed before the final test; the test runs once.
-- Do not select the best checkpoint or the best tier after seeing results.
+- Freeze: endpoint, models, harness modes, revision hashes, tier, n, MDE, alpha and stopping rule are fixed before the final test; the test runs once.
+- Do not select the best tier after seeing results.
 -->
 
 ### 3.6 Ethics, licensing and reproducibility
 
 <!--
 - Public programs and public data; no human subjects; check each corpus licence and record it.
-- Contamination: dedup CAD-QA programs against every transfer benchmark; exclude their families from every training arm.
+- Contamination: dedup CAD-QA programs against every benchmark we evaluate on; exclude their families from the release.
 - Reproducibility: tagged release, Dataset card, run manifest with versions and hashes, one command to regenerate.
 - Logging: every LLM call, internal reasoning, visible output and tool call is recorded and reconstructable.
 - Compute: small open models on a single GPU; report cost and hardware.
@@ -228,8 +228,8 @@ In order to validate the quality of our dataset, we enforce after-construction v
 
 <!--
 IMPLEMENTATION: only the final stage; no code listings, no user manual
-- Name the outputs: generator CLI, Parquet artifacts, release directory, harness, trained adapter.
-- Name tools and languages: Go module, Python worker, CadQuery/OCP, PyArrow/Parquet, uv, pytest, Liquid fine-tuning stack, HuggingFace/PyTorch.
+- Name the outputs: generator CLI, Parquet artifacts, release directory, harness.
+- Name tools and languages: Go module, Python worker, CadQuery/OCP, PyArrow/Parquet, uv, pytest.
 - State what exists and what does not; do not present planned work as done.
 - One table of artifact -> status (exists / verified / missing) is enough.
 -->
@@ -271,26 +271,25 @@ IMPLEMENTATION: only the final stage; no code listings, no user manual
 - No partial release: a failed row fails the release build, not the published artifact.
 -->
 
-### 5.5 Training and evaluation harness
+### 5.5 Evaluation harness
 
 <!--
-- Local tool-call harness, shared by training and evaluation: submit_* tools per answer format, run_code for NumPy mode, parser, exact-match scorer.
-- Base model: a small open LFM2.5 checkpoint (1.2B/2.6B class); LoRA SFT through the Liquid cookbook; teacher traces from deepseek-v4.1-flash.
-- Training data mix: tool format, CAD-QA reasoning traces, general math/code preservation; two phases with an advancement gate.
-- Scorer: one implementation for evaluation, rejection sampling and any reward; the current three-scorer split is a recorded defect and must be reconciled before the thesis number.
+- Local tool-call harness: submit_* tools per answer format, run_code for NumPy mode, parser, exact-match scorer.
+- Models are evaluated as released through the same harness; no fine-tuning and no adapter is trained.
+- Scorer: one implementation for evaluation; the current three-scorer split is a recorded defect and must be reconciled before the thesis number.
 - Sandbox: run_code is an accidental-misuse guard, not a security boundary; state that honestly.
-- Status at writing: numpy and no_tools modes exist; cadquery mode is missing; no preserved NumPy run; three scorers disagree; transfer not run.
+- Status at writing: numpy and no_tools modes exist; cadquery mode is missing; no preserved NumPy run; three scorers disagree.
 -->
 
 ## 6. Evaluation
 
 <!--
 EVALUATION: only results that exist at submission time
-- Report the instrument result first (validity and composition), then baseline, then the training ablation, then transfer.
+- Report the instrument result first (validity and composition), then the base-model results across harness modes.
 - Every table names its split, tier, n, model and harness mode.
 - Report negative and null results; do not hide them.
 - Planned-but-unrun work belongs in Future Work, not here.
-- Visuals: accuracy by step count; accuracy by answer meaning; ablation risk difference with CI; transfer point estimate with CI.
+- Visuals: accuracy by step count; accuracy by answer meaning; accuracy by harness mode with CI.
 -->
 
 ### 6.1 Experiment 1: instrument validity
@@ -315,33 +314,10 @@ EVALUATION: only results that exist at submission time
 - Do not call this the thesis result; it is a diagnostic that the no-kernel setting measures something real.
 -->
 
-### 6.3 Experiment 3: fine-tuning ablation (H1, H2)
+### 6.3 Discussion
 
 <!--
-- Primary comparison: CAD-QA reasoning vs Answer-only, same task rows, general mix, prompt set and loss-bearing token budget; paired by row.
-- Secondary: vs Base and vs Format-only (a bundle, not a reasoning isolation); Holm within the family.
-- Endpoint: exact-answer accuracy on the pre-registered hard tier; paired risk difference in percentage points with 95% CI.
-- Report all three seeds separately and the mean; a claim needs the pooled CI to exclude zero and the same sign in at least 2 of 3.
-- Report invalid-output rate and tool-valid rate (H1) separately; do not fold format compliance into the reasoning claim.
-- Include a general math/code monitor as a covariate; a drop above the review threshold is a specialization tradeoff, not a failed run.
-- Status: fill only after the runs exist. If unrun at submission, move to Future Work and say so.
--->
-
-### 6.4 Experiment 4: external transfer (H3, H4)
-
-<!--
-- Target: BenchCAD qa_code, official full split and official metric; report percentage-point difference with a paired CI. edit_code and Text2CAD-Bench corroborate.
-- Preconditions: reachability pilot (base low but nonzero), format-adaptation control, contamination audit, frozen subset and scorer. The pilot doubles as the Code QA freshness check: run a current model on the official split before quoting the 2026-05 gap.
-- No subset-shopping; spatial-axis and family breakdowns are diagnostics only.
-- H4: dose-response of CAD-QA pass rate vs external score at fixed recipe and matched compute, with a general-only counter-arm.
-- A null transfer is a finding: the dataset would improve only its own split.
-- Status: planned, not run. Do not fabricate a number.
--->
-
-### 6.5 Discussion
-
-<!--
-- Answer the research question directly: does the instrument expose a real gap, and does graph-derived supervision close it.
+- Answer the research question directly: does the instrument expose a real gap, and how large is it.
 - Interpret by step count, target category and answer meaning, not only by aggregate accuracy.
 - Compare with BenchCAD Code QA: same task shape, different depth; explain why a high single-pass score does not imply multi-hop success.
 - Threats: contamination, saturation, small per-cell n, one model, scorer disagreement, kernel-version drift, prompt-template sensitivity.
@@ -355,9 +331,9 @@ EVALUATION: only results that exist at submission time
 CONCLUSION (300–400 words)
 - Restate the question, the instrument and the work done; state how far each objective was met, including partial and failed ones.
 - Key findings: only measured ones; name the tier and split.
-- Implications: benchmark design, no-kernel evaluation, graph-derived supervision, small-model training.
-- Limitations: public-program bias, no-kernel constraint, transfer unproven, release size, single-family or single-snapshot risks.
-- Future work: the kernel-query pivot (generate the query, score by execution); RL on harder tiers after the readiness gate; reasoning conciseness from the critical path; CADEditQA; 6–10 tiers once the release gate passes; more models and seeds; a larger public release.
+- Implications: benchmark design, no-kernel evaluation, graph-derived supervision.
+- Limitations: public-program bias, no-kernel constraint, release size, single-family or single-snapshot risks.
+- Future work: the kernel-query pivot (generate the query, score by execution); reasoning conciseness from the critical path; CADEditQA; 6–10 tiers once the release gate passes; more models and samples; a larger public release.
 - No new results, no new citations, no sweeping parameter-sweep promises.
 -->
 
@@ -368,7 +344,7 @@ REFERENCES
 - Harvard or APA, per the NCI Library Referencing Guide; keep the CA2 list and extend it.
 - At least 15 references in the paper; aim for the ~50 read.
 - Every entry resolved to a DOI or proceedings page; URLs go in footnotes.
-- Include: BenchCAD, Text2CAD, CAD-Recode, cadrille, CADENA, CADBench, Text2CAD-Bench, CAD-Editor, QueryCAD, GeoGramBench, DeepCAD, CADEvolve, the program-evolution dataset, plus the fine-tuning, RLVR/verifier and tool-calling sources in docs/prior-art.md.
+- Include: BenchCAD, Text2CAD, CAD-Recode, cadrille, CADENA, CADBench, Text2CAD-Bench, CAD-Editor, QueryCAD, GeoGramBench, DeepCAD, CADEvolve, the program-evolution dataset, plus the RLVR/verifier and tool-calling sources in docs/prior-art.md.
 - Add from the 2026-11-25 scan, with author lists taken from the arXiv metadata: DrawScore (2611.24681), RealCAD (2608.30617), CAD Bench v3 (2611.02659), CADWorld (2609.16251), EngiWorld (2609.37686), RealCADBench (2609.03773), MechReason (2609.16012), CADFather (2610.09127), CADMAGEDDON (2611.22563), VisCAD (2609.03811), ConCAD (2609.34494), PhyCAD (2611.09401), Done Is Not Correct (2611.10063), Learn the Solid (2609.11573). All are 2026 preprints unless a venue appears; label them as preprints.
 - Do not cite the Zenodo tolerant-B-rep preprint in the paper's reference list until its author list is confirmed; if the argument needs it, cite it in research-gap.md only.
 - Do not cite a benchmark number without checking its current split and metric.
