@@ -256,6 +256,10 @@ We construct the dataset across multiple axes:
 Our hypotheses are:
 H1. There are limits in which models would show reasoning gaps; different per harness.
 
+
+As other datasets already cover simple question-answering pairs (such as lookup radius of a hole), we deliberately abstain from questions not requiring deep geometrical reasoning, with at least 95% of our dataset containing geometry-focused questions.
+
+
 <!--
 - Design: instrument-building plus a controlled training experiment (design science + pre-registered analysis).
 - Unit of analysis: one task = program + target + clues + one answer. One CAD model = one CadQuery program; one family may contain many programs.
@@ -359,19 +363,19 @@ A task is a single question-answering pair, it is defined by input geometry and 
 
 The model narrows down by clues. For example, in a simple box with a hole program [figure 1], we derive all entities and relations between them, and select clues as follows:
 
-- Final answer: the length of the circular edge where the hole meets the top face (12.57 mm),
-- Clue 1: the target edge is an edge of the face touching the top of the axis-aligned bounding box,
+- Picked result entity: circular edge where the hole meets the top face,
+- Picked property of the edge: length.
+
+- Clue 1: the target edge is an edge of the face touching the top of the axis-aligned bounding box.
 - Clue 2: the target edge is an edge of the cylindrical face.
 
-The model thus needs to find all 15 edges of the final solid state, keep the five that bound the top face, and then the one of those that also bounds the hole wall. Each clue is necessary: dropping the first leaves the edges of the cylindrical face and both circles, dropping the second leaves the five edges of the top face, so neither step can be skipped to reach a single candidate.
+The model thus needs to find all 15 edges of the final solid state, keep the five that are on the top face, and filter them into one that would be cylindrical. By design and verifiably, each clue in the dataset is necessary, so the LLM can never reach the answer omitting any of clues.
 
-We support the following types:
+Completely, we support the following types:
 
 - Target categories: operation, feature, solid state, face, edge, vertex, CadQuery profile, CadQuery workplane, region, scalar value.
 - Clue types: property, relation, comparison, provenance, aggregation.
 - Answer formats: multiple choice, number, integer, boolean, 3D coordinate, bounding box; structured object.
-
-
 
 
 <!--
@@ -388,46 +392,16 @@ We support the following types:
 - One task has exactly one correct answer; answer-equivalent entities at the stated precision count as one answer.
 -->
 
-### 4.2 CAD graph
-
-<!--
-- Entities: program, operation, feature, solid state, face, edge, vertex, CadQuery profile, CadQuery workplane, region, point probe (P0); path and selector result (P1).
-- Relations: before/after, creates, uses, derived_from, has_face/has_edge/has_vertex, adjacent_to, adds_material/removes_material/part_of (P0).
-- Face attributes: surface kind (plane, cylinder, cone, sphere, torus, bspline, other), bounding-box position extremes, outward normal.
-- Measurements: volume, area, length, distance, angle, counts, centroid, bounding box, volume change, topology change; units, precision and tolerance are explicit.
-- Parallel and perpendicular are angle values at render time, not stored relations.
-- Point probes supply membership points; one or two per state, opposite labels when both survive; no probe means no membership task, a recorded deficit.
-- States: P0 uses the final state; one named intermediate state is P1; the before/after pair is P2.
-- Graph quality rules: every entity belongs to one program; every relation has two endpoints; missing provenance is a miss, not a pass.
--->
-
-### 4.3 Generator architecture
-
-<!--
-- One figure here: the pipeline from CADEvolve to release artifacts.
-- Five stages with typed artifacts: 01 external ETL, 02 extraction and graph, 03 task generation, 04 render, 05 validate and export.
-- 03 splits into 03a quota allocation, 03b construction, 03c deficit resolution; 03c is a bounded loop back, not a terminal step.
-- Incremental run: immutable Parquet parts, resumable, manifest-pinned inputs and policy hashes; a changed input is a new run directory.
-- No full enumeration: quotas are sampled with deterministic ordering, deduplication and backfill.
-- Language boundary: Go owns orchestration, graph assembly, task generation, rendering, release state; Python only normalizes programs, extracts the AST and executes CadQuery.
-- Bulk data is typed Parquet; JSON is control only (manifest, completion markers, deficit ledger).
-- UUIDs are stable: UUIDv5 from program-scoped IDs in extraction, UUID logical type in Parquet.
--->
-
-### 4.4 Release contract
-
-<!--
-- Artifacts: release.parquet, manifest.json, dataset-card.md, failures.parquet, support/ with five step-support tables.
-- One row per task; the prompt column is the only LLM-facing column; gold answer columns never enter the prompt.
-- Answer value, tolerance and evidence are typed structs (tagged union), not JSON strings.
-- Target size: at least 10,000 tasks and at least 1,000 distinct programs (P0); no program above 1% of tasks (P1).
-- Warmup is 5% of tasks and is included in the count; at least 80% of tasks need three or more steps; at least 95% require the built shape.
-- Splits: 70/15/15 target, group-safe, frozen in split_manifest.json; later releases preserve earlier split assignments.
-- Support tables state which dimension values can occur at each step count and why not.
-- The Dataset card states what the dataset is and is not suitable for, plus the answer conventions and precision.
--->
-
 ### 4.5 Validity rules and quality gates
+
+In order to validate the quality of our dataset, we enforce after-construction validation:
+
+1. Every answer is correct,
+2. There is exactly one answer, 
+3. In multiple-choice questions, there are at least 5 answer options, with mean of 7, so as to ensure fairness of the answer,
+4. At least 95% of our dataset has geometrical questions as noted in [3.1](<CAD-QA_report#3.1 Research design, variables and hypotheses>)
+4. There is no answer leakage in the question.
+5. Human review: while tasks are sampled deterministically, we review a sample of as diverse as possible questions from the dataset.
 
 <!--
 - R-1 every answer is correct; R-2 exactly one answer; R-3 multiple-choice fairness (at least five, aim seven, real candidates, no leak); R-4 at least 95% shape-required; R-5 shortcut resistance (P1); R-6 no answer leakage.
@@ -436,12 +410,6 @@ We support the following types:
 - The gate is a floor, not a proof: the baseline measures whether a model can still shortcut.
 - Human review: sampled tasks covering every dimension value, up to step 10, before release; unclear wording is a defect.
 - Reproducibility: same inputs and versions give the same dataset; every rejection is reported with a reason.
--->
-
-### 4.6 Worked example
-
-<!--
-- One worked task example: program, rendered prompt, gold answer, answer evidence.
 -->
 
 ## 5. Implementation
