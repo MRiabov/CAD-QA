@@ -19,15 +19,15 @@ HOW TO USE THESE ANNOTATIONS
 
 ## Abstract
 
-**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focus on reconstruction, engineering standard following and editing.
+**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focusing on reconstruction, engineering standard following and editing.
 
-**Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exists.
+**Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exist.
 
-**Objectives and contribution:** We present a large dataset allowing to train foundational capabilities of LLMs on deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation.
+**Objectives and contribution:** We present a large dataset that allows training foundational capabilities of LLMs in deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation.
 
-**Methodology:** To aid in efficient training of LLMs on our dataset, a critical path allowing validated step-by-step solution is presented.
+**Methodology:** To aid in efficient training of LLMs on our dataset, we present a critical path that allows validated step-by-step solutions.
 
-**Results, findings and remaining gap:** We show that frontier models are only 50-80% successful without too assistance, showing headroom in geometrical reasoning.
+**Results, findings and remaining gap:** We show that frontier models are only 50–80% successful without tool assistance, showing headroom in geometrical reasoning.
 
 **Availability:** We open-source the dataset at https://huggingface.co/MRiabov/
 
@@ -56,13 +56,13 @@ ABSTRACT (write last, 200–250 words, no citations)
 
 ### 1.1 Background and motivation
 
-AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [Benchcad 1.0]. Foundational, large datasets including recent in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than a half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only one lookup or knowledge of a particular standard and not deep geometrical reasoning. 
+AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [BenchCAD 1.0]. Foundational, large datasets, including recent ones in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which has mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only one lookup or knowledge of a particular standard and not deep geometrical reasoning. 
 
 As such, the field is still lacking a dataset that would allow ready training on: verification of reasoning on more complex CAD reasoning beyond simple question answering pairs, as well as optimization of conciseness on reasoning in such tasks.
 
 Our primary research question:
 
-- How can we improve the raw capability of an LLM model to comprehend the geometry resulting from CAD code?
+- How can we improve the raw capability of an LLM to comprehend the geometry resulting from CAD code?
 
 Secondary:
 
@@ -100,11 +100,11 @@ Our contributions are:
 
 ### 1.5 Limitations and assumptions
 
-The limitations of our studies are in transfer of our dataset to other benchmarks:
+The limitations of our studies are in the transfer of our dataset to other benchmarks:
 
-- We evaluate two LLMs only on approximately 750 trajectories each, spanned over multiple levels and multiple clue types. Our results are statistically limited by budget.
-- We do not train a model on the dataset or transfer of improvement on our dataset to other benchmarks; primarily due to budget.
-- We only train on one CAD engine. There are now numerous BREP kernels including open-source ones [brepbench], but we deem it sufficient as CadQuery is the widely adapted open source CAD modelling application, being used in most major papers [Zero-to-CAD] 
+- We evaluate two LLMs only on approximately 750 trajectories each, spanning multiple levels and multiple clue types. Our results are statistically limited by budget.
+- We do not train a model on the dataset, nor measure transfer of improvement to other benchmarks; primarily due to budget.
+- We only train on one CAD engine. There are now numerous BREP kernels including open-source ones [brepbench], but we deem it sufficient as CadQuery is the widely adopted open-source CAD modelling application, being used in most major papers [Zero-to-CAD]. 
 
 <!--
 - Scope: executable CadQuery programs from CADEvolve; P0 is no kernel, NumPy allowed; kernel access is an upper bound (P2), not the headline.
@@ -116,12 +116,12 @@ The limitations of our studies are in transfer of our dataset to other benchmark
 ### 1.6 Structure of the report
 
 We will structure our work as follows:
-1. Related work with go over the recent contributions, in particular the state of the art in 3d applications and where they currently fall short, as well as foundational datasets.
+1. Related work will go over the recent contributions, in particular the state of the art in 3D applications and where they currently fall short, as well as foundational datasets.
 2. Research methodology will go over the [.] 
-3. Design specification will go over what the dataset is expected to be and the dataset validity procedures that are in place; it will also go over evaluation procedures
-4. Implementation will brief the implementation structure of the dataset,
+3. Design specification will go over what the dataset is expected to be and the dataset validity procedures that are in place; it will also go over evaluation procedures.
+4. Implementation will briefly describe the implementation structure of the dataset,
 5. Evaluation will focus on evaluating the state of the art and showing deficiencies of existing models,
-6. Conclusion and Future Work will go will show the future work.
+6. Conclusion and Future Work will show the future work.
 
 <!--
 - Outline: one sentence per later section.
@@ -129,7 +129,7 @@ We will structure our work as follows:
 
 ## 2. Related Work
 
-LLMs in CAD has seen a surge in research and industry results in Q2 and Q3, producing 2x more literature than Q3 a year ago in the same field. In q3, 19# papers were produced, with 45% focusing on generation, 20% on agent tool-use, ~20% focusing on application and ~9% of evaluation or foundational datasets. 
+LLMs in CAD have seen a surge in research and industry results in Q2 and Q3, producing 2x more literature than Q3 a year ago in the same field. In Q3, 19# papers were produced, with 45% focusing on generation, 20% on agent tool-use, ~20% focusing on application and ~9% on evaluation or foundational datasets. 
 
 
 
@@ -152,7 +152,7 @@ RELATED WORK: bullets only; write the prose from these
 
 ### 2.1 CAD generation and reconstruction
 
-Recent work has demonstrated major progress in CAD generation and reconstruction, partially driven by large synthetically generated datasets - both Zero-To-CAD and CadEvolve were released as million-scale datasets, where CadEvolve released a dataset of "deliberately as complex shapes as possible" which, in CadEvolve, was used to train a reconstruction model. A plurality of papers have focused on improving Text- and Image-To-Cadquery, saturating reconstruction benchmarks [CADENA, ConCAD], while editing is unsaturated; perhaps due to editing being more complex to scale data-wise.
+Recent work has demonstrated major progress in CAD generation and reconstruction, partially driven by large synthetically generated datasets - both Zero-To-CAD and CADEvolve were released as million-scale datasets, where CADEvolve released a dataset of "deliberately as complex shapes as possible" which, in CADEvolve, was used to train a reconstruction model. A plurality of papers have focused on improving Text- and Image-to-CadQuery, saturating reconstruction benchmarks [CADENA, ConCAD], while editing is unsaturated; perhaps due to editing being more complex to scale data-wise.
 
 <!--
 - Text2CAD, CAD-Recode, cadrille, CADENA, CADBench, Text-to-CadQuery, CAD-Editor.
@@ -168,13 +168,13 @@ Recent work has demonstrated major progress in CAD generation and reconstruction
 
 ### 2.2 Geometry comprehension benchmark
 
-Closest spiritually to our dataset are procedurally generated 2d and 3d geometry  reasoning benchmarks such as SiT-Bench (Guo et al., 2026) and Real-3DQA (Ma et al., 2026), which explicitly evaluate models' 3D comprehension abilities from text alone, without visuals. They are similar in that they evaluate models on procedurally generated geometry, but they do not evaluate or focus on CAD-specific geometry such as selectors, vertices, and boolean operations — only on text descriptions of scenes.
+Closest spiritually to our dataset are procedurally generated 2D and 3D geometry reasoning benchmarks such as SiT-Bench (Guo et al., 2026) and Real-3DQA (Ma et al., 2026), which explicitly evaluate models' 3D comprehension abilities from text alone, without visuals. They are similar in that they evaluate models on procedurally generated geometry, but they do not evaluate or focus on CAD-specific geometry such as selectors, vertices, and boolean operations — only on text descriptions of scenes.
 
 ### 2.3 CAD comprehension benchmarks
 
-BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied, however the dataset focuses on benchmarking simple question answering such as compliance to a standard (e.g. whether a thread size is compliant), whereas our dataset focuses on verification of correct geometrical reasoning, at scale and varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add no comprehension task. QueryCAD is a earlier similar work evaluating capabilities of LLMs on answering factual questions based on CAD models, but without CadQuery; again, without depth.
+BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied, however the dataset focuses on benchmarking simple question answering such as compliance to a standard (e.g. whether a thread size is compliant), whereas our dataset focuses on verification of correct geometrical reasoning, at scale and varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add no comprehension task. QueryCAD is an earlier similar work evaluating capabilities of LLMs on answering factual questions based on CAD models, but without CadQuery; again, without depth.
 
-MechReason is a benchmark evaluating multi-view and multi-hop reasoning - of LLMs on Mechanical engineering publications and papers; however it synthesizes QA pairs from papers and does not evaluate models on CAD programs, nor is verifiable via a kernel.
+MechReason is a benchmark evaluating multi-view and multi-hop reasoning of LLMs on mechanical engineering publications and papers; however it synthesizes QA pairs from papers and does not evaluate models on CAD programs, nor is it verifiable via a kernel.
 
 
 <!--
@@ -196,9 +196,9 @@ MechReason is a benchmark evaluating multi-view and multi-hop reasoning - of LLM
 
 ### 2.4 QA datasets and verifiable reasoning 
 
-Verifiable reasoning and evaluation by tool calling has become de-facto standard for factual question-answering training, having the advantage of:
+Verifiable reasoning and evaluation by tool calling have become the de-facto standard for factual question-answering training, with the advantage of:
 
-- Allowing stable training - no noisy LLM-as-a-judge is necessary; with verifiable reasoning being ubiquitous in physics, 3d and geometry datasets
+- Allowing stable training - no noisy LLM-as-a-judge is necessary, with verifiable reasoning being ubiquitous in physics, 3D and geometry datasets
 
 <!--
 - RLVR and verifier work: the verifier is the objective, so a noisy or divergent scorer is optimised; query-verifier audits report self-agreement as low as 53.8% and two configurations disagreeing on 49.9% of pairs.
@@ -229,19 +229,19 @@ Verifiable reasoning and evaluation by tool calling has become de-facto standard
 METHODOLOGY: the scientific procedure, not the software
 -->
 
-Much like in software engineering, being proficient in one area, such as SQL queries, doesn't mean an agent is proficient in machine learning; or being proficient in Python, an agent isn't proficient in Rust. Similarly, CAD requires understanding of numerous operations and relations, and underexposure to some will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper) (Elistratov, 2026), where agents were not proficient on everything but modelling with boxes. As such, we construct a wide variety of tasks as well as compositions and report success rates on them separately.
+Much like in software engineering, being proficient in one area, such as SQL queries, doesn't mean an agent is proficient in machine learning; nor does being proficient in Python make an agent proficient in Rust. Similarly, CAD requires understanding of numerous operations and relations, and underexposure to some will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper) (Elistratov, 2026), where agents were not proficient in everything but modelling with boxes. As such, we construct a wide variety of tasks as well as compositions and report success rates on them separately.
 
 ### 3.1 Research design, variables and hypotheses
 
 We construct the dataset across multiple axes:
 
 - Tasks - what tasks in particular do models fail on?
-- Depth - when tasks, geometrical complexity is composed, what is the reasoning depth a model solve reliably?
-- Harnesses - given different tools available to the agent (no tools, numpy, CadQuery), how does being able to verify, and with which tools, does success rate increase?
+- Depth - when task geometrical complexity is composed, what is the reasoning depth a model can solve reliably?
+- Harnesses - given different tools available to the agent (no tools, NumPy, CadQuery), how does being able to verify, and with which tools, increase success rate?
 - Models - we will evaluate a number of models to ensure fairness of evaluation. 
 
 Our hypotheses are:
-H1. There are limits in which models would show reasoning gaps; different per harness.
+H1. There are limits beyond which models would show reasoning gaps; different per harness.
 
 
 As other datasets already cover simple question-answering pairs (such as lookup radius of a hole), we deliberately abstain from questions not requiring deep geometrical reasoning, with at least 95% of our dataset containing geometry-focused questions.
@@ -260,7 +260,7 @@ As other datasets already cover simple question-answering pairs (such as lookup 
 
 ### 3.2 Dataset construction procedure
 
-We use CadEvolve dataset as it is the largest, most diverse dataset in the publicly available corpora. We normalize programs using AST and CadQuery post-processing to extract a graph of entities and dependencies between them, such as edges, vertices, faces, boolean operations and derive relations between them, such as distances, angles between them. The graph, with later postprocessing allows us to deterministically and verifiably generate questions such as in [figure 1]. We will expand on dataset construction in design specification part.
+We use the CADEvolve dataset as it is the largest and most diverse dataset among the publicly available corpora. We normalize programs using AST and CadQuery post-processing to extract a graph of entities and dependencies between them, such as edges, vertices, faces, boolean operations and derive relations between them, such as distances, angles between them. The graph, with later post-processing, allows us to deterministically and verifiably generate questions such as in [figure 1]. We will expand on dataset construction in the design specification section.
 
 
 
@@ -286,17 +286,17 @@ We evaluated models on completion of the tasks under varying tasks, depths and h
 
 Over the combination of:
 - Tasks (clues),
-- Depth (quantity of narrowing steps to derive a model)
+- Depth (number of narrowing steps required to derive an answer)
 - Models
 - Harnesses
 
 ### 3.4 Harnesses
 
-To make evaluation of different CAD reasoning skills - evaluating internal reasoning of models:
+To evaluate different CAD reasoning skills and the internal reasoning of models:
 
-- without access to tools (the notable advantage of this that stronger models can estimate correct solutions *without* doing a tool call),
-- Numpy-only harness - the importance of this harness is twofold: being able to estimate complex CAD without harness, such as in cases of "on-paper" feasibility analysis, as well as being not limited to cadquery alone - for example not every CAD modelling assistant has shell access to a CAD kernel, but they may have access to shell.
-- CadQuery-enabled harness - CadQuery is the most ubiquitous CadQuery, being popular in the largest recent CAD datasets - Zero-To-CAD, CadEvolve and others. 
+- without access to tools (the notable advantage of this is that stronger models can estimate correct solutions *without* doing a tool call),
+- NumPy-only harness - the importance of this harness is twofold: being able to estimate complex CAD without a harness, such as in cases of "on-paper" feasibility analysis, as well as not being limited to CadQuery alone - for example not every CAD modelling assistant has shell access to a CAD kernel, but they may have access to a shell.
+- CadQuery-enabled harness - CadQuery is the most ubiquitous CAD library, being popular in the largest recent CAD datasets - Zero-To-CAD, CADEvolve and others. 
 
 
 <!--
@@ -313,7 +313,7 @@ To make evaluation of different CAD reasoning skills - evaluating internal reaso
 - Freshness: no external gap is quoted without a current re-run; record the benchmark's `tested` date next to every number.
 -->
 
-### 3.4 Statistical analysis
+### 3.5 Statistical analysis
 
 <!--
 - Binary outcomes: McNemar exact two-sided on discordant rows, plus paired bootstrap (10,000 resamples) 95% CI.
@@ -325,7 +325,7 @@ To make evaluation of different CAD reasoning skills - evaluating internal reaso
 - Do not select the best checkpoint or the best tier after seeing results.
 -->
 
-### 3.5 Ethics, licensing and reproducibility
+### 3.6 Ethics, licensing and reproducibility
 
 <!--
 - Public programs and public data; no human subjects; check each corpus licence and record it.
@@ -346,9 +346,9 @@ DESIGN: what the instrument is, before how it was coded
 
 ### 4.1 Task model
 
-A task is a single question-answering pair, it is defined by input geometry and the clues supplied to the model. Given a 3d model as a whole which may have 20000 entities and relations, the model needs to narrow down to entity or operation, for example finding the correct face in the entity amidst hundreds.
+A task is a single question-answering pair, defined by input geometry and the clues supplied to the model. Given a 3D model as a whole which may have 20,000 entities and relations, the model needs to narrow down to an entity or operation, for example finding the correct face among hundreds of entities.
 
-The model narrows down by clues. For example, in a simple box with a hole program [figure 1], we derive all entities and relations between them, and select clues as follows:
+The model narrows down by clues. For example, in a simple box-with-a-hole program [figure 1], we derive all entities and relations between them, and select clues as follows:
 
 - Picked result entity: circular edge where the hole meets the top face,
 - Picked property of the edge: length.
@@ -356,9 +356,9 @@ The model narrows down by clues. For example, in a simple box with a hole progra
 - Clue 1: the target edge is an edge of the face touching the top of the axis-aligned bounding box.
 - Clue 2: the target edge is an edge of the cylindrical face.
 
-The model thus needs to find all 15 edges of the final solid state, keep the five that are on the top face, and filter them into one that would be cylindrical. By design and verifiably, each clue in the dataset is necessary, so the LLM can never reach the answer omitting any of clues.
+The model thus needs to find all 15 edges of the final solid state, keep the five that are on the top face, and filter them into one that would be cylindrical. By design and verifiably, each clue in the dataset is necessary, so the LLM can never reach the answer while omitting any of the clues.
 
-Completely, we support the following types:
+In total, we support the following types:
 
 - Target categories: operation, feature, solid state, face, edge, vertex, CadQuery profile, CadQuery workplane, region, scalar value.
 - Clue types: property, relation, comparison, provenance, aggregation.
@@ -385,10 +385,10 @@ In order to validate the quality of our dataset, we enforce after-construction v
 
 1. Every answer is correct,
 2. There is exactly one answer, 
-3. In multiple-choice questions, there are at least 5 answer options, with mean of 7, so as to ensure fairness of the answer,
-4. At least 95% of our dataset has geometrical questions as noted in [3.1](<CAD-QA_report#3.1 Research design, variables and hypotheses>)
-4. There is no answer leakage in the question.
-5. Human review: while tasks are sampled deterministically, we review a sample of as diverse as possible questions from the dataset.
+3. In multiple-choice questions, there are at least 5 answer options, with a mean of 7, so as to ensure fairness of the answer,
+4. At least 95% of our dataset has geometrical questions as noted in [3.1](<CAD-QA_report#31-research-design-variables-and-hypotheses>)
+5. There is no answer leakage in the question.
+6. Human review: while tasks are sampled deterministically, we review a sample of questions that is as diverse as possible.
 
 <!--
 - R-1 every answer is correct; R-2 exactly one answer; R-3 multiple-choice fairness (at least five, aim seven, real candidates, no leak); R-4 at least 95% shape-required; R-5 shortcut resistance (P1); R-6 no answer leakage.
