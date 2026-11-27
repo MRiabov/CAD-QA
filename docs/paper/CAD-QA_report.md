@@ -359,11 +359,11 @@ A task is a single question-answering pair, it is defined by input geometry and 
 
 The model narrows down by clues. For example, in a simple box with a hole program [figure 1], we derive all entities and relations between them, and select clues as follows:
 
-- Final answer: flat face in the bottom of the hole,
-- Clue 1: 
-- Clue 2: 
+- Final answer: the length of the circular edge where the hole meets the top face (12.57 mm),
+- Clue 1: the target edge is an edge of the face touching the top of the axis-aligned bounding box,
+- Clue 2: the target edge is an edge of the cylindrical face.
 
-The model thus needs to find all [...] to derive
+The model thus needs to find all 15 edges of the final solid state, keep the five that bound the top face, and then the one of those that also bounds the hole wall. Each clue is necessary: dropping the first leaves the edges of the cylindrical face and both circles, dropping the second leaves the five edges of the top face, so neither step can be skipped to reach a single candidate.
 
 We support the following types:
 
