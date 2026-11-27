@@ -142,7 +142,11 @@ about 644 MB, and the kernel extra takes it to about 2.3 GB.
 The CAD kernel is the `cadquery` extra, not a base dependency. The current
 tests do not import it, and CI does not install it. Only pipeline stage `02b`
 imports it. When the `02b` integration test lands, the `pipeline` suite installs
-`--extra cadquery`; the current suite stays the lean `contract` suite.
+`--extra cadquery`; the current suite stays the lean `contract` suite. The
+`pipeline` suite runs the committed pipeline fixture pool and the hand-authored
+golden and oracle programs. It fails rather than skips when the kernel is absent,
+and it fails when it collects zero kernel tests; a marked-skip kernel job that
+passes is the failure mode this rule prevents.
 
 The base dependencies still include pyarrow and polars (about 335 MB of the
 359 MB) because the Python worker's pipeline stages read and write Parquet. That

@@ -1,4 +1,35 @@
-# Coverage fixtures
+# Test fixtures
+
+Programs the tests run over. There are three sets, kept apart: a pipeline
+fixture pool, coverage fixtures, and rejection fixtures.
+
+## Pipeline fixture pool
+
+**Status:** `missing` — `pipeline-pool.json` lands with the `P0-W2` test.
+
+The end-to-end and stage tests read a committed copy of a few CADEvolve rows, not
+the downloaded cache. `pipeline-pool.json` carries, per row, the `01a` metadata
+fields, the program text `01c` would fetch, and the typed packet that replaces
+the fetch. The test writes a three-row `cadevolve_sources.parquet` from the file
+into a temporary directory and passes it as `--external-dataset`, so the
+production Parquet reader is real and the 507 MB cache is not required.
+
+The rows are copied from the pinned cache once, not invented: `source_id`,
+`source_collection`, `path_family`, `source_feature_tags`, `generator_id`, and
+`normalized_source_code_hash` keep the cache's values, and the program text is
+the cache's normalized code. The file names the rows, so the pool is
+deterministic. The fixture records the small-run `SelectionPolicy`
+(`active_count`, `collection_minimum`, `usable_floor`) because the release
+defaults cannot select three programs.
+
+The fixture carries its own `cache_revision` and `cache_schema_version`, and the
+test's manifest declares them, so `01a`'s revision check is exercised against a
+real file rather than bypassed.
+
+The pool is input for the end-to-end and stage seams. It is not a golden record
+and not the coverage fixture set below.
+
+## Coverage fixtures
 
 Programs that define what the support table means by "supported". See
 [`../00-support-tables.md`](../00-support-tables.md) for the test contract.

@@ -308,7 +308,8 @@ repeat that with a cleaner schema.
   contract has no equivalent. `scoring_rule` offers `exact`,
   `numeric_tolerance`, and `structured_exact` (line 98); there is no
   structured numeric tolerance for a bounding box or workplane state.
-  `answer_unit` is a string in the release contract but an enum in the graph.
+  The release tolerance's `unit` is a string while the graph declares an enum.
+  The release has no `answer_unit` column; CadQuery is unitless.
   No document defines how an LLM model’s free-form output is parsed before
   scoring.
 - **Why it kills the engine:** two implementations can hash the same answer

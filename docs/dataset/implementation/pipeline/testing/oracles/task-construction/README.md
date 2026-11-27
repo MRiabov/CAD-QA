@@ -190,7 +190,7 @@ the last `after` count equals the size of the answer-equivalent set.
 |---|---|
 | `value_kind` | `number`, `integer`, `boolean`, `point`, `bounding_box`, `label`, or `structured`. |
 | `value` | The answer value, in the shape its value kind declares. |
-| `unit` | `millimetre`, `square_millimetre`, `cubic_millimetre`, `degree`, or `unitless`. |
+| `unit` | The graph measurement unit of the expected answer: `millimetre`, `square_millimetre`, `cubic_millimetre`, `degree`, or `unitless`. It is test data used to choose the tolerance; it is not a release column. |
 | `tolerance` | `{tolerance_kind, value_text}` for a numeric answer; null for an exact answer. |
 | `scoring_rule` | `exact`, `numeric_tolerance`, or `structured_exact`. |
 | `parameter` | The meaning's declared parameter, or null. See section 4. |
@@ -289,11 +289,15 @@ entity in `answer_parameter` is now invalid.
 
 ## 5. Units and canonical text
 
-The records use the graph's unit names: `millimetre`, `square_millimetre`,
-`cubic_millimetre`, `degree`, and `unitless`. The golden record
-[`box-with-hole.json`](../../golden/box-with-hole.json) uses `mm` for a length.
-The release contract does not fix the vocabulary. Unify it before the first
-release; the oracle is the place the choice is pinned.
+A record's `answer.unit` is the graph measurement unit of the expected answer:
+`millimetre`, `square_millimetre`, `cubic_millimetre`, `degree`, or `unitless`.
+It is test data used to choose the answer's tolerance. It is not a release
+column.
+
+CadQuery is unitless, so the release has no per-row answer unit and no prompt
+renders one. The dataset card states the one convention a consumer needs: 1 CAD
+unit = 1 mm, areas mm², volumes mm³, angles degrees. Display spellings such as
+`mm`, `mm^2`, `mm^3`, and `deg` are not record keys.
 
 ## 6. How to add a record
 

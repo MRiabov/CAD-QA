@@ -707,9 +707,10 @@ rests on.
 **P2 extras.** Near-miss choices, six or more steps, arbitrary control flow. Not
 a milestone; it must not delay the first release.
 
-Each milestone gets a golden narrowing record, a property test (every accepted
-task is answer-unique, every clue narrows, every clue is true of all final
-possible answers), a replay test, and one end-to-end test.
+Each milestone from `03b-M2` gets a golden narrowing record, a property test
+(every accepted task is answer-unique, every clue narrows, every clue is true of
+all final possible answers), a replay test, and one end-to-end test. `03b-M1`
+has no clue to narrow; its proof is the end-to-end row and the property tests.
 
 ## Deferred
 

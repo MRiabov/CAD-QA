@@ -1,10 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "golden_id": "box-with-hole",
   "construction": {
     "constructor_version": "1",
     "construction_seed": 0,
-    "definition_schema_version": "1",
+    "definition_schema_version": "2",
     "graph_schema_version": "1"
   },
   "program": {
@@ -81,13 +81,13 @@
   ],
   "answer": {
     "gold_answer": "12.57",
-    "answer_unit": "mm",
     "tolerance": {
       "kind": "absolute",
-      "value": 0.005
+      "value": 0.005,
+      "unit": "millimetre"
     },
     "scoring_rule": "numeric_tolerance",
-    "answer_schema_version": "1",
+    "answer_schema_version": "2",
     "answer_evidence": {
       "evidence_kind": "measured",
       "evidence_rule": "length",

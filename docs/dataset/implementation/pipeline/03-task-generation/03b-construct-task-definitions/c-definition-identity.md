@@ -91,8 +91,8 @@ the hash.
 `definition_sha256` covers `state_scope`, `possible_answer_count`,
 `target_binding`, `task_clues`,
 `clue_reduction_form_profile`, `answer_meaning`, `answer_parameter`,
-`gold_answer`, `answer_unit`, `tolerance`, `scoring_rule`, `answer_evidence`,
-and `choice_pool` in construction order. It also covers the inputs that change
+`gold_answer`, `tolerance`, `scoring_rule`, `answer_evidence`, and
+`choice_pool` in construction order. It also covers the inputs that change
 that content: `program_sha256`, `graph_identity_sha256`, `graph_schema_version`,
 `runtime_extraction_sha256`, `constructor_version`, `definition_schema_version`,
 and `construction_seed`.
@@ -102,8 +102,8 @@ It does not cover `plan_version`, `cadevolve_program_family_id`, `split`, or
 changing an accepted definition, so hashing them would invalidate every accepted
 definition on every replan (`TG-3`).
 
-`answer_sha256` covers `gold_answer`, `answer_unit`, `tolerance`,
-`scoring_rule`, and `answer_schema_version`. For a multiple-choice task it also
+`answer_sha256` covers `gold_answer`, `tolerance`, `scoring_rule`, and
+`answer_schema_version`. For a multiple-choice task it also
 covers the `candidate` of the entry whose label is `gold_answer`, because a label
 is a position and does not identify the answer on its own. It excludes
 `answer_evidence`, because evidence is audit data and a change to its

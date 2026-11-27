@@ -91,7 +91,7 @@ tolerance; `text` also tolerates float-formatting differences in a decomposed
 The harness owns the system prompt, the answer instruction, and the submit tool.
 The dataset prompt is the user message and does not contain them
 ([`DS-REQ-24`](../../dataset/requirements/decisions.md#ds-req-24--the-dataset-prompt-is-the-user-message)).
-The CAD-QA dataset row supplies `answer_format` and `answer_unit`; the harness
+The CAD-QA dataset row supplies `answer_format` and `answer_meaning`; the dataset card states the unit convention, because CadQuery is unitless. The harness
 maps them to one typed submit tool:
 
 | Dataset `answer_format` | Submit tool | Typed arguments |

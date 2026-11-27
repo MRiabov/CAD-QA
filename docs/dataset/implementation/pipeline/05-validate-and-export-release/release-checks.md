@@ -45,7 +45,7 @@ nobody planned for.
 | Task reasoning step count | `task_reasoning_step_count` | task | tasks | `task_reasoning_step_count` |
 | Built shape | `geometry_required` | task | tasks | `geometry_required` |
 | CAD model | `program_id` | task | tasks | `program_id` |
-| Correct answer | `correct_answer` | task | tasks | `answer_format`, `gold_answer` or `choices`, `answer_unit` |
+| Correct answer | `correct_answer` | task | tasks | `answer_format`, `answer_meaning`, `gold_answer` or `choices` |
 | Clue type | `clue_type` | clue occurrence | clue occurrences | `clue_types` |
 | Clue reduction form | `clue_reduction_form` | clue occurrence that carries a reference | clue occurrences that carry a reference | `clue_reduction_form_profile` |
 | Warmup | `warmup` | task | — | `subset` |
@@ -66,7 +66,7 @@ are in
 release contract and `03a` both count distinct programs, so the two numbers are
 the same number.
 
-**A correct answer is `(answer_format, gold_answer, answer_unit)`, with
+**A correct answer is `(answer_format, answer_meaning, gold_answer)`, with
 `gold_answer` in its canonical text form, except for multiple choice.** It is deliberately coarser than `answer_sha256`, which also
 covers the scoring fields. Two tasks that ask for the same number with different
 tolerances have the same correct answer, and R-11 is about the answer, not about

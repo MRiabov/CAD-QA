@@ -34,7 +34,7 @@ labels, and placeholders are all declared.
   definition's typed values byte for byte after canonical encoding. The fixture
   writes its tolerance with a number form a serializer would change, so a
   re-serialization fails here;
-- `answer_schema_version` and `answer_unit` are copied unchanged;
+- `answer_schema_version` is copied unchanged;
 - every column the release contract marks required is present, and no column is
   invented.
 

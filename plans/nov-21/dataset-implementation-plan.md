@@ -77,7 +77,7 @@ later, so `02c`'s schema is real before `03b` depends on it.
 | Work item | Requirements | Goal | Pass condition |
 |---|---|---|---|
 | `P0-W1` | — | Contract close-out: the decisions that must exist before code | The owner docs named in [P0-W1](#p0-w1--contract-close-out) carry the new rules; no code |
-| `P0-W2` | R-18, R-19 | Walking skeleton: one program → one release row | `test_pipeline_end_to_end` green on the fixture pool; a rerun is a no-op with byte-identical output |
+| `P0-W2` | R-18, R-19 | Walking skeleton: one release row per fixture program | `test_pipeline_end_to_end` green on the fixture pool; a rerun is a no-op with byte-identical output |
 | `P0-W3` | R-1, R-4, R-19 | Extraction and execution depth: AST, CadQuery runtime, CAD graph, census, completeness, and the verified oracle set | Validation and persistence tests green on the real pool; failures reconcile; no unexplained missing or orphan row; every must-extract capability has a verified oracle; time and memory per program recorded |
 | `P0-W4` | R-1–R-9, R-15 | Construction depth: clue search and the P0 vocabulary | Golden records match; property tests hold; yield per program measured on real graphs |
 | `P0-W5` | R-7–R-10, R-13, R-15 | Quotas and deficits: `03a` and `03c` | A planned release over the real pool with reconciled counts and a deficit ledger |
@@ -185,9 +185,9 @@ item, defer it to the item that consumes it.** This is the mitigation from
 
 ## P0-W2 — walking skeleton
 
-One program produces one release row through the production entry point. The
-point is not the row; it is that every seam is exercised while it is still cheap
-to change.
+Each fixture program produces one release row through the production entry
+point. The point is not the rows; it is that every seam is exercised while it is
+still cheap to change.
 
 **Go.**
 
@@ -210,22 +210,27 @@ to change.
 
 **Pipeline stages.**
 
-- `01a`–`01e` on a three-program fixture pool cut from
-  `data/cadevolve_sources.parquet`.
-- `02a`/`02b`/`02c` on the program in
-  `docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json`.
-- `02c` writes the `GraphCompletenessReport` for the box-with-hole program from
+- `01a`–`01e` on the committed three-row pipeline fixture pool from
+  `docs/dataset/implementation/pipeline/testing/fixtures/pipeline-pool.json`;
+  the test writes the small `cadevolve_sources.parquet` into a temporary
+  directory, so the downloaded cache is not a precondition.
+- `02a`/`02b`/`02c` on the same fixture pool. The box-with-hole program is not a
+  chain input: its graph and `GraphCompletenessReport` are built by the `02c`
+  test, and the extraction-graph oracles are direct `02c` checks.
+- `02c` writes the `GraphCompletenessReport` for each graph it builds from
   [`extraction/graph-completeness.md`](../../docs/dataset/implementation/pipeline/extraction/graph-completeness.md);
   the expected set comes from the upstream extraction records and the contract
   rules, not from the graph. The oracle set calibrates those rules.
 - Verify the two extraction-graph oracles (`box-with-hole`, `rotated-box`) from
   `proposed` to `verified`; the builder and the records are checked in under
   [`testing/oracles/extraction-graph/`](../../docs/dataset/implementation/pipeline/testing/oracles/extraction-graph/).
-- `03a` emits a one-cell plan, typed from its own doc even though the allocation
-  is trivial.
+- `03a` emits a one-cell plan covering the three fixture programs, typed from its
+  own doc even though the allocation is trivial.
 - `03b` lands the plumbing milestone (`03b-M1`) from
   `plans/nov-19/03b-task-construction-design.md`: final solid state target,
-  volume answer, number format, one step, no clue search.
+  volume answer, number format, one step, no clue search. The W2 test asserts the
+  row structurally against the graph measurement; golden records start at
+  `03b-M2`.
 - `04` renders from `prompts.yaml`; `05` exports `release.parquet`,
   `failures.parquet`, `manifest.json`, and the dataset card. The support table
   and its `05` assertion belong to `P0-W5`; the W2 export does not require them.
@@ -240,7 +245,9 @@ to change.
 `testing/00-end-to-end.md` is written from its contract and green on the fixture
 pool; a second run with the same inputs executes no unit, writes no part, and
 produces byte-identical `release.parquet`; `generator status` reports the
-completion marker and part counts for each pipeline stage.
+completion marker and part counts for each pipeline stage. The test runs in the
+`pipeline` suite, which lands with `02b`, installs the kernel extra, and fails
+rather than skips when CadQuery is absent.
 
 **Scope, and what replaces it.** The skeleton is deliberately thin. Each thin
 part has an owner later in the plan; a skeleton behaviour that is not in this
@@ -248,26 +255,26 @@ table is part of the contract and is not replaced later.
 
 | Skeleton behaviour | Replaced by | Failure if left |
 |---|---|---|
-| `01` runs on a three-program fixture pool | `P0-W3` full pool | the fixture hides fetch, selection, and normalization failures |
-| `03a` emits a one-cell plan | `P0-W5` quota allocation | the typed plan bakes in one cell and one program |
+| `01` runs on a three-row committed fixture pool | `P0-W3` full pool | the fixture hides fetch, selection, and normalization failures |
+| `03a` emits a one-cell plan with no quota competition | `P0-W5` quota allocation | the typed plan bakes in one cell and the fixture's program set |
 | `03b-M1`: final solid state, volume answer, number format, one step | `P0-W4` `03b-M2`/`M3` | the constructor grows a path that the `box-volume` oracle later disagrees with |
 | `05` exports without the full check suite | `P0-W6` P0 checks and `known_misses` | the partial export becomes the release contract |
-| One `GraphCompletenessReport`, for `box-with-hole` | `P0-W3` whole pool | the report shape is the acceptance gate, and it is untested on hard geometry |
+| The chain's `GraphCompletenessReport` covers a fixture-pool program; box-with-hole's is the `02c` test | `P0-W3` whole pool | the report shape is the acceptance gate, and it is untested on hard geometry |
 | `02b` binds one solid state; the point-probe scope is unresolved | `P0-W3` `DS-REQ-10` rule | changing it later invalidates every graph and every `03b` unit |
 | No family-to-split registry | `P0-W6` writer, `P1-W3` reader | the first release becomes the migration |
 | No sampled review queue, only `dataset_browser` and the dataset release task review ledger | `P0-W6` three-ledger gate | the ledger schemas change after rows exist |
 | No graph persistence tuning; one part per `02b` unit | contract, not a shortcut (`DS-ADR-07`/`DS-ADR-09`) | none; this one is not replaced |
 
-**Contract conflict to settle before the first commit.** `P0-W2`'s `03b` scope
-is `03b-M1` (one step, volume, no clue search), but `test_pipeline_end_to_end`
-in [`testing/00-end-to-end.md`](../../docs/dataset/implementation/pipeline/testing/00-end-to-end.md)
-asserts that the golden record's definition appears in the release, and
-[`golden/box-with-hole.json`](../../docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json)
-is a three-step edge-length task. The test cannot be green on a one-step
-constructor as written. Either the skeleton asserts a one-step `box-volume`
-golden and `box-with-hole` moves to `P0-W4`, or the skeleton's single row is the
-box-with-hole chain. The first keeps `03b-M1` honest and is the smaller scope;
-the test doc owns the answer and must say which before `P0-W2` is marked green.
+**Test contract settled.** `03b-M1` is one-step volume with no clue search, so
+the W2 end-to-end test asserts the constructed row structurally: the release
+carries the definition's `gold_answer` unchanged, equal to the final solid
+state's measured volume in the graph, with one possible answer, one reasoning
+step, and no clues. It does not compare a golden record. Golden records start at
+`03b-M2`; [`golden/box-with-hole.json`](../../docs/dataset/implementation/pipeline/testing/golden/box-with-hole.json)
+remains the `02a`/`02b`/`02c` fixture and the `P0-W4` construction record. The
+fixture pool is the committed three-row CADEvolve copy in
+`testing/fixtures/pipeline-pool.json`, and box-with-hole is a direct
+`02c`/oracle test program, not a chain input.
 
 **Why first.** Artifact identities, the Parquet schema across the Go/Python
 boundary, the worker protocol, resume, and failure reconciliation are the

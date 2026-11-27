@@ -53,7 +53,7 @@ WRITE:
 
 TRANSFORM:
 
-- copy definition fields unchanged, including `clue_reduction_form_profile`, `answer_schema_version`, and `answer_unit`
+- copy definition fields unchanged, including `clue_reduction_form_profile` and `answer_schema_version`
 - copy `gold_answer`, `tolerance`, and `answer_evidence` as typed values; never re-serialize or recompute an answer value
 - copy `answer_sha256`; never recompute it
 - copy the label and the answer value of every choice-pool entry into `choices`; the descriptions stay in the prompt and `distinguishing_facts` stay in the definition
@@ -65,4 +65,4 @@ TRANSFORM:
 
 WRITE:
 
-- `ReleaseTable` `(release_id)` → one row per task, in the release contract column order: `task_id, split, subset, prompt, prompt_sha256, program_id, program_sha256, cadevolve_program_family_id, task_reasoning_step_count, target_category, clue_types, clue_reduction_form_profile, answer_format, choices (label, candidate), answer_meaning, geometry_required, gold_answer, answer_unit, tolerance, scoring_rule, answer_schema_version, answer_sha256, answer_evidence`
+- `ReleaseTable` `(release_id)` → one row per task, in the release contract column order: `task_id, split, subset, prompt, prompt_sha256, program_id, program_sha256, cadevolve_program_family_id, task_reasoning_step_count, target_category, clue_types, clue_reduction_form_profile, answer_format, choices (label, candidate), answer_meaning, geometry_required, gold_answer, tolerance, scoring_rule, answer_schema_version, answer_sha256, answer_evidence`

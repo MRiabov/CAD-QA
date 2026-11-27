@@ -130,7 +130,6 @@ class ReleaseRow(BaseModel):
     answer_meaning: str = Field(min_length=1)
     geometry_required: bool
     gold_answer: AnswerValue
-    answer_unit: str | None = None
     tolerance: Tolerance | None = None
     scoring_rule: str = Field(min_length=1)
     answer_sha256: str = Field(min_length=64, max_length=64)
@@ -329,14 +328,14 @@ def tolerance_display(row: ReleaseRow) -> str:
     tolerance = row.tolerance
     if tolerance is None:
         return "exact"
-    unit = tolerance.unit or row.answer_unit or ""
+    unit = tolerance.unit or ""
     return f"{tolerance.tolerance_kind} {tolerance.value_text or ''} {unit}".strip()
 
 
 def answer_text(row: ReleaseRow) -> str:
-    """The gold answer as one line, with its unit."""
+    """The gold answer as one line. CadQuery is unitless, so there is no unit."""
 
-    return f"{answer_display(row)} {row.answer_unit or ''}".strip()
+    return answer_display(row)
 
 
 def prompt_preview(prompt: str, limit: int = 180) -> str:

@@ -96,9 +96,8 @@ def write_release(path: Path) -> None:
                 [{"kind": "number", "number_text": task[6]} for task in TASKS],
                 type=answer,
             ),
-            "answer_unit": ["mm"] * 3,
             "tolerance": pa.array(
-                [{"kind": "absolute", "value_text": "0.5", "unit": "mm"}] * 3,
+                [{"kind": "absolute", "value_text": "0.5", "unit": "millimetre"}] * 3,
                 type=tolerance,
             ),
             "scoring_rule": ["numeric_tolerance"] * 3,
@@ -220,7 +219,7 @@ def test_page_filters_and_paginates(index: TaskIndex) -> None:
 
 def test_detail_has_program_and_diagnostics(index: TaskIndex) -> None:
     task = index.detail("cadqatask:aaa")
-    assert task.answer == "1000 mm"
+    assert task.answer == "1000"
     assert "result = cq.Workplane" in task.program
     assert {entry.label for entry in task.diagnostics} >= {"task_id", "tolerance"}
 
@@ -245,7 +244,7 @@ def test_api_serves_tasks_and_detail(origin: str) -> None:
     assert len(page["tasks"]) == 2
 
     task = get_json(f"{origin}/api/tasks/cadqatask%3Aaaa")
-    assert task["answer"] == "1000 mm"
+    assert task["answer"] == "1000"
     assert "How long is the target edge?" in task["prompt"]
 
 

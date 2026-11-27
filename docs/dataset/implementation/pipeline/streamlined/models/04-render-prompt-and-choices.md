@@ -82,7 +82,6 @@ type ReleaseRow struct {
 	AnswerMeaning            AnswerMeaning   `parquet:"answer_meaning"`
 	GeometryRequired         bool            `parquet:"geometry_required"`
 	GoldAnswer               AnswerValue     `parquet:"gold_answer"`
-	AnswerUnit               *string         `parquet:"answer_unit"`
 	Tolerance                *AnswerTolerance `parquet:"tolerance"`
 	ScoringRule              ScoringRule     `parquet:"scoring_rule"`
 	AnswerSchemaVersion      string          `parquet:"answer_schema_version"`

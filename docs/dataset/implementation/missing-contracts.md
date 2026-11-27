@@ -14,12 +14,13 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-Five entries are open: `MC-68`, `MC-69`, `MC-71`, `MC-72`, and `MC-74`, all
-from the 2026-11-27 P0-W2 audit. `MC-70` closed on 2026-11-27 with `DS-ADR-18`,
-and `MC-73` closed in the pair-answer oracle pass.
+Two entries are open: `MC-71` and `MC-74`, both from the 2026-11-27 P0-W2
+audit. `MC-68`, `MC-69`, and `MC-72` closed on 2026-11-27 in the P0-W2
+test-contract pass. `MC-70` closed on 2026-11-27 with `DS-ADR-18`, and `MC-73`
+closed in the pair-answer oracle pass.
 P1 and P2 are empty. `MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66`
-closed on 2026-11-25, and `MC-64` and `MC-67` closed on 2026-11-27. The closed
-entries below are unchanged.
+closed on 2026-11-25, and `MC-64` and `MC-67` closed on 2026-11-27. The
+previously closed entries below are unchanged.
 
 ## Decisions needed from the owner
 
@@ -42,36 +43,8 @@ other open P0 entries are technical.
 
 ### Technical (P0)
 
-Work order: `MC-72` first, because the M1 golden, the release column, and the
-prompt all depend on the unit vocabulary; then `MC-68` and `MC-69` (golden and
-fixture pool), then `MC-71` (the P0-W2 `05`
-check set). `MC-74` lands with the code it corrects.
-
-- `MC-68` — the P0-W2 end-to-end test does not name the golden record it
-  asserts. [`00-end-to-end.md`](pipeline/testing/00-end-to-end.md#the-test)
-  asserts that "the golden record's definition appears in the release"; the
-  plan's `03b-M1` is one-step volume
-  ([milestones](../../../plans/nov-19/03b-task-construction-design.md#milestones)),
-  while [`golden/box-with-hole.json`](pipeline/testing/golden/box-with-hole.json)
-  is a three-step edge-length task with retired `clue_operand_form` values. The
-  record's own status note says it keeps the old vocabulary until `03b`
-  rebuilds it. The test doc must name the record: either a new one-step
-  `box-volume` record is the skeleton's golden and `box-with-hole` moves to
-  P0-W4, or the skeleton's single row is the `box-with-hole` chain. The first
-  keeps `03b-M1` honest and is the smaller scope. The same pass fixes the stale
-  `answer.tolerance` "canonical JSON text" sentence and the record's
-  `answer_unit` (see `MC-72`).
-
-- `MC-69` — the skeleton fixture pool has no membership contract. The plan runs
-  `01a`–`01e` on "a three-program fixture pool cut from
-  `data/cadevolve_sources.parquet`" and runs `02a`–`02c` on the program in
-  `golden/box-with-hole.json`
-  ([P0-W2](../../../plans/nov-21/dataset-implementation-plan.md#p0-w2--walking-skeleton)).
-  That program is not in the CADEvolve cache: its normalized hash `b406df…` and
-  its `box(10, 20, 5)` text are absent from all 1,998,810 rows. If the pool
-  includes hand-authored fixture programs, `01a` and `01b` need their metadata
-  and `cadevolve_program_family_id`; if it does not, the chain cannot produce
-  the golden row.
+Work order: `MC-71` (the P0-W2 `05` check set), then `MC-74` (the typed
+declarations, which land with the code they correct).
 
 - `MC-71` — the P0-W2 `05` check set is undefined.
   [`05`](pipeline/05-validate-and-export-release.md#scope) runs every
@@ -85,16 +58,6 @@ check set). `MC-74` lands with the code it corrects.
   `graph_completeness`, the review gate, and the benchmark overlap are
   enforced. The dataset browser's review-ledger path is also not a `05` input
   path or a run CLI flag.
-
-- `MC-72` — `answer_unit` has no closed vocabulary. The golden record uses `mm`
-  ([golden/README](pipeline/testing/golden/README.md#35-answer)), the oracles
-  use `millimetre`, `square_millimetre`, `cubic_millimetre`, and `unitless`
-  ([oracles README](pipeline/testing/oracles/task-construction/README.md#5-units-and-canonical-text)),
-  the release contract says only "string or null", and
-  [`prompt-templates.md`](prompt-templates.md#5-label-tables) keys `label.unit`
-  by `mm`, `mm2`, `mm3`, and `deg`. The M1 volume row needs one value and a
-  display mapping. Pin the graph unit names as the release vocabulary and map
-  them in `04`, or add the display keys.
 
 - `MC-74` — four typed declarations contradict their contracts.
   [`ReleaseTable`](pipeline/streamlined/models/04-render-prompt-and-choices.md#output--releasetable)
@@ -119,6 +82,20 @@ None.
 
 None. `MC-22` closed in the 2026-11-25 geometry-required pass and `MC-49`
 closed in the 2026-11-25 benchmark-program-set pass.
+
+## Closed in the 2026-11-27 P0-W2 test-contract pass
+
+- `MC-68` — the W2 end-to-end test asserts the one-step volume row against the
+  graph measurement and does not compare a golden record; golden records start at
+  `03b-M2`. The stale `answer.tolerance` sentence was corrected, and the record's
+  `answer_unit` was removed with the unit column.
+- `MC-69` — the W2 chain runs on the committed three-row pipeline fixture pool
+  from `testing/fixtures/pipeline-pool.json`, with the small-run
+  `SelectionPolicy` named in the test doc. Box-with-hole is a direct
+  `02c`/oracle test program, not a chain input.
+- `MC-72` — the release has no `answer_unit` column; the answer identity is
+  `(answer_format, answer_meaning, gold_answer)`, and no prompt renders a unit.
+  The dead `label.unit` table was removed.
 
 ## Closed in the 2026-11-27 pair-answer oracle pass
 

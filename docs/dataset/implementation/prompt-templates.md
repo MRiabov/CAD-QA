@@ -42,8 +42,8 @@ this contract.
 A minimal file looks like this:
 
 ```yaml
-schema_version: 3
-version: cadqa_prompt_v13
+schema_version: 4
+version: cadqa_prompt_v14
 
 namespaces:
   dataset:
@@ -155,7 +155,7 @@ renderer refuses an entry that does not fit.
 `text` is for a description or a sentence that another part of `04` has already
 rendered. `label.<table>` is for a closed display table. A choice description, an
 operation description, and a CadQuery profile description are `text`; a metric
-name, a relation name, a comparator, a unit, and a target category are
+name, a relation name, a comparator, and a target category are
 `label.<table>`.
 
 A `text` placeholder that names an entity is a full noun phrase with its
@@ -222,7 +222,6 @@ The P0 label tables are:
 | `metric` | `volume`, `face_area`, `distance`, `face_count`, `centroid_x` | `label.metric` |
 | `comparator` | `gt`, `ge`, `lt`, `le`, `eq` | `label.comparator` |
 | `relation` | `adjacent_to`, `has_edge`, `has_vertex` | `label.relation` |
-| `unit` | `mm`, `mm2`, `mm3`, `deg` | `label.unit` |
 | `position_parameter` | `face_centroid`, `edge_midpoint`, `vertex_point`, `region_centroid`, `solid_state_centroid` | `label.position_parameter` |
 | `counted_entity` | `face`, `edge`, `vertex`, `selected_entity` | `label.counted_entity` |
 | `frame` | `program_frame` | `label.frame` |
@@ -241,7 +240,9 @@ The label tables are a closed set. Schema version 2 added
 them. One value has no label on purpose: `face_surface_kind` has no `other`,
 because the face surface kind has no adjective, and a task that would name an
 `other` face is a render-time task defect. A new table is a schema change: bump
-`schema_version` and `version`, and add the renderer support.
+`schema_version` and `version`, and add the renderer support. Schema version 4
+removed the `unit` table: CadQuery is unitless, the release has no unit column,
+and no template renders a unit.
 
 ## 6. Templates and selection
 
@@ -360,7 +361,7 @@ three values together make a prompt reproducible.
 
 The evaluation harness owns its system prompt, answer instruction, and submit-tool
 schema; they are not in `prompts.yaml` and not in the dataset release. The
-harness builds them from a row's `answer_format` and `answer_unit`. A change to a
+harness builds them from a row's `answer_format` and `answer_meaning`. A change to a
 harness prompt or tool does not change a dataset release row: the dataset prompt
 and `prompt_sha256` stay the same (`DS-REQ-24`). The dataset supplies no system
 prompt.

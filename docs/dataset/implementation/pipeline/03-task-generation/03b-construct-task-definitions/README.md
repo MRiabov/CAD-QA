@@ -42,7 +42,7 @@ task. It is not prompt text and not a loose task tuple. It is what `04` renders.
 | `answer_meaning`, `task_answer_step` | What the answer is about and the step that produces it. |
 | `answer_parameter` | The point for a position or a membership, the category for a topology change, null otherwise. |
 | `native_answer_format`, `answer_format` | The meaning's native format and the format the prompt will request. |
-| `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` is an `AnswerValue` and `tolerance` is a `Tolerance`; both use canonical decimal text for numbers and match the release columns. |
+| `gold_answer`, `tolerance`, `scoring_rule` | Answer data. `gold_answer` is an `AnswerValue` and `tolerance` is a `Tolerance`; both use canonical decimal text for numbers and match the release columns. CadQuery is unitless, so the answer has no unit field. |
 | `answer_schema_version` | Version of the answer representation: the answer formats, the canonical text rules, and the answer evidence shape. Hashed by `answer_sha256`. |
 | `answer_evidence` | Typed `AnswerEvidence`: rule, references, the answer-equivalent count and shared answer, and the point probe. The full set stays in the definition; `04` copies the count and shared answer into the release column. |
 | `choice_pool` | The ordered, labeled options when multiple choice is planned: label, answer value, distinguishing graph facts, and the P2 error mode. Empty otherwise. |

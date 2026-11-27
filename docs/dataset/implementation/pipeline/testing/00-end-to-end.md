@@ -12,10 +12,14 @@ metadata to `05` validate and export release on the fixture pool, through the
 production entry point, and asserts the release artifacts read back through the
 reader a dataset consumer uses.
 
-**Given** a fixture pool of CADEvolve programs, their metadata, and typed packets
-for the `01c` fetch that replace the network. Nothing else is mocked: CadQuery
-and OCP execute, the graph is built, definitions are constructed, prompts are
-rendered, and the release is exported.
+**Given** a pipeline fixture pool in `fixtures/pipeline-pool.json`: three CADEvolve
+rows copied once into the repository as metadata, program text, and typed
+packets for the `01c` fetch that replace the network, plus the small-run
+`SelectionPolicy` the fixture names. The test writes the three-row
+`cadevolve_sources.parquet` into a temporary directory and passes it as
+`--external-dataset`, so the downloaded cache is not a precondition. Nothing else is mocked: CadQuery and OCP execute, the
+graph is built, definitions are constructed, prompts are rendered, and the
+release is exported.
 
 **When** the chain runs once with a fixed `release_seed` in a temporary runs
 root; it allocates `run0001`.
@@ -28,8 +32,11 @@ root; it allocates `run0001`.
   failures recorded there;
 - every release row has a non-empty answer-free `prompt` whose `prompt_sha256`
   recomputes from its bytes, one `answer_sha256`, and one answer set;
-- the golden record's definition appears in the release, and its clue sequence,
-  answer, and counts match the record;
+- each constructed task's release row carries the definition's `gold_answer`
+  unchanged, and that value equals the graph measurement the answer meaning
+  reads — for the `03b-M1` one-step volume task, the final solid state's measured
+  volume — with `possible_answer_count = 1`,
+  `task_reasoning_step_count = 1`, and no clues;
 - each CADEvolve program family sits in exactly one split, and no `task_id`
   appears twice;
 - every multiple-choice row carries a `choices` pool whose correct label denotes
@@ -47,9 +54,9 @@ root; it allocates `run0001`.
   unit, writes no part, and leaves every pipeline stage completion marker
   unchanged.
 
-**TDD pin:** pins the chain's count reconciliation, the golden definition in the
-release, split isolation, and the manifest fields before any pipeline stage
-exists.
+**TDD pin:** pins the chain's count reconciliation, the one-step volume row's
+answer against the graph measurement, split isolation, and the manifest fields
+before any pipeline stage exists.
 
 ## Failure-mode tests
 
@@ -67,6 +74,8 @@ exists.
 
 ## What this does not prove
 
+- That a task definition matches a golden record. That is the `03b` construction
+  test, which starts at `03b-M2`.
 - That the release meets its targets. That is the check policy, run by `05` and
   reported in the manifest.
 - That a task is natural or well worded. That is the review gate.

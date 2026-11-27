@@ -328,7 +328,6 @@ it from there when it needs to recheck uniqueness.
 | `answer_meaning` | enum | yes | What the answer is about. | `TaskDefinition.answer_meaning` |
 | `geometry_required` | boolean | yes | Whether at least one task reasoning step (a task clue step or the task answer step) depends on the built shape. | `TaskDefinition.geometry_required` |
 | `gold_answer` | `AnswerValue` struct | yes | The gold answer, tagged by `kind`. | `TaskDefinition.gold_answer` |
-| `answer_unit` | string or null | yes | Unit; null means unitless. | `TaskDefinition.answer_unit` |
 | `tolerance` | `Tolerance` struct or null | yes | Answer tolerance; null means exact. | `TaskDefinition.tolerance` |
 | `scoring_rule` | enum `exact`, `numeric_tolerance`, `structured_exact` | yes | How the answer is checked. | `TaskDefinition.scoring_rule` |
 | `answer_schema_version` | string | yes | Version of the answer representation. | `TaskDefinition.answer_schema_version` |
@@ -541,7 +540,7 @@ test commit look like a new generator, which is the wrong trade for a dataset.
 
 `answer_set_sha256` is SHA-256 over the sorted, deduplicated correct answers of
 the release. It uses the same answer identity as the `distinct_answer_count`
-check in `05`: `(answer_format, gold_answer, answer_unit)`. Each answer is
+check in `05`: `(answer_format, answer_meaning, gold_answer)`. Each answer is
 encoded as the canonical JSON array of those three values, with `gold_answer` in
 its canonical text form. The count and the
 digest therefore describe the same set.
@@ -580,7 +579,7 @@ release:
 | Topology change | The signed change in the entity category the question declares. |
 | Membership | Inside or outside. A point within the clear-case margin of a face surface is not used, so "on the boundary" is never an answer. |
 | Answer precision | Four significant figures by default. The stated precision is the precision a scorer compares at. |
-| Units | The `answer_unit` column; null means unitless. |
+| Units | No per-row unit column. CadQuery is unitless; the graph declares a measurement unit for tolerance selection, and the card states the convention once: 1 CAD unit = 1 mm, areas mm², volumes mm³, angles degrees. |
 
 ## 9. Generation pipeline
 

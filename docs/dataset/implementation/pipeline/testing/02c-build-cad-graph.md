@@ -91,6 +91,9 @@ equality, and the state-size rejection before `02c` exists.
 
 ## What this does not prove
 
+- That the box-with-hole report is the chain's report. The box-with-hole graph
+  and its `GraphCompletenessReport` are built by this test; the chain's report
+  covers a fixture-pool program.
 - That a task exists for the graph. That is
   [`03b-construct-task-definitions.md`](03-task-generation/03b-construct-task-definitions/README.md).
 - That every declared capability is realized somewhere in the pool. That is

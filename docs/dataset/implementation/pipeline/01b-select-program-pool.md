@@ -57,6 +57,16 @@ Within the in-scope pool:
 7. Select 1,500 active C programs for P0/P1. Select the next 300–450 by the same
    policy as reserve.
 
+### Test and fixture pools
+
+A test or a smaller run injects `SelectionPolicy` values instead of the release
+defaults: `active_count`, `reserve_count`, `collection_minimum`, `family_cap`,
+and `usable_floor`. The selection order, dedupe rule, and family cap do not
+change. The injected values are part of the fixture contract and are named in
+the test doc; a release run uses the defaults. A three-program pool with the
+release minima would record shortfalls and fail `usable_floor`, so the fixture
+policy is explicit rather than implied.
+
 ## Constraint precedence
 
 The order is:

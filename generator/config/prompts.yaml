@@ -17,8 +17,8 @@
 # copy bumps `version`; a comment-only edit changes the file hash but not
 # `version`. A structural change bumps `schema_version` and `version`.
 
-schema_version: 3
-version: cadqa_prompt_v13
+schema_version: 4
+version: cadqa_prompt_v14
 
 namespaces:
   dataset:
@@ -100,12 +100,6 @@ namespaces:
         endpoint_of: "an endpoint of"
         # p2
         same_as: "the same as"
-
-      unit:
-        mm: "mm"
-        mm2: "mm^2"
-        mm3: "mm^3"
-        deg: "degrees"
 
       position_parameter:
         face_centroid: "area centroid"

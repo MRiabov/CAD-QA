@@ -337,7 +337,6 @@ type TaskDefinition struct { // Parquet
 	NativeAnswerFormat         AnswerFormat              `parquet:"native_answer_format"`
 	AnswerFormat               AnswerFormat              `parquet:"answer_format"`
 	GoldAnswer                 AnswerValue               `parquet:"gold_answer"`
-	AnswerUnit                 *string                   `parquet:"answer_unit"`
 	Tolerance                  *AnswerTolerance          `parquet:"tolerance"`
 	ScoringRule                ScoringRule               `parquet:"scoring_rule"`
 	AnswerSchemaVersion        string                    `parquet:"answer_schema_version"`

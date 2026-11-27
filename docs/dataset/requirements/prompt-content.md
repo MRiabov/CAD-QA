@@ -28,7 +28,7 @@ The prompt does not contain the answer or any hidden identifier.
 
 The prompt contains only what the task needs. The system prompt, the answer
 instruction, and the submission format are harness policy: a harness adds them
-from the answer metadata (`answer_format` and `answer_unit`), and they are not
+from the answer metadata (`answer_format` and `answer_meaning`), and they are not
 part of the dataset prompt (`DS-REQ-24`). The dataset card carries the answer
 conventions a consumer needs.
 
@@ -263,10 +263,11 @@ plausible distractors, the task is not generated.
 The dataset prompt does not state the answer format, an example of its syntax, or
 how to submit an answer. Those are harness policy (`DS-REQ-24`): a harness builds
 its answer instruction and submit tool from the row's `answer_format` and
-`answer_unit`. The release dataset card states the conventions a consumer needs —
+`answer_meaning`. The release dataset card states the conventions a consumer needs —
 units, precision, the angle and distance conventions, and the signed material
 change ([`release-dataset-contract.md`](release-dataset-contract.md#8-dataset-card)).
-The `answer_format` and `answer_unit` columns are the machine-readable form.
+The `answer_format` and `answer_meaning` columns are the machine-readable form;
+CadQuery is unitless, so there is no per-row unit column.
 
 ## 7. What the prompt must not contain
 

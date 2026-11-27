@@ -7,7 +7,8 @@ task construction and the first record. It closes `MC-42`. The first record
 predates the 2026-11-24 requirement revisions (the reduction-form rename,
 categorical features, and one-condition references); it keeps the old
 `clue_operand_form` field names and `named` and `selected` values until `03b`
-rebuilds it.
+rebuilds it. The record is `schema_version` 2: the answer no longer carries an
+`answer_unit`, because the release has no unit column and CadQuery is unitless.
 
 ## 1. What a golden record is
 
@@ -142,15 +143,14 @@ no direction.
 |---|---|---|
 | `gold_answer` | string | Canonical text; the same text `TaskDefinition.gold_answer` holds. |
 | `choices` | list of struct `{label, candidate}`, both strings | The multiple-choice pool; empty unless the answer format is multiple choice. |
-| `answer_unit` | string or null | `mm` or null. |
-| `tolerance` | object or null | Decoded tolerance; null for an exact answer. |
+| `tolerance` | object or null | Decoded tolerance with `kind`, `value`, and `unit`; null for an exact answer. `unit` is the graph measurement unit the tolerance policy keys on. |
 | `scoring_rule` | string | `exact`, `numeric_tolerance`, or `structured_exact`. |
 | `answer_schema_version` | string | The answer representation version. |
 | `answer_evidence` | object | The typed evidence. |
 
-`tolerance` is decoded for readability. The definition stores it as canonical
-JSON text; the end-to-end test canonicalizes the record's object before
-comparing.
+`tolerance` is decoded for readability. The definition carries a typed
+`Tolerance` whose numbers are canonical decimal text; the end-to-end test
+compares the typed value.
 
 `answer_evidence` has exactly five keys:
 
@@ -232,7 +232,7 @@ pinned construction input, and compares it field by field:
 - the task description fields in `task`;
 - each clue's `order`, `clue_type`, `clue_operand_form`, `subject`, `check`, and
   `narrows`;
-- the answer's `gold_answer`, `answer_unit`, `tolerance`, `scoring_rule`,
+- the answer's `gold_answer`, `tolerance`, `scoring_rule`,
   `answer_schema_version`, and `answer_evidence`.
 
 The test compares a descriptor by resolving it against the graph and comparing

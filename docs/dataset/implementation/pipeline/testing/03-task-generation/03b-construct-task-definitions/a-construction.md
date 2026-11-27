@@ -24,8 +24,8 @@ pinned construction input, and compares it per
   answer format, answer format, and `geometry_required`;
 - every clue's order, clue type, reduction form, subject, check, and narrowing
   counts;
-- the answer fields, including `choices`, `gold_answer`, `answer_unit`,
-  `tolerance`, `scoring_rule`, and `answer_evidence`;
+- the answer fields, including `choices`, `gold_answer`, `tolerance`,
+  `scoring_rule`, and `answer_evidence`;
 - each entity descriptor by resolving it against the graph and comparing the
   resolved entity, never an entity identifier.
 
