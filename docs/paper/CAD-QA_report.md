@@ -173,14 +173,13 @@ Recent work has demonstrated major progress in CAD generation and reconstruction
 
 ### 2.2 Geometry comprehension benchmark
 
-Closest spiritually to our dataset are procedurally generated 2d and 3d geometry  reasoning benchmarks such as SiT-Bench (Guo et al., 2026) and Real-3DQA (Ma et al., 2026), which explicitly evaluate models' 3D comprehension abilities from text alone, without visuals. They are similar in task nature, but they do not evaluate or focus on CAD-specific geometry such as selectors, vertices, and boolean operations — only on text descriptions of scenes.
+Closest spiritually to our dataset are procedurally generated 2d and 3d geometry  reasoning benchmarks such as SiT-Bench (Guo et al., 2026) and Real-3DQA (Ma et al., 2026), which explicitly evaluate models' 3D comprehension abilities from text alone, without visuals. They are similar in that they evaluate models on procedurally generated geometry, but they do not evaluate or focus on CAD-specific geometry such as selectors, vertices, and boolean operations — only on text descriptions of scenes.
 
 ### 2.2 CAD comprehension benchmarks
 
-BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied, however the dataset focuses on benchmarking simple question answering such as compliance to a standard (e.g. whether a thread size is compliant), whereas our dataset focuses on verification of correct geometrical reasoning, at scale and varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add no comprehension task. QueryCAD is a earlier work evaluating capabilities of LLMs on answering questions based on CAD models, but without CadQuery.
+BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied, however the dataset focuses on benchmarking simple question answering such as compliance to a standard (e.g. whether a thread size is compliant), whereas our dataset focuses on verification of correct geometrical reasoning, at scale and varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add no comprehension task. QueryCAD is a earlier similar work evaluating capabilities of LLMs on answering factual questions based on CAD models, but without CadQuery; again, without depth.
 
-MechReason is a benchmark evaluating reasoning -  multi-view and multi-hop reasoning - of LLMs on Mechanical engineering publications and papers; however it synthesizes QA pairs from mechanical engineering and does not get CAD programs, nor is verifiable via a kernel. 
-
+MechReason is a benchmark evaluating multi-view and multi-hop reasoning - of LLMs on Mechanical engineering publications and papers; however it synthesizes QA pairs from papers and does not evaluate models on CAD programs, nor is verifiable via a kernel.
 
 
 <!--
@@ -243,7 +242,7 @@ MechReason is a benchmark evaluating reasoning -  multi-view and multi-hop reaso
 METHODOLOGY: the scientific procedure, not the software
 -->
 
-Much like software engineering, being proficient in one area, such as SQL queries, doesn't mean an agent is proficient in machine learning; or being proficient in Python, an agent isn't proficient in Rust. Similarly, CAD requires understanding of numerous operations and relations, and underexposure to some will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper) (Elistratov, 2026), where agents were not proficient on everything but modelling with boxes. As such, we construct a wide variety of tasks as well as compositions and report success rates on them separately.
+Much like in software engineering, being proficient in one area, such as SQL queries, doesn't mean an agent is proficient in machine learning; or being proficient in Python, an agent isn't proficient in Rust. Similarly, CAD requires understanding of numerous operations and relations, and underexposure to some will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper) (Elistratov, 2026), where agents were not proficient on everything but modelling with boxes. As such, we construct a wide variety of tasks as well as compositions and report success rates on them separately.
 
 ### 3.1 Research design, variables and hypotheses
 
@@ -270,6 +269,12 @@ H1. There are limits in which models would show reasoning gaps; different per ha
 
 ### 3.2 Dataset construction procedure
 
+We use CadEvolve dataset as it is the largest, most diverse dataset in the publicly available corpora. We normalize programs using AST and CadQuery post-processing to extract a graph of entities and dependencies between them, such as edges, vertices, faces, boolean operations and derive relations between them, such as distances, angles between them. The graph, with later postprocessing allows us to deterministically and verifiably generate questions such as in [figure 1]. We will expand on dataset construction in design specification part.
+
+
+
+
+
 <!--
 - Instrument construction: CADEvolve -> normalized programs -> CAD graph -> task definitions -> rendered prompts -> validated release.
 - Gold answers are computed by execution or exact derivation; no LLM writes or judges an answer.
@@ -294,7 +299,7 @@ Over the combination of:
 - Models
 - Harnesses
 
-### 3.3.1 Harnesses
+### 3.4 Harnesses
 
 To make evaluation of different CAD reasoning skills - evaluating internal reasoning of models:
 
@@ -341,6 +346,7 @@ To make evaluation of different CAD reasoning skills - evaluating internal reaso
 
 ## 4. Design Specification
 
+In this section, we will describe how the dataset and evaluation procedures were built, focusing on the dataset.
 <!--
 DESIGN: what the instrument is, before how it was coded
 - Keep requirements-level rules here; keep code paths in Implementation.
@@ -348,6 +354,25 @@ DESIGN: what the instrument is, before how it was coded
 -->
 
 ### 4.1 Task model
+
+A task is a single question-answering pair, it is defined by input geometry and the clues supplied to the model. Given a 3d model as a whole which may have 20000 entities and relations, the model needs to narrow down to entity or operation, for example finding the correct face in the entity amidst hundreds.
+
+The model narrows down by clues. For example, in a simple box with a hole program [figure 1], we derive all entities and relations between them, and select clues as follows:
+
+- Final answer: flat face in the bottom of the hole,
+- Clue 1: 
+- Clue 2: 
+
+The model thus needs to find all [...] to derive
+
+We support the following types:
+
+- Target categories: operation, feature, solid state, face, edge, vertex, CadQuery profile, CadQuery workplane, region, scalar value.
+- Clue types: property, relation, comparison, provenance, aggregation.
+- Answer formats: multiple choice, number, integer, boolean, 3D coordinate, bounding box; structured object.
+
+
+
 
 <!--
 - A task has five independent dimensions: target, clues, answer format, answer meaning, reasoning step count.
