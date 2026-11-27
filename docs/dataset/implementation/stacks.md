@@ -134,17 +134,18 @@ Parquet logical type.
 
 ## Frontend devtool
 
-**Toolchain:** `Node.js` 24 and pnpm, driven through Vite+ (`vp`). The task
+**Toolchain:** `Node.js` 24 and pnpm, driven through Vite+ (`vp`). The dataset
 browser is the only browser app: React and TypeScript for the UI, three.js for
 the 3D view.
 `pnpm-lock.yaml` is committed; `node_modules/` and `dist/` are ignored. The app
-lives in `tools/manual-verification/task-browser/`; the generator does not import
-it. The contract is [`devtools/task-browser.md`](devtools/task-browser.md), and
-the workflow is the `vite-plus` skill.
+lives in `tools/manual-verification/dataset-browser/`; the generator does not
+import it. The contract is
+[`devtools/dataset-browser.md`](devtools/dataset-browser.md), and the workflow is
+the `vite-plus` skill.
 
 | Need | Choice | Status |
 |---|---|---|
-| Dev server, check, build | Vite+ (`vp`) | in use in `task-browser/` |
+| Dev server, check, build | Vite+ (`vp`) | in use in `dataset-browser/` |
 | UI | React (`>=19`) with TypeScript | in use |
 | 3D view | three.js | in use |
 | Package manager | pnpm | in use; `pnpm-lock.yaml` is committed |
@@ -258,16 +259,18 @@ the workflow is the `vite-plus` skill.
   `ty` returns if Pyrefly's diagnostics or performance become a measured
   problem.
 
-### STK-5 — The task browser uses Vite+ with React and three.js
+### STK-5 — The dataset browser uses Vite+ with React and three.js
 
-- **Status:** accepted (2026-11-23).
-- **Context:** the task browser is the only browser app. It needs a task list,
-  filters, a detail panel, and an interactive 3D view over a release table. The
-  generator never imports it, so the choice is a devtool decision, not a pipeline
-  stack decision.
+- **Status:** accepted (2026-11-23); broadened 2026-11-27 to cover the full
+  dataset review frontend.
+- **Context:** the dataset browser is the only browser app and the one human
+  review frontend. It needs a task list, filters, a detail panel, a review
+  queue, read-only ledger views, and an interactive 3D view over a release
+  table. The generator never imports it, so the choice is a devtool decision,
+  not a pipeline stack decision.
 - **Decision:** use Vite+ (`vp`) for dev, check, and build; React and TypeScript
   for the UI; three.js for the 3D view. The app lives in
-  `tools/manual-verification/task-browser/`; `pnpm-lock.yaml` is committed and
+  `tools/manual-verification/dataset-browser/`; `pnpm-lock.yaml` is committed and
   `node_modules/` and `dist/` are ignored. The API stays on the Python
   standard-library HTTP server, so the devtool adds no Python dependency.
 - **Consequences:** `vp check` and `vp build` are the app's gates; the Vite+

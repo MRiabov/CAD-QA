@@ -1,4 +1,4 @@
-"""Load checked-in gold task oracles as task-browser rows.
+"""Load checked-in gold task oracles as dataset-browser rows.
 
 A gold record has no rendered prompt and no split, so the row records its input
 as ``gold``/``oracle`` and keeps the record itself for the detail panel. The

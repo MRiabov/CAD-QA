@@ -1,4 +1,4 @@
-"""Tessellated scene payload for the task browser.
+"""Tessellated scene payload for the dataset browser.
 
 The browser asks the backend for one scene per program. This module turns a
 CadQuery shape into flat triangle and line-segment positions and a typed

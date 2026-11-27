@@ -9,8 +9,8 @@ contract; it does not stay here.
 
 ## What belongs here
 
-- tools whose output a person reads or judges: renders, task cards, sampled
-  slices, review packs;
+- tools whose output a person reads or judges: 3D scenes, sampled slices,
+  review ledgers;
 - benchmarks and one-off measurements that support a decision;
 - repository checkers that enforce a doc or code convention.
 
@@ -32,10 +32,10 @@ contract; it does not stay here.
   `tools/manual-verification/` when a person runs it by hand. Neither is imported
   by the generator.
 - Output is written under `runs/manual_verification/<tool>/` or another
-  gitignored path. No render, sample, or ledger is committed.
+  gitignored path. No scene cache, sample, or ledger is committed.
 - A tool builds against the contracts in `docs/`, never against the code being
   replaced.
-- The tool prints the inputs it used next to the output path. A render without
+- The tool prints the inputs it used next to the output path. A scene without
   the prompt it came from is not verifiable.
 - A tool that runs CadQuery over many items executes them in one process and
   imports the kernel once. A cold `import cadquery` costs seconds and hundreds
@@ -60,17 +60,17 @@ this answer match the geometry. An automated check cannot make that judgement.
 - Take the dataset path and a row selector as arguments; never hardcode a run.
 - A script that becomes load-bearing moves into the package and gets a test.
 
-The first available manual verification tool is the
-[task browser](task-browser.md). The [review pack](review-pack.md) is planned; it
-adds the task matrix and the dataset release absence and geometry residual ledgers, and reuses the
-browser's task-ledger writer.
+The one human review frontend is the
+[dataset browser](dataset-browser.md). It lists, filters, and opens release tasks
+or gold oracles, orders the review queue by coverage gap, and records a release
+row's verdict in the dataset release task review ledger. The absence and
+geometry residual ledgers are derived and machine-checked; the browser shows them
+read-only under its `Other` menu and never asks for a verdict on them.
 
 ## Tools
 
 | Tool | What it does | Status |
 |---|---|---|
-| [`task-browser.md`](task-browser.md) | Lists, filters, and opens release tasks or gold oracles, and records a release row's verdict in the dataset release task review ledger. | `available`; approval `planned` |
-| [`review-pack.md`](review-pack.md) | Renders sampled release tasks, writes the dataset release task review, absence, and geometry residual ledgers, and gates export on all three. | `planned` |
-| `rejection_contact_sheet.py` | Builds the absence evidence: one oracle render and disposition per absent program, capability, or capacity, written to the dataset release absence ledger. | `planned` |
+| [`dataset-browser.md`](dataset-browser.md) | Lists, filters, and opens release tasks or gold oracles, orders the review queue by coverage gap, records a release row's verdict in the dataset release task review ledger, and shows the derived absence and residual ledgers read-only. | `available`; review queue and approval `planned` |
 | `residual_sample.py` | Draws `min(pool_size, 300)` programs from the pinned dataset release program pool, runs the CAD graph kernel-oracle differential, and writes the dataset release geometry residual ledger. | `planned` |
 | Don't-say checker | Enforces the glossary's Don't-say table and the identifier renames. | `available`; see [`../../../docs-conventions.md`](../../../docs-conventions.md) |

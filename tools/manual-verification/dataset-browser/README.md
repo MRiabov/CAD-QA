@@ -1,7 +1,7 @@
-# CAD-QA task browser
+# CAD-QA dataset browser
 
-Vite+ app for the task browser. The contract is
-[`docs/dataset/implementation/devtools/task-browser.md`](../../../docs/dataset/implementation/devtools/task-browser.md).
+Vite+ app for the dataset browser. The contract is
+[`docs/dataset/implementation/devtools/dataset-browser.md`](../../../docs/dataset/implementation/devtools/dataset-browser.md).
 
 ```bash
 pnpm install
@@ -12,7 +12,7 @@ The dev server proxies `/api` to `http://127.0.0.1:8765`. Start the API from the
 repository root:
 
 ```bash
-uv run python tools/manual-verification/task_browser.py \
+uv run python tools/manual-verification/dataset_browser.py \
   --release runs/run0001/05-validate-and-export-release/current
 ```
 

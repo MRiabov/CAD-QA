@@ -41,7 +41,7 @@ of them. The origins split by when they run:
 | `contract_rule` | the row the graph must contain for an entity kind | every CAD graph entity, relation, and measurement | every program |
 | `upstream_record` | AST and runtime extraction rows | operations, features, states, profiles, paths, workplanes, selectors, effects | every program |
 | `emission_rule` | pair rows from the entity tables and the reference classes | pair relations and pair measurements | every program |
-| `kernel_oracle` | geometry and incidence measured by plain CadQuery and OCP, without instrumentation | calibration of the rule table, and the dataset release geometry residual-defect sample in the [review pack](../../devtools/review-pack.md#dataset-release-geometry-residual-ledger) | development and sampled runs only |
+| `kernel_oracle` | geometry and incidence measured by plain CadQuery and OCP, without instrumentation | calibration of the rule table, and the dataset release geometry residual-defect sample in the [dataset release geometry residual ledger](../../../requirements/release-dataset-contract.md#dataset-release-geometry-residual-ledger) | development and sampled runs only |
 
 **Production check.** The report compares the persisted graph with the upstream
 extraction records and the contract rules. It makes no CadQuery or OCP call,
@@ -249,8 +249,8 @@ counts per relation kind, ranked by missing and orphan count, with one card per
 exception: the expected row, the upstream row that implies it, the program lines,
 and a render with the endpoints highlighted.
 
-The rejection contact sheet and the [dataset release absence ledger](../../devtools/review-pack.md#dataset-release-absence-ledger)
-cover whole-program drops. This report covers the graph builder. Capture loss — the extraction records themselves missing a row —
+The [dataset release absence ledger](../../../requirements/release-dataset-contract.md#dataset-release-absence-ledger)
+covers whole-program drops. This report covers the graph builder. Capture loss — the extraction records themselves missing a row —
 is not visible here; the verified oracle set and the optional dev-mode kernel
 oracle own it. The two-pane graph viewer locates an exception on the shape; it
 does not replace the report.
@@ -265,7 +265,7 @@ does not replace the report.
   ([`validation.md`](validation.md#coverage)), which reads this report set.
 - That the contract's rule set is complete. That is the extraction-graph oracle
   set in [`../testing/oracles/extraction-graph/`](../testing/oracles/extraction-graph/)
-  and the [dataset release geometry residual-defect sample](../../devtools/review-pack.md#dataset-release-geometry-residual-ledger).
+  and the [dataset release geometry residual-defect sample](../../../requirements/release-dataset-contract.md#dataset-release-geometry-residual-ledger).
 - That a measurement value is correct. That is the oracle comparison, not the
   completeness count.
 - That the upstream extraction is complete. The production report cannot prove

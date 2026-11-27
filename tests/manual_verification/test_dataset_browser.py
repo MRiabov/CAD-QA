@@ -1,4 +1,4 @@
-"""Tests for the task browser API and scene cache."""
+"""Tests for the dataset browser API and scene cache."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import pytest
 TOOLS = Path(__file__).resolve().parents[2] / "tools" / "manual-verification"
 sys.path.insert(0, str(TOOLS))
 
-from task_browser import TaskIndex, build_handler
+from dataset_browser import TaskIndex, build_handler
 from task_oracles import load_oracle_rows
 from task_release import load_release_rows, prompt_preview
 from task_scene import PrimitiveKind
@@ -267,7 +267,7 @@ def test_api_rejects_an_unknown_task(origin: str) -> None:
 
 def test_static_fallback_names_the_build_step(origin: str) -> None:
     page = get_text(f"{origin}/")
-    assert "Task browser is not built" in page
+    assert "Dataset browser is not built" in page
     assert "pnpm build" in page
 
 
@@ -275,15 +275,15 @@ def test_static_serves_the_built_index(tmp_path: Path, index: TaskIndex) -> None
     dist = tmp_path / "dist"
     dist.mkdir()
     (dist / "index.html").write_text(
-        "<html>task browser shell</html>", encoding="utf-8"
+        "<html>dataset browser shell</html>", encoding="utf-8"
     )
     server = ThreadingHTTPServer(("127.0.0.1", 0), build_handler(index, dist))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
         origin = f"http://127.0.0.1:{server.server_port}"
-        assert "task browser shell" in get_text(f"{origin}/")
-        assert "task browser shell" in get_text(f"{origin}/tasks/anything")
+        assert "dataset browser shell" in get_text(f"{origin}/")
+        assert "dataset browser shell" in get_text(f"{origin}/tasks/anything")
         with pytest.raises(urllib.error.HTTPError) as error:
             get_text(f"{origin}/favicon.ico")
         assert error.value.code == 404

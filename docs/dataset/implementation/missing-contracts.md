@@ -67,24 +67,25 @@ closed in the 2026-11-25 benchmark-program-set pass.
 ## Closed in the 2026-11-27 review-ledger pass
 
 - `MC-64` — the review gate has three ledgers. The dataset release task review
-  ledger is the existing sampled matrix in
-  [`devtools/review-pack.md`](devtools/review-pack.md#sampling-matrix). The
-  dataset release absence ledger is exhaustive over every upstream absence: one
-  row per absent program, capability, or capacity, keyed
-  `(pipeline_stage, subject_kind, subject_identity)`, with a
-  `FailureDisposition`, a verdict, and evidence. The dataset release geometry
-  residual ledger is a uniform draw from the pinned dataset release program
-  pool,
+  ledger is the sampled matrix in the
+  [`05` review gate](pipeline/05-validate-and-export-release.md#review-gate),
+  recorded through the one human review frontend, the
+  [dataset browser](devtools/dataset-browser.md). The dataset release absence
+  ledger is exhaustive over every upstream absence: one derived row per absent
+  program, capability, or capacity, keyed
+  `(pipeline_stage, subject_kind, subject_identity)`, with the upstream
+  `FailureDisposition` and its evidence; it carries no human verdict. The
+  dataset release geometry residual ledger is a uniform draw from the pinned
+  dataset release program pool,
   `min(pool_size, 300)` programs at `bound_p = 0.01` and 95% confidence, each run
-  through the CAD graph kernel-oracle differential. `05` derives the expected
-  absence key set from the failure partitions, the `GraphCompletenessReport`
-  set, and the deficit ledger, and blocks on a missing row, a `pending` row, a
-  `defect`, or an `extractor_gap`; it blocks a short dataset release geometry
-  residual-defect sample or an unexplained mismatch. The manifest records
-  `review_ledger_sha256`, `absence_ledger_sha256`, and
-  `residual_ledger_sha256`, and the three ledgers are internal control
-  documents. `rejection_contact_sheet.py` and `residual_sample.py` write the
-  ledgers.
+  through the CAD graph kernel-oracle differential; any mismatch blocks. `05`
+  derives the expected absence key set from the failure partitions, the
+  `GraphCompletenessReport` set, and the deficit ledger, and blocks on a missing
+  row or an `extractor_gap`; it blocks a short geometry residual-defect sample or
+  any mismatch. The manifest records `review_ledger_sha256`,
+  `absence_ledger_sha256`, and `residual_ledger_sha256`, and the three ledgers
+  are internal control documents. `residual_sample.py` writes the residual
+  ledger and `05` writes the absence ledger.
 
 ## Closed in the 2026-11-25 failure-disposition pass
 

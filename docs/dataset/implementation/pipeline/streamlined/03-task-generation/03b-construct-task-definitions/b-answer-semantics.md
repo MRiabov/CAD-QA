@@ -53,7 +53,7 @@ TRANSFORM:
 - when the task is multiple choice, `gold_answer` is the pool label whose `candidate` equals `answer_value`; the answer value stays in `answer_evidence` and `choice_pool`
 - `answer_parameter` is null unless the meaning declares a point (position, membership) or a category (topology change); material change declares no parameter
 - evidence is `evidence_kind (measured | derived), evidence_rule, evidence_refs, answer_equivalent_set, point_probe`; `answer_equivalent_set` holds one entry per remaining candidate as `{subject, answer}`, and every entry equals the answer value under `same_answer`
-- an entry's `subject` is a graph entity for an entity target and the measurement name for a scalar target; `04` renders the question and `05` the review pack from it
+- an entry's `subject` is a graph entity for an entity target and the measurement name for a scalar target; `04` renders the question from it and the dataset browser colours the entity in the review scene
 - a missing target or a missing graph measurement rejects the task; never guess or approximate
 
 WRITE:

@@ -40,7 +40,7 @@ Python tests cover only Python code, in the suite that owns it:
   modules under `generator/python/cadqa_dataset_generator/`.
 - `tests/ci_cd/` — the `tools/ci_cd/` gates.
 - `tests/manual_verification/` — the Python devtools in
-  `tools/manual-verification/`; the task browser's frontend behaviour belongs
+  `tools/manual-verification/`; the dataset browser's frontend behaviour belongs
   to its own toolchain.
 
 Root `tests/` holds no files directly: one subdirectory per repo tooling family.

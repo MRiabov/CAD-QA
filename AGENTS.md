@@ -138,8 +138,8 @@ Python tests cover Python code only, in the suite that owns it:
   stage is tested in Python.
 - `tests/ci_cd/` — the `tools/ci_cd/` gates.
 - `tests/manual_verification/` — the Python devtools in
-  `tools/manual-verification/`; the task browser's frontend behaviour belongs to
-  the browser's own toolchain.
+  `tools/manual-verification/`; the dataset browser's frontend behaviour belongs
+  to the browser's own toolchain.
 
 Root `tests/` holds no files directly: one subdirectory per repo tooling family.
 No pipeline-stage, artifact-contract, oracle, golden-record, release, or

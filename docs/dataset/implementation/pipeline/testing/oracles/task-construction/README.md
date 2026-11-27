@@ -318,7 +318,7 @@ release; the oracle is the place the choice is pinned.
    changes the answer; a query that prints something else is a failure.
 6. Read the record as a reviewer: is the task unambiguous, is the clue chain
    true, is the answer the one a careful human would give? The
-   [task browser](../../../../devtools/task-browser.md#gold-oracles) opens every
+   [dataset browser](../../../../devtools/dataset-browser.md#gold-oracles) opens every
    record with its program render, answer, clue chain, gold query, coverage, and
    exclusions. Accept the record when the answer is yes:
 

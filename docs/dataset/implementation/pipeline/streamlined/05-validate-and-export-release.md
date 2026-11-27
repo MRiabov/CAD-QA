@@ -19,7 +19,7 @@ READ:
 - `ExternalBenchmarkProgramSet` from the release author: benchmark name, revision, declared split, normalization version, file hash, and one row per benchmark program with `normalized_program_text`, `program_sha256`, and the P1 `ast_normalized_sha256` and `final_shape_hash`
 - failure partitions for each pipeline stage
 - the deficit ledger from `03b`
-- the run manifest and the dataset release task review, absence, and geometry residual ledgers
+- the run manifest, the dataset release task review ledger from the dataset browser, and the dataset release geometry residual ledger from the residual sample tool
 
 WRITE:
 
@@ -83,9 +83,9 @@ TRANSFORM:
 
 - dataset release task review ledger: require a current `pass` for every required sampling cell; a `defect` or a missing cell blocks the export
 - the sample covers every clue type, every answer meaning, every answer format, and every task reasoning step count in the release, up to 10; for 6–10, review at least 30 tasks per tier or every task if fewer
-- each sampled task carries the prompt, one render of the final solid state with the target and every clue-bound entity highlighted in a distinct colour and labelled with its clue number, and the gold answer
-- dataset release absence ledger: derive the expected key set from the failure partitions, the `GraphCompletenessReport` set, and the deficit ledger; require a current `pass` per key with a `disposition` other than `extractor_gap`; a missing key, a `pending` row, a `defect`, or an `extractor_gap` blocks
-- dataset release geometry residual ledger: require it to name the run and the pinned dataset release program pool, meet `sample_size >= min(pool_size, 300)` at `bound_p = 0.01`, hold one row per drawn program, and carry no unexplained mismatch; a short sample, a missing row, a mismatch without a disposition, or an `extractor_gap` blocks
+- each sampled task carries the prompt, the final solid state with the target and every clue-bound entity in a distinct colour and labelled with its clue number in the dataset browser's 3D view, and the gold answer
+- dataset release absence ledger: derive it from the failure partitions, the `GraphCompletenessReport` set, and the deficit ledger, one row per expected key; a missing key or an upstream `disposition` of `extractor_gap` blocks; the ledger carries no human verdict
+- dataset release geometry residual ledger: require it to name the run and the pinned dataset release program pool, meet `sample_size >= min(pool_size, 300)` at `bound_p = 0.01`, hold one row per drawn program, and carry no `mismatch`; a short sample, a missing row, or any mismatch blocks
 
 WRITE:
 

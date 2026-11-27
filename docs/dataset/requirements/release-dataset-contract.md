@@ -44,6 +44,162 @@ artifacts: `review-ledger.parquet`, `absence-ledger.parquet`, and
 `residual-ledger.parquet`. They record review provenance and are excluded from
 `release_id`.
 
+### Dataset release review ledgers
+
+The three internal control documents have the schemas below. The
+[dataset browser](../implementation/devtools/dataset-browser.md) writes the task
+review ledger; `05` derives the absence ledger from the failure partitions, the
+`GraphCompletenessReport` set, and the deficit ledger; `residual_sample.py`
+writes the geometry residual ledger. Only the task review ledger carries a human
+verdict. The review gate invariants for all three are in
+[`05` validate and export release](../implementation/pipeline/05-validate-and-export-release.md#review-gate).
+
+All three use the UUID v5 namespace
+`uuid5(URL namespace, "https://github.com/MRiabov/CAD-QA/dataset-review-ledger")`.
+
+#### Dataset release task review ledger
+
+| Column | Format | Null | Meaning |
+|---|---|---|---|
+| `task_id` | string | no | The reviewed task. |
+| `definition_sha256` | string | no | The definition content the reviewer saw. |
+| `prompt_sha256` | string | no | The rendered prompt the reviewer read. |
+| `verdict` | enum `pending`, `pass`, `defect` | no | `pending` is not an approval. |
+| `reviewer` | string | no | Who made the judgement. |
+| `reviewed_at` | timestamp | no | When. Human provenance, not release identity. |
+| `defect_note` | string | yes | Required when `verdict` is `defect`. |
+| `scene_sha256` | string | yes | SHA-256 of the canonical scene payload the reviewer saw. |
+| `scene_version` | integer | yes | The tessellation version that produced the scene. |
+
+The key is `(task_id, definition_sha256, prompt_sha256)`. A row with a different
+key is a different review. The ledger is append-only within a run; a later row
+supersedes an earlier row with the same key, and the latest row wins. `pending`
+never satisfies the review gate.
+
+`definition_sha256` covers the answer and `answer_evidence`; `prompt_sha256`
+covers the rendered wording. A task whose content or wording changes gets a new
+key and needs a new review. A task reproduced with the same inputs keeps its key
+and its prior verdict.
+
+`scene_sha256` covers the canonical scene payload: the tessellated geometry, the
+clue colours, and the labels. The browser serves that scene from
+`program_sha256`, the `TaskDefinition`, the CAD graph, and `scene_version`, so
+the ledger names the scene without a render file.
+
+#### Dataset release absence ledger
+
+The task review ledger can only speak about tasks that became release rows. The
+absence ledger speaks about the subjects that did not: a rejected program, a
+declared capability no accepted graph realizes, or a quota target whose deficit
+remains. It is exhaustive, not sampled: one row per absent subject, keyed
+`(pipeline_stage, subject_kind, subject_identity)`.
+
+The row is derived, not judged. `disposition` is the upstream failure row's
+`FailureDisposition`; a program row always carries one, and an extraction or
+capacity row carries null when no failure row defines one. The ledger has no
+verdict and no reviewer, and the browser shows it read-only.
+
+| Column | Format | Null | Meaning |
+|---|---|---|---|
+| `ledger_id` | UUID v5 | no | Deterministic identity of the key. |
+| `run_id` | string | no | The run the upstream artifacts belong to. |
+| `release_id` | string | no | The release the ledger is evidence for. |
+| `pipeline_stage` | enum | no | The upstream pipeline stage that dropped the subject, in the `failure-record.md` pipeline stage names. |
+| `subject_kind` | enum `program`, `capability`, `capacity` | no | Which kind of absence. |
+| `subject_identity` | string | no | The canonical identity below. |
+| `deficit_class` | enum | yes | `DeficitClass` for a task or capacity absence; null for a program or extraction capability. |
+| `reason_code` | string | yes | The upstream failure reason or deficit detail; null when the absence comes from the completeness report. |
+| `disposition` | enum `FailureDisposition` | yes | The upstream failure row's disposition; null when no failure row defines one. |
+| `evidence` | string | no | Canonical reference: `failure:<failure_id>`, `completeness:<cell>`, or `deficit:<entry key>`. |
+| `evidence_sha256` | string | yes | Hash of the evidence artifact, when it has bytes. |
+
+The identity is canonical per subject kind:
+
+- `program:<program_id>@<program_sha256>` — one rejected or unfetchable program.
+  `program_sha256` is the failure row's `input_sha256`.
+- `extraction:<cell>` — one must-extract capability cell whose
+  `actual_count` is zero across the report set.
+- `capability:<quota_target>@<family>@<task_reasoning_step_count>@<deficit_class>`
+  — one task-shape deficit from the deficit ledger. `<quota_target>` is the
+  canonical `QuotaTargetRef` text (`<quota_dimension>=<dimension_value>`);
+  `<family>` is `cadevolve_program_family_id`, or `unassigned` when null;
+  `<deficit_class>` is `unclassified` when the entry's class is null.
+- `capacity:<quota_target>@<family>@<task_reasoning_step_count>` — one capacity
+  deficit from the deficit ledger.
+
+`ledger_id` is `uuid5(namespace, key)` over the canonical JSON of
+`(pipeline_stage, subject_kind, subject_identity)`.
+
+#### Dataset release geometry residual ledger
+
+The task review ledger is stratified by what we already know to look for; the
+absence ledger is exhaustive over what we know is missing. Neither can find a
+defect class nobody named. The geometry residual ledger draws programs uniformly
+from the normalized programs of the pinned dataset release program pool and runs
+the CAD graph kernel-oracle differential, so the release carries a stated bound
+on the share of the pool with a detectable defect.
+
+`residual_sample.py` writes one row per drawn program, in draw order. A mismatch
+is not dispositioned: the review gate blocks every mismatch, so a legitimate mismatch is
+fixed in the differential contract or the generator, not waived in the ledger.
+
+| Column | Format | Null | Meaning |
+|---|---|---|---|
+| `ledger_id` | UUID v5 | no | Deterministic identity of `(run_id, program_id)`. |
+| `run_id` | string | no | The run the pinned dataset release program pool belongs to. |
+| `release_id` | string | no | The release the ledger is evidence for. |
+| `draw_index` | integer | no | Zero-based position in the draw order. |
+| `program_id` | string | no | The drawn program. |
+| `program_sha256` | string | no | Its normalized-program hash. |
+| `status` | enum `match`, `mismatch` | no | The CAD graph kernel-oracle differential result. |
+| `mismatch_count` | integer | no | Compared rows outside tolerance or missing/orphan. |
+| `mismatch_kinds` | list of string | no | The compared row kinds that disagreed; empty on a match. |
+| `evidence` | string | yes | The differential report for the program. |
+| `sample_seed` | string | no | The seed that orders the draw. |
+| `pool_sha256` | string | no | SHA-256 over the canonical JSON of the sorted `[program_id, program_sha256]` pairs. |
+| `pool_size` | integer | no | Programs in the pinned dataset release program pool. |
+| `sample_size` | integer | no | Programs in the draw. |
+| `sample_kind` | enum `sample`, `census` | no | `census` when every pool program is drawn. |
+| `bound_p` | decimal string | no | The policy bound, `0.01`. |
+| `draw_sha256` | string | no | SHA-256 over the canonical JSON of the drawn `[program_id, program_sha256]` pairs in draw order. |
+| `differential_version` | string | no | The differential implementation. |
+| `tolerance_policy_sha256` | string | no | The tolerance policy the comparison used. |
+
+`ledger_id` is `uuid5(namespace, key)` over the canonical JSON of
+`(run_id, program_id)`.
+
+The draw is uniform without replacement: sort the pinned dataset release program
+pool by `sha256(utf8(sample_seed) || utf8(program_id))` ascending and take the
+first `sample_size`, where `||` is concatenation with no separator and
+`sample_size = min(pool_size, ceil(3 / bound_p))`. At `bound_p = 0.01` that is
+300 programs. A census is allowed and preferred when the CAD graph
+kernel-oracle differential is affordable; it replaces the statistical bound
+with an exact result for the pool.
+
+`05` does not read the pool, so the reviewer verifies the draw against the `01c`
+artifact; `pool_sha256`, `sample_seed`, and `draw_sha256` make that check
+reproducible. `05` checks the ledger's arithmetic and row set.
+
+The differential compares the persisted graph with a plain CadQuery and OCP
+recomputation of the final solid state: entity counts by entity kind, incidence,
+and the P0 measurements in the measurement catalog, under the run tolerance
+policy. It does not compare AST provenance, feature effects, selectors, or pair
+relations; those are owned by the extraction-graph oracle set and the
+completeness report.
+
+With `sample_kind = sample` and no mismatch, the 95% upper confidence bound on
+the share of the pinned dataset release program pool with a detectable
+differential mismatch is `3 / sample_size`, which is `bound_p` at the policy
+size. A census makes the result exact for the pool.
+
+#### Dataset release geometry residual-defect sampling policy
+
+**Decision (owner, 2026-11-27):** `bound_p = 0.01` at 95% confidence, so the
+dataset release geometry residual-defect sample is `min(pool_size, 300)`
+programs. The bound is on defects the kernel differential can detect. A defect
+class the differential cannot see is outside the claim, which is why the absence
+review is exhaustive and the task review is stratified rather than random.
+
 `release.parquet` is the release dataset. It contains the gold answer because the
 release is used for training, scoring, and audit. The `prompt` column is the only
 LLM-facing column; the evaluation harness selects that column and does not pass

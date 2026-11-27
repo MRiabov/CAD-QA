@@ -81,7 +81,7 @@ later, so `02c`'s schema is real before `03b` depends on it.
 | `P0-W3` | R-1, R-4, R-19 | Extraction and execution depth: AST, CadQuery runtime, CAD graph, census, completeness, and the verified oracle set | Validation and persistence tests green on the real pool; failures reconcile; no unexplained missing or orphan row; every must-extract capability has a verified oracle; time and memory per program recorded |
 | `P0-W4` | R-1–R-9, R-15 | Construction depth: clue search and the P0 vocabulary | Golden records match; property tests hold; yield per program measured on real graphs |
 | `P0-W5` | R-7–R-10, R-13, R-15 | Quotas and deficits: `03a` and `03c` | A planned release over the real pool with reconciled counts and a deficit ledger |
-| `P0-W6` | R-1–R-10, R-13, R-14, R-17–R-19 | Rendering, validation, and the release contracts: `04`, `05`, the grader, the review pack and its dataset release absence and geometry residual ledgers | A release built from the real pool, validated, with every miss recorded as a `known_miss` |
+| `P0-W6` | R-1–R-10, R-13, R-14, R-17–R-19 | Rendering, validation, and the release contracts: `04`, `05`, the grader, the dataset browser and the three dataset release review ledgers | A release built from the real pool, validated, with every miss recorded as a `known_miss` |
 | `P0-W7` | R-14, R-17–R-19 | First real `P0` release | Tagged release revision and run manifest; `docs/development-plan.md` Phase 2 can start |
 
 The five `03b` construction milestones in
@@ -127,9 +127,11 @@ Closed since the audit's `P0-W1` table:
   geometry residual ledger of `min(pool_size, 300)` programs at `bound_p = 0.01`
   run through the CAD graph kernel-oracle differential. `05` derives the
   expected absence key set and blocks on a gap or an `extractor_gap`; the
-  manifest records the three ledger hashes. The contract is in
-  [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md)
-  and
+  manifest records the three ledger hashes. The ledger schemas are in
+  [`release-dataset-contract.md`](../../docs/dataset/requirements/release-dataset-contract.md#dataset-release-review-ledgers),
+  the frontend is
+  [`devtools/dataset-browser.md`](../../docs/dataset/implementation/devtools/dataset-browser.md),
+  and the review gate is
   [`05` validate and export release](../../docs/dataset/implementation/pipeline/05-validate-and-export-release.md#review-gate).
 - `DA-4` / `MC-53` — `DS-REQ-15` makes `same_answer` the construction comparison
   and the grader's comparison, and `b-answer-semantics.md` rechecks the
@@ -159,8 +161,8 @@ The performance findings `PA-1`–`PA-14` are closed in `ef3ac58`: `EX-22` to
 `P0-W3`, and `P0-W4` work; the plan schedules that work, not the decision.
 
 Closed before the audit list was written: `DA-1` by `run-contract.md`, and
-`DA-3`'s data path by the review-pack ledger in `01578d8`; the renderer is
-`P0-W6` code, not a `P0-W1` gap.
+`DA-3`'s data path by the review ledger in `01578d8`; the browser scene and
+approval are `P0-W6` code, not a `P0-W1` gap.
 The graph completeness contract and the extraction-graph oracle format are
 written; their implementation and the verified oracle set are `P0-W3` work.
 
@@ -226,12 +228,12 @@ to change.
   volume answer, number format, one step, no clue search.
 - `04` renders from `prompts.yaml`; `05` exports `release.parquet`,
   `failures.parquet`, `manifest.json`, the dataset card, and `support/`.
-- `tools/manual-verification/task_browser.py` opens the skeleton row: the final
+- `tools/manual-verification/dataset_browser.py` opens the skeleton row: the final
   solid state, the prompt text, and the gold answer. It is the owner's first
   verification point and the same tool serves `P0-W4`. Its approval action
-  appends the verdict to the dataset release task review ledger at the `review-pack.md` path; that is
-  an edit to the existing browser, and the schema is the one `P0-W6`'s pack
-  consumes.
+  appends the verdict to the dataset release task review ledger at the path the
+  release contract defines; that is an edit to the existing browser, and the
+  schema is the one `P0-W6`'s review queue consumes.
 
 **Pass condition.** `test_pipeline_end_to_end` from
 `testing/00-end-to-end.md` is written from its contract and green on the fixture
@@ -252,7 +254,7 @@ table is part of the contract and is not replaced later.
 | One `GraphCompletenessReport`, for `box-with-hole` | `P0-W3` whole pool | the report shape is the acceptance gate, and it is untested on hard geometry |
 | `02b` binds one solid state; the point-probe scope is unresolved | `P0-W3` `DS-REQ-10` rule | changing it later invalidates every graph and every `03b` unit |
 | No family-to-split registry | `P0-W6` writer, `P1-W3` reader | the first release becomes the migration |
-| No review pack, only `task_browser` and the dataset release task review ledger | `P0-W6` three-ledger pack | the ledger schemas change after rows exist |
+| No sampled review queue, only `dataset_browser` and the dataset release task review ledger | `P0-W6` three-ledger gate | the ledger schemas change after rows exist |
 | No graph persistence tuning; one part per `02b` unit | contract, not a shortcut (`DS-ADR-07`/`DS-ADR-09`) | none; this one is not replaced |
 
 **Contract conflict to settle before the first commit.** `P0-W2`'s `03b` scope
@@ -383,13 +385,13 @@ at every pipeline stage, a deficit ledger, and one exercised slow-loop round.
   (`DA-6`), `release_id` (`DA-5`), the family-to-split registry writer (`DA-8`),
   the P0 exact-text overlap check against the external benchmark program set
   (`MC-49`, `DS-ADR-16`), the dataset card, and the answer-column review.
-- The review-pack renderer and its sampled matrix, per
-  [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
-  the browser and its ledger write already exist from `P0-W2`, and the pack adds
-  `generate`, the renders, the `pending` rows, and the matrix.
-- The review pack's dataset release absence and geometry residual ledgers, and the release gate that
-  derives the expected absence key set and requires the dataset release geometry
-  residual-defect sample to meet
+- The dataset browser's review queue and its sampled matrix, per
+  [`devtools/dataset-browser.md`](../../docs/dataset/implementation/devtools/dataset-browser.md);
+  the browser and its ledger write already exist from `P0-W2`, and `P0-W6` adds
+  the coverage-gap queue, the clue-coloured scene, and the `pending` rows.
+- The dataset release absence and geometry residual ledgers, and the release gate
+  that derives the expected absence key set and requires the dataset release
+  geometry residual-defect sample to meet
   `min(pool_size, 300)` at `bound_p = 0.01`, so an open extraction gap blocks
   export even when the release rows look complete.
 - The `extraction_capability_coverage` check: a must-extract capability with zero
@@ -469,26 +471,26 @@ points into passes and names the seams they do not cover.
 
 | Work item | What the owner verifies | Artifact | Time |
 |---|---|---|---|
-| `P0-W2` | The skeleton row: does the prompt read as a question, and is the answer defensible? This is the first point at which the wording pipeline can be judged. | the task browser on the skeleton row, plus a `pass` or `defect` row in the dataset release task review ledger | ~15 min |
+| `P0-W2` | The skeleton row: does the prompt read as a question, and is the answer defensible? This is the first point at which the wording pipeline can be judged. | the dataset browser on the skeleton row, plus a `pass` or `defect` row in the dataset release task review ledger | ~15 min |
 | `P0-W2` | The box-with-hole extraction-graph oracle: do the nodes, incidence relations, and measurements match the program? Set `verified` and name the reviewer. | `oracles/extraction-graph/box-with-hole.json` | ~30 min |
-| `P0-W3` | The rotated-box oracle and the first capability-cell oracles; the completeness report exceptions; the rejection contact sheet. This is the check that a supported capability did not silently disappear. | oracle records, completeness report, contact sheet | ~2–3 h |
-| `P0-W4` | The quality gate before scale: 15–30 constructed definitions on real graphs, across clue types and answer meanings, plus the yield number. This is where ambiguous wording is cheapest to fix. | a task browser sample and the yield report | ~1–2 h |
+| `P0-W3` | The rotated-box oracle and the first capability-cell oracles; the completeness report exceptions. This is the check that a supported capability did not silently disappear. | oracle records and the completeness report | ~2–3 h |
+| `P0-W4` | The quality gate before scale: 15–30 constructed definitions on real graphs, across clue types and answer meanings, plus the yield number. This is where ambiguous wording is cheapest to fix. | a dataset browser sample and the yield report | ~1–2 h |
 | `P0-W5` | The deficit ledger: accept or reject each miss and each expansion round. `known_misses` is an owner decision. | deficit ledger and plan | ~30 min |
-| `P0-W6` | The blocking review gate: every required sampling cell has a current `pass`; a `defect` blocks the export. Dataset card sign-off. | review pack and ledger | per the sampling matrix |
-| `P0-W6` | The dataset release absence and geometry residual ledgers: is each absence legitimate, and does the random pool sample contain an unexplained miss? | dataset release absence and geometry residual ledgers | per the sampling policy |
+| `P0-W6` | The blocking review gate: every required sampling cell has a current `pass`; a `defect` blocks the export. Dataset card sign-off. | the dataset browser and the task review ledger | per the sampling matrix |
+| `P0-W6` | The dataset release absence and geometry residual ledgers: does every absence account for an upstream subject, and does the random pool sample contain a mismatch? | dataset release absence and geometry residual ledgers | per the sampling policy |
 | `P0-W7` | Release sign-off: manifest, dataset card, `known_misses`, `release_id`. | release directory | ~1 h |
-| `P1-W1` | The PRD section 6.1 release gate per tier: 30 tasks reviewed, or every task. | review pack and ledger | per tier |
+| `P1-W1` | The PRD section 6.1 release gate per tier: 30 tasks reviewed, or every task. | the dataset browser and the task review ledger | per tier |
 
 - `P0-W2` and `P0-W4` are cheap, and they are where wording defects are fixed
   while the prompt copy and the constructor are still moving. Do not defer
   wording review to `P0-W6`: a defect there costs a re-render, a new
   `prompt_sha256`, and a fresh review of that cell.
-- The dataset release task review ledger is written from `P0-W2` on by the task browser's approval
-  action, so no owner judgement is throwaway.
-  `tools/manual-verification/task_browser.py` and the ledger are the
-  first-release fallback in
-  [`devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
-  the sampled pack with the full matrix lands in `P0-W6`.
+- The dataset release task review ledger is written from `P0-W2` on by the
+  dataset browser's approval action, so no owner judgement is throwaway.
+  `tools/manual-verification/dataset_browser.py` and the ledger are the one
+  human review frontend in
+  [`devtools/dataset-browser.md`](../../docs/dataset/implementation/devtools/dataset-browser.md);
+  the coverage-gap queue with the full matrix lands in `P0-W6`.
 - `P0-W3`'s oracle review is not a spot check of every program: it is the
   calibration set. A verified oracle the checker disagrees with is a checker
   defect; a `proposed` oracle nobody verified is not evidence.
@@ -522,7 +524,7 @@ The scaffold is green (`(cd generator && go test -count=1 ./...)`, `uv run pytes
 - the graph completeness contract, the extraction-graph oracle format and two
   `proposed` records, the oracle builder, and the task-construction oracle set
   with its schema, runner, and verifier;
-- `tools/manual-verification/task_browser.py` and the task browser frontend.
+- `tools/manual-verification/dataset_browser.py` and the dataset browser frontend.
 
 So `P0-W2` is not "initialise everything"; it is the run-contract code half plus
 one thin body per stage. Do not stub `03`–`05` beyond what `P0-W2` needs: a stub

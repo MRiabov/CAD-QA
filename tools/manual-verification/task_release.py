@@ -1,4 +1,4 @@
-"""Release-table types and CadQuery execution for the task browser.
+"""Release-table types and CadQuery execution for the dataset browser.
 
 The browser reads the documented release columns, extracts the program from the
 prompt's Python fence, and executes it to tessellate the final solid state. The
@@ -272,7 +272,7 @@ def execute_program(text: str) -> Any:
 
     import cadquery as cq
 
-    namespace: dict[str, Any] = {"__name__": "__task_browser__"}
+    namespace: dict[str, Any] = {"__name__": "__dataset_browser__"}
     try:
         exec(compile(text, "<release-program>", "exec"), namespace)  # noqa: S102 - reviewed input
     except Exception as error:

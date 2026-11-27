@@ -103,7 +103,7 @@ export default function App() {
   }, [activeId]);
 
   const gold = facets?.input_kind === "gold";
-  const title = gold ? "CAD-QA gold oracle review" : "CAD-QA task browser";
+  const title = gold ? "CAD-QA gold oracle review" : "CAD-QA dataset browser";
   const countLabel =
     facets === null
       ? "loading…"

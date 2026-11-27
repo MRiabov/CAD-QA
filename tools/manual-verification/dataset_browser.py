@@ -1,7 +1,7 @@
-"""Local task browser over one task-row schema.
+"""Local dataset browser over one task-row schema.
 
-The browser serves the JSON API the Vite+ app in ``task-browser/`` reads, and
-serves the built app when ``task-browser/dist`` exists. It reads one
+The browser serves the JSON API the Vite+ app in ``dataset-browser/`` reads, and
+serves the built app when ``dataset-browser/dist`` exists. It reads one
 ``release.parquet`` or the checked-in task-construction oracles, maps both into
 one ``TaskRow``, paginates the task list, and tessellates a task's final solid
 state on demand. One tessellation is cached per program, so tasks that share a
@@ -9,18 +9,18 @@ program share a scene.
 
 Run the API and the Vite dev server separately while developing::
 
-    uv run python tools/manual-verification/task_browser.py \
+    uv run python tools/manual-verification/dataset_browser.py \
         --release runs/run0001/05-validate-and-export-release/current
 
-    uv run python tools/manual-verification/task_browser.py \
+    uv run python tools/manual-verification/dataset_browser.py \
         --oracles docs/dataset/implementation/pipeline/testing/oracles/task-construction
 
-    cd tools/manual-verification/task-browser && pnpm dev
+    cd tools/manual-verification/dataset-browser && pnpm dev
 
 For a single-command review, build the app once and open the API origin::
 
-    cd tools/manual-verification/task-browser && pnpm build
-    uv run python tools/manual-verification/task_browser.py --release ...
+    cd tools/manual-verification/dataset-browser && pnpm build
+    uv run python tools/manual-verification/dataset_browser.py --release ...
 
 This is a manual-verification devtool. The generator never imports it.
 """
@@ -53,17 +53,17 @@ from task_release import (
 )
 from task_scene import SCENE_VERSION, ScenePayload, scene_from_shape
 
-LOGGER = logging.getLogger("cadqa.task_browser")
+LOGGER = logging.getLogger("cadqa.dataset_browser")
 MAX_PAGE_SIZE = 200
 
 FALLBACK_HTML = """<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>CAD-QA task browser</title></head>
+<head><meta charset="utf-8"><title>CAD-QA dataset browser</title></head>
 <body style="font-family:system-ui;padding:2rem;max-width:46rem">
-<h1>Task browser is not built</h1>
-<p>The API is running, but <code>task-browser/dist</code> does not exist.</p>
+<h1>Dataset browser is not built</h1>
+<p>The API is running, but <code>dataset-browser/dist</code> does not exist.</p>
 <p>Build it once with <code>pnpm install &amp;&amp; pnpm build</code> in
-<code>tools/manual-verification/task-browser</code>, then reload.</p>
+<code>tools/manual-verification/dataset-browser</code>, then reload.</p>
 <p>For live development run <code>pnpm dev</code> in the same folder and open
 the Vite URL. The API is under <code>/api</code>.</p>
 </body>
@@ -191,10 +191,10 @@ def _str_param(query: dict[str, list[str]], name: str, default: str = "") -> str
     return query.get(name, [default])[0] or default
 
 
-class TaskBrowserHandler(BaseHTTPRequestHandler):
+class DatasetBrowserHandler(BaseHTTPRequestHandler):
     """The JSON API and the static app."""
 
-    server_version = "CADQATaskBrowser/1"
+    server_version = "CADQADatasetBrowser/1"
     index: TaskIndex
     web_dist: Path
 
@@ -286,12 +286,12 @@ class TaskBrowserHandler(BaseHTTPRequestHandler):
         LOGGER.info("%s - %s", self.address_string(), format % args)
 
 
-def build_handler(index: TaskIndex, web_dist: Path) -> type[TaskBrowserHandler]:
+def build_handler(index: TaskIndex, web_dist: Path) -> type[DatasetBrowserHandler]:
     """Bind one task index and web build to a handler class."""
 
     return type(
-        "BoundTaskBrowserHandler",
-        (TaskBrowserHandler,),
+        "BoundDatasetBrowserHandler",
+        (DatasetBrowserHandler,),
         {"index": index, "web_dist": web_dist},
     )
 
@@ -314,13 +314,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--cache-dir",
         type=Path,
-        default=Path("runs/manual_verification/task_browser/cache"),
+        default=Path("runs/manual_verification/dataset_browser/cache"),
         help="scene cache; one JSON per program",
     )
     parser.add_argument(
         "--web-dist",
         type=Path,
-        default=Path(__file__).with_name("task-browser") / "dist",
+        default=Path(__file__).with_name("dataset-browser") / "dist",
         help="built Vite+ app to serve",
     )
     return parser
@@ -342,7 +342,7 @@ def main(argv: list[str] | None = None) -> int:
         rows = load_release_rows(table_path)
         index = TaskIndex(rows, args.cache_dir, input_kind="release")
         input_line = f"Release table: {table_path}"
-        title = "CAD-QA task browser"
+        title = "CAD-QA dataset browser"
     server = ThreadingHTTPServer(
         (args.host, args.port), build_handler(index, args.web_dist)
     )
@@ -356,7 +356,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nStopping task browser")
+        print("\nStopping dataset browser")
     finally:
         server.server_close()
     return 0

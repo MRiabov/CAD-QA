@@ -23,7 +23,7 @@ from tools.ci_cd.ci_plan import JobPlan, Suite, changed_paths, plan, suites_for
         ("contracts/worker/v1/envelope.schema.json", {Suite.GO, Suite.PYTHON}),
         ("tests/ci_cd/test_check_fanout.py", {Suite.PYTHON}),
         ("tools/ci_cd/check_dont_say.py", {Suite.PYTHON}),
-        ("tools/manual-verification/tests/test_task_browser.py", {Suite.PYTHON}),
+        ("tests/manual_verification/test_dataset_browser.py", {Suite.PYTHON}),
         (
             "docs/dataset/implementation/pipeline/testing/golden/record.json",
             {Suite.GO},

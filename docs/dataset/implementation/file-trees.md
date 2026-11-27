@@ -1,7 +1,8 @@
 # Implementation file trees
 
 **Status:** draft, 2026-11-23. Reconciled with the 2026-11-21 run contract, the
-2026-11-21 architecture audit, and the review-pack plan. This document owns
+2026-11-21 architecture audit, and the dataset browser and review-ledger plan.
+This document owns
 where the replacement dataset generator's code, tests, fixtures, and
 owner-facing tools live. Pipeline stage docs own what the code does;
 [`python-and-golang.md`](python-and-golang.md) owns the language boundary;
@@ -326,7 +327,7 @@ tests/                    repo tooling only; no files directly here
     test_check_test_ownership.py
     test_ci_plan.py
   manual_verification/
-    test_task_browser.py
+    test_dataset_browser.py
 ```
 
 Root `tests/` mirrors the tooling under `tools/`: one subdirectory per tooling
@@ -408,44 +409,43 @@ not imported by it.
 
 ```text
 tools/manual-verification/
-  task_browser.py                          exists; local JSON API over one release table or one gold-oracle directory
+  dataset_browser.py                       exists; local JSON API over one release table, one gold-oracle directory, or one review run
   task_release.py                          exists; release rows, the shared row type, and program execution
   task_oracles.py                          exists; loads gold records as browser rows
   task_scene.py                            exists; typed scene payload and CadQuery tessellation
-  task-browser/                            exists; Vite+ frontend: task list, 3D stage, detail panel
+  dataset-browser/                         exists; Vite+ frontend: task list, review queue, Other views, 3D stage, detail panel
   build_extraction_oracle.py               exists; derives a proposed extraction-graph oracle from a program
   cadquery_method_specs.py                 exists; the method table the oracle builder diffs against the allowlist
   extraction_oracle_schema.py              exists; the Pydantic schema for an oracle record
   task_oracle_schema.py                    exists; the task-construction oracle schema
   task_oracle_runner.py                    exists; runs a batch of gold queries in one process
   verify_task_oracles.py                   exists; checks, records, and accepts task-construction oracles
-  render_task.py                           planned; one release row's render plus its printed card
-  review_pack.py                           planned; `pack generate` and `pack record` from devtools/review-pack.md
-  run_report.py                            planned; batch counts, distributions, timings, and pending review cells
-  rejection_contact_sheet.py               planned; writes the dataset release absence ledger, one oracle render and disposition per absent program, capability, or capacity
+  run_report.py                            planned; batch counts, distributions, timings, and review coverage
   residual_sample.py                       planned; draws the min(pool_size, 300) pool sample at bound_p = 0.01 and writes the dataset release geometry residual ledger
 tools/contracts/
   export_worker_schemas.py                 exists; exports the worker JSON Schema from Pydantic
 ```
 
-`task_browser.py`, `task_release.py`, `task_oracles.py`, `task_scene.py`, and
-`task-browser/` exist; `build_extraction_oracle.py` exists and writes a
+`dataset_browser.py`, `task_release.py`, `task_oracles.py`, `task_scene.py`, and
+`dataset-browser/` exist; `build_extraction_oracle.py` exists and writes a
 `proposed` oracle for a
 human to verify. `verify_task_oracles.py` checks every task-construction oracle's
 gold query in one batch, records the environment and the observed output, and
 records a human acceptance; the records are in
 [`pipeline/testing/oracles/task-construction/`](pipeline/testing/oracles/task-construction/README.md).
-`render_task.py` is the first-release fallback and the
-`P0-W2`/`P0-W4` review tool. `review_pack.py` is the sampled matrix that gates
-export. `run_report.py` is the report the
+`dataset_browser.py` is the one human review frontend: it orders the task review
+queue by coverage gap, records the task review ledger, and shows the derived
+absence and residual ledgers read-only. `run_report.py` is the report the
 [manual-verification protocol](../../../plans/nov-21/manual-verification-protocol.md)
-requires for the batch passes. `rejection_contact_sheet.py` and
-`residual_sample.py` write the dataset release absence and geometry residual ledgers that `05` gates on.
+requires for the batch passes. `residual_sample.py` writes the dataset release
+geometry residual ledger that `05` gates on; `05` derives the absence ledger from
+its own inputs.
 
 A tool that becomes load-bearing moves into the package and gets a test
-contract. The task browser is the first available manual verification tool; see
-[`devtools/task-browser.md`](devtools/task-browser.md). The review pack and its
-ledger are planned; see [`devtools/review-pack.md`](devtools/review-pack.md).
+contract. The dataset browser is the only human review tool; see
+[`devtools/dataset-browser.md`](devtools/dataset-browser.md). The review ledgers
+are dataset artifacts, defined in
+[`requirements/release-dataset-contract.md`](../requirements/release-dataset-contract.md#dataset-release-review-ledgers).
 
 ## Artifacts awaiting an owner
 
@@ -457,7 +457,6 @@ artifact.
 |---|---|---|
 | `family_split_registry` | `missing`; `DA-8` records that [`artifacts.md`](artifacts.md) has no row. | Add the artifact row first. `05` writes it after a release; `03a` reads the previous release's registry. Choose whether it is a release control document or a run-level artifact, and record its hash in the release manifest. |
 | `run_report` | `missing`; the manual-verification protocol and [`graph-completeness.md`](pipeline/extraction/graph-completeness.md#8-report) both refer to it. | Choose `generator report` or `tools/manual-verification/run_report.py`. It is evidence, not a release file. |
-| Dataset release task review ledger | `exists` in [`artifacts.md`](artifacts.md); `tools/manual-verification/task_browser.py` writes it from `P0-W2`, and `review_pack.py` reuses the writer from `P0-W6`. | Both write `runs/manual_verification/review_pack/<release_id>/review-ledger.parquet`; `05` copies it into the release and records `review_ledger_sha256`. |
 | Evaluation material and grader | Out of scope for this tree. | [`docs/train-and-eval/`](../../train-and-eval/) owns the harness, grader, prompt-only view, answer parsing, and scoring. `04` only renders the release prompt. |
 
 `family_split_registry` is the durable
@@ -512,9 +511,9 @@ This section is the file and package bootstrap order within those work items.
    `reference_share.go`, because the support table is what `03a` reads.
 5. `03a`, `03c`, `04`, `05`, `end-to-end`, all under `internal/stages/` except
    `end-to-end`.
-6. `render_task.py`, `run_report.py`, `review_pack.py`,
-   `rejection_contact_sheet.py`, `residual_sample.py`, and the absence and geometry
-   residual ledgers they write, as the owner verification points need them.
+6. `dataset_browser.py`, `run_report.py`, `residual_sample.py`, and the
+   geometry residual ledger it writes, as the owner verification points need
+   them. `05` writes the derived absence ledger.
 
 ## Deleted generator
 

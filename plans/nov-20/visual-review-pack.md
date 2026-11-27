@@ -1,7 +1,8 @@
 # Visual review pack
+<!-- dont-say: allow-file: superseded plan history; the term is quoted -->
 
 **Status:** superseded, 2026-11-21. The tool contract is
-[`docs/dataset/implementation/devtools/review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md);
+[`docs/dataset/implementation/devtools/dataset-browser.md`](../../docs/dataset/implementation/devtools/dataset-browser.md);
 the review gate rule is in `05`. This file is kept as plan history.
 
 The 2026-11-20 plan deferred the renderer and named

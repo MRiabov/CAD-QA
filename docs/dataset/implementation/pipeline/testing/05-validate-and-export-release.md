@@ -103,15 +103,15 @@ sorted check rows, the three review gates, and the manifest-last rule before
   `external_benchmark.program_set_sha256`, a schema-version mismatch, a split
   other than the declared one, and a normalization-version mismatch each block
   as an input error before the check runs; no manifest is written.
-- `test_05_review_gate` — a review sample missing one answer format blocks, and a
-  failed review records its reason and blocks.
+- `test_05_review_gate` — a task review sample missing one answer format
+  blocks, and a `defect` verdict records its note and blocks.
 - `test_05_absence_ledger_gap` — a program failure with no absence row, a
   zero-count capability cell with no row, and a remaining deficit entry with no
-  row each block; an `extractor_gap` disposition blocks even with a `pass`
-  verdict.
+  row each block; an `extractor_gap` disposition blocks, and the ledger carries
+  no human verdict column.
 - `test_05_residual_sample_short` — a 299-program draw from a pool of 300 or
-  more blocks; a full census passes; a mismatch without a disposition and a
-  mismatch dispositioned `extractor_gap` each block.
+  more blocks; a full census passes; any `mismatch` blocks, and the ledger has no
+  disposition column to waive it.
 - `test_05_no_partial_release` — a block after `release.parquet` is written leaves
   no `manifest.json`, no `dataset-card.md`, and no `support/`, so the directory is
   not a release.

@@ -140,7 +140,7 @@ Then spot-check, not audit:
   the pinned dataset release program pool at the stated seed and size
   `min(pool_size, 300)` at `bound_p = 0.01`; verify the draw, not only the
   result
-  ([`review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md#dataset-release-geometry-residual-ledger)).
+  ([`release-dataset-contract.md`](../../docs/dataset/requirements/release-dataset-contract.md#dataset-release-geometry-residual-ledger)).
 
 Pass: no failure reason is unexplained; every distribution sits inside a stated
 range; every support-table cell has a witness or a reason; every rejected
@@ -186,7 +186,7 @@ conventions match the actual answers.
 | R-13 splits | one family | split isolation |
 | R-14 test never trained | card and recipe | test count per step |
 | R-15 warmup labeled | one warmup row | `warmup_set` |
-| R-17 understandable | review pack | review gate |
+| R-17 understandable | dataset browser | review gate |
 | R-18 reproducible | Pass 0 determinism | manifest hashes |
 | R-19 nothing silent | Pass 0 reconciliation, Pass 3 failures | pipeline stage reconciliation |
 
@@ -204,7 +204,7 @@ them in the owner documents before the corresponding pass is evidence.
 
 The dataset release absence and geometry residual review work closed on
 2026-11-27: the contract is in
-[`review-pack.md`](../../docs/dataset/implementation/devtools/review-pack.md),
+[`release-dataset-contract.md`](../../docs/dataset/requirements/release-dataset-contract.md#dataset-release-review-ledgers),
 and `05` gates on both ledgers.
 
 ## Additions to the owner verification table

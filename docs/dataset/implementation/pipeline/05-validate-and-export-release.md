@@ -27,9 +27,9 @@ Coverage and balance checks:
 - The deficit ledger from `03b` construct task definitions.
 - The run manifest, for the generator version, the release seed, the policy
   versions and hashes, and the tolerance policy hash.
-- The dataset release task review ledger, the dataset release absence ledger,
-  and the dataset release geometry residual ledger from the
-  [review pack](../devtools/review-pack.md).
+- The dataset release task review ledger from the
+  [dataset browser](../devtools/dataset-browser.md), and the dataset release
+  geometry residual ledger from the residual sample tool.
 
 ## Scope
 
@@ -70,11 +70,12 @@ Coverage and balance checks:
   before it runs the check.
 - Hold the review gate before export against the three ledgers (R-17). The
   dataset release task review ledger requires a current `pass` per required
-  sampling cell. The dataset release absence ledger requires every upstream
-  absence key to have a current `pass` with a disposition other than
-  `extractor_gap`. The dataset release geometry residual ledger requires the
-  `min(pool_size, 300)` draw and no unexplained mismatch. A gap, a `defect`, or
-  an `extractor_gap` blocks the export.
+  sampling cell. The dataset release absence ledger is derived from the failure
+  partitions, the `GraphCompletenessReport` set, and the deficit ledger, and
+  blocks on a missing key or an `extractor_gap` disposition. The dataset release
+  geometry residual ledger requires the `min(pool_size, 300)` draw and no
+  mismatch. A gap, a `defect`, an `extractor_gap`, or a `mismatch` blocks the
+  export.
 - Copy the three dataset release review ledgers into the release as internal
   control documents.
 - Write `release.parquet`, `failures.parquet`, `manifest.json`, and
@@ -134,9 +135,10 @@ checked against the policy it names. The manifest makes the departure visible.
 
 ## Review gate
 
-The [review pack](../devtools/review-pack.md) renders the task sample and writes
-the dataset release task review, absence, and geometry residual ledgers. `05` reads the ledgers and never
-renders.
+The [dataset browser](../devtools/dataset-browser.md) selects the task sample
+and records the reviewer's verdicts in the dataset release task review ledger.
+`05` derives the dataset release absence ledger from its own inputs and reads
+the task and geometry residual ledgers; it never renders.
 
 The sample is the cross product of clue type, answer meaning, answer format, and
 task reasoning step count, restricted to the cells the support tables support and
@@ -147,13 +149,14 @@ release gate requires.
 Each sampled task carries:
 
 - the prompt text;
-- one render of the final solid state with the target and every clue-bound
-  entity highlighted in a distinct colour and labelled with its clue number;
+- the final solid state with the target and every clue-bound entity in a
+  distinct colour, labelled with its clue number, in the browser's 3D view;
 - the gold answer.
 
 The reviewer checks that each highlighted entity is the one the clue names, that
-the answer matches the geometry, and that the wording is clear. The render does
-the work that re-deriving the task would otherwise take.
+the answer matches the geometry, and that the wording is clear. The interactive
+scene does the work that re-deriving the task would otherwise take, and the
+browser records the scene hash rather than a render file.
 
 **Dataset release task review ledger.** `05` blocks the export unless every
 required cell has a current `pass` whose `(definition_sha256, prompt_sha256)`
@@ -161,18 +164,18 @@ matches the release row. A `defect` blocks until the task is re-reviewed.
 
 **Dataset release absence ledger.** `05` derives the expected absence key set
 from the failure partitions, the `GraphCompletenessReport` set, and the deficit
-ledger. Every key needs a current `pass` with a disposition other than
-`extractor_gap`; a missing key, a `pending` row, a `defect`, or an
-`extractor_gap` blocks. The ledger is exhaustive over upstream absences, not a
-sample.
+ledger, and writes one derived row per key. A missing key blocks. A row whose
+upstream `disposition` is `extractor_gap` blocks. There is no human verdict on
+this ledger: its disposition is copied from the upstream artifact, and a capacity
+deficit the owner accepts is recorded in `known_misses`, not as a review row.
 
 **Dataset release geometry residual ledger.** `05` checks that this ledger names
 the run and the pinned dataset release program pool, draws at least
 `min(pool_size, 300)` programs at `bound_p = 0.01`, has one row per drawn
-program, and carries no unexplained mismatch. A short sample, a missing row, a
-mismatch without a disposition, or an `extractor_gap` blocks. The bound is on
-detectable CAD graph kernel-oracle differential mismatches, not on every defect
-([`review-pack.md`](../devtools/review-pack.md#dataset-release-geometry-residual-ledger)).
+program, and carries no `mismatch`. Any mismatch blocks; it is not waived by a
+disposition. The bound is on detectable CAD graph kernel-oracle differential
+mismatches, not on every defect
+([`release-dataset-contract.md`](../../requirements/release-dataset-contract.md#dataset-release-geometry-residual-ledger)).
 
 The three ledgers are internal control documents and are not consumer artifacts.
 `05` copies them into the release and records their hashes.

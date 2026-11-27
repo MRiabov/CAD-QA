@@ -687,35 +687,48 @@ step count. `In code:` `DeficitLedger`. `Distinct from:` the **Task quota plan**
 
 ---
 
+### Dataset browser
+
+The one human frontend for dataset review: a task list, a coverage-gap-ordered
+review queue, an interactive 3D view, and read-only views of the derived review
+ledgers. It records the **Dataset release task review ledger** and writes no
+static render. `In code:` `tools/manual-verification/dataset_browser.py` and
+`tools/manual-verification/dataset-browser/`. `Distinct from:` the **Dataset
+release absence ledger** and **Dataset release geometry residual ledger**, which
+are derived and machine-checked, and from a pipeline stage, which it is not.
+
+---
+
 ### Dataset release task review ledger
 
 The append-only record of one human verdict per task in a dataset release, keyed
-`(task_id, definition_sha256, prompt_sha256)`. `In code:`
-`review-ledger.parquet`. `Distinct from:` the **Dataset release absence ledger**,
-which covers subjects that never became release rows, and the **Dataset release
-geometry residual ledger**, which records the CAD graph kernel-oracle
-differential.
+`(task_id, definition_sha256, prompt_sha256)` and recorded through the
+**Dataset browser**. `In code:` `review-ledger.parquet`. `Distinct from:` the
+**Dataset release absence ledger**, which covers subjects that never became
+release rows, and the **Dataset release geometry residual ledger**, which records
+the CAD graph kernel-oracle differential.
 
 ---
 
 ### Dataset release absence ledger
 
-The exhaustive record of one disposition per subject absent from a dataset
+The exhaustive record of one derived row per subject absent from a dataset
 release — a program, capability, or capacity — keyed
-`(pipeline_stage, subject_kind, subject_identity)`. `In code:`
+`(pipeline_stage, subject_kind, subject_identity)`, carrying the upstream
+`FailureDisposition` and its evidence. It has no human verdict. `In code:`
 `absence-ledger.parquet`. `Distinct from:` the **Dataset release task review
-ledger**, which is sampled from release rows.
+ledger**, which is sampled from release rows and human-judged.
 
 ---
 
 ### Dataset release geometry residual ledger
 
 The record of one **CAD graph kernel-oracle differential** result per program
-drawn uniformly from the **Dataset release program pool**, for the mismatches
-the release checks do not explain. `In code:` `residual-ledger.parquet`.
-`Distinct from:` the **Dataset release absence ledger**, which is exhaustive
-over known absences, and the **Dataset release task review ledger**, which is a
-human judgement.
+drawn uniformly from the **Dataset release program pool**. Any mismatch blocks
+the export; there is no disposition that waives one. `In code:`
+`residual-ledger.parquet`. `Distinct from:` the **Dataset release absence
+ledger**, which is exhaustive over known absences, and the **Dataset release task
+review ledger**, which is a human judgement.
 
 ---
 
@@ -725,8 +738,8 @@ The uniform draw of `min(pool_size, 300)` programs from the **Dataset release
 program pool** at `bound_p = 0.01`, used by the **Dataset release geometry
 residual ledger** to bound the dataset release geometry residual-defect rate:
 the share of the pool with a detectable **CAD graph kernel-oracle differential**
-mismatch that the release checks do not explain. `Distinct from:` the
-**Sampling matrix**, which is a stratified sample of release tasks.
+mismatch. `Distinct from:` the **Sampling matrix**, which is a stratified sample
+of release tasks.
 
 ---
 
@@ -897,6 +910,8 @@ cross-cutting phrases. Enforced by `tools/ci_cd/check_dont_say.py`.
 | RL-readiness gate | RL-readiness gate | "sampling of what?" |
 | RL-readiness gate | RL-readiness gate | ambiguous |
 | gate (bare) | RL-readiness gate / release gate / phase gate / quality gate / review gate / coverage gate / regression gate / stop gate / forgetting gate / format gate / evaluation gate / test gate / advancement gate / blocking gate / freeze gate / smoke gate / trust-audit gate | name which gate |
+| review pack | dataset browser / dataset release task review ledger | the browser is the one review frontend; a sample is a view, not a tool |
+| task browser | dataset browser | the tool is the dataset browser |
 | band | RL-eligible pass rate / range | imprecise; name the RL-eligible pass rate, or the range |
 | kind (bare) / kinds (bare) | predicate kind | raw noun; qualify it |
 | type (bare) / types (bare) | CAD graph entity type / CAD graph relation type / clue type / answer format / measurement scope / LLM harness mode | raw noun; qualify it |
