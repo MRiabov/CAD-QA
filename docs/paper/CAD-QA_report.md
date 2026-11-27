@@ -19,20 +19,10 @@ HOW TO USE THESE ANNOTATIONS
 
 ## Abstract
 
-**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focusing on reconstruction, engineering standard following and editing.
+**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focusing on reconstruction, engineering standard following and editing. **Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exist. **Objectives and contribution:** We present a large dataset that allows training foundational capabilities of LLMs in deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation. **Methodology:** To aid in efficient training of LLMs on our dataset, we present a critical path that allows validated step-by-step solutions. **Results, findings and remaining gap:** We show that frontier models are only 50–80% successful without tool assistance, showing headroom in geometrical reasoning. **Availability:** We open-source the dataset at https://huggingface.co/MRiabov/
 
-**Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exist.
-
-**Objectives and contribution:** We present a large dataset that allows training foundational capabilities of LLMs in deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation.
-
-**Methodology:** To aid in efficient training of LLMs on our dataset, we present a critical path that allows validated step-by-step solutions.
-
-**Results, findings and remaining gap:** We show that frontier models are only 50–80% successful without tool assistance, showing headroom in geometrical reasoning.
-
-**Availability:** We open-source the dataset at https://huggingface.co/MRiabov/
-
-[to be revised]
 <!--
+[to be revised]
 ABSTRACT (write last, 200–250 words, no citations)
 - Structured labels: Background, Problem, Objectives/contribution, Methodology, Results/findings/remaining gap, Availability.
 - Keep the CA2 arc (winter/spring 2026): assistant → comprehension failure (invalid geometry, overlaps) → question-answering dataset from CadQuery programs → simple lookups to high-step questions with distractors → three harnesses → accuracy by task reasoning step, clue type, relation family and LLM harness mode → contribution. The 2026 evidence updates the middle of that arc; it does not replace it.
