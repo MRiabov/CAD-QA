@@ -137,7 +137,7 @@ Parallelism and perpendicularity are not relation kinds. The graph stores the
 | `cadquery_selector_result` | `selected_count` | runtime selector result |
 | `cadquery_workplane` | `workplane_frame` | runtime frame capture |
 | `operation` | `volume_change`, `bounding_box_change`, `topology_change` | runtime effect delta |
-| `pair` | `distance`, `angle` | kernel measurement for `distance`; derived geometry for `angle` |
+| `pair` | `distance`, `angle` | runtime pair distance for `distance`; derived geometry for `angle` |
 
 The subject for an effect delta is `operation`: the effect belongs to the
 operation that produced it, and the measurement type catalog in

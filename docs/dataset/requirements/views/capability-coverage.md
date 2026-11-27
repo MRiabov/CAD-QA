@@ -38,7 +38,7 @@ the graph has it.
 | Volume | `volume` | solid state, region |
 | Area | `area` | face, CadQuery profile, region |
 | Length | `length` | edge |
-| Distance | `distance` | two entities, or an entity and a point |
+| Distance | `distance` | the bound target and the nearest member of a clue's reference set |
 | Angle | `angle` | two faces, two edges, a face and an axis |
 | Count | `face_count`, `edge_count`, `vertex_count` | solid state, face |
 | Membership | `is_inside` with a point or point probe | solid state |
@@ -129,10 +129,11 @@ centroids.
   construction is `03b` work.
 - `distance_to_face_surface` is evidence, not an answer: membership reads its
   point, not its distance.
-- `distance` on a pair is the closest-point distance (above), but the requirement
-  does not declare which entity kinds it pairs and no pipeline stage produces the
-  rows yet
-  (`MC-67`). A pair-distance question cannot be built until both land.
+- `distance` on a pair is the closest-point distance, over the face and edge
+  endpoint kinds `graph-content.md` section 4.1 declares; `02b` captures the dense
+  set and `02c` copies it (`EX-25`). A distance answer reads the reference set of
+  a task clue, so a task with no clue that names a reference cannot ask for one
+  (`task-structure.md` section 2.2).
 - `derived_from`, `part_of`, `adds_material`, `removes_material`, and the
   CadQuery workplane `uses` have no clue. Material change reads the operation's volume
   change, so the region relations stay graph facts for now.

@@ -198,7 +198,7 @@ must support at least these.
 | Area | Face, CadQuery profile, region | Face area and CadQuery profile area are different scopes. | P0 |
 | Perimeter | CadQuery profile | The length of the closed boundary. It describes a CadQuery profile of any outline, including one whose outline has no noun. | P1 |
 | Length | Edge, path segment | Straight or curve length. | P0 |
-| Distance | Two endpoint entities, or one endpoint entity and a point | The shortest distance between the two entities' geometry, which is the distance between their closest points, or from the point to the nearest point of the entity. 0 when they touch or intersect. Not the distance between centroids. | P0 |
+| Distance | Two entities of the declared endpoint kinds, or one endpoint entity and a point | The shortest distance between the two entities' geometry, which is the distance between their closest points, or from the point to the nearest point of the entity. 0 when they touch or intersect. Not the distance between centroids. The endpoint kinds are declared in section 4.1. | P0 |
 | Angle | Two planar faces, two edges, a path tangent, or a planar face and a program axis | Two faces: between outward normals, 0–180°. Two edges: acute angle between the lines, 0–90°. A face and an axis: between the outward normal and the directed axis, 0–180°, because +z and -z are different labels. Path tangent: between consecutive tangents, 0–180° (P1). Degrees. | P0 |
 | Outward normal | Planar face | The unit direction that points out of the solid, in the program frame. A direction, not a category and not a number. | P0 |
 | Bounding box | Solid state, face, edge, region | The axis-aligned minimum and maximum corners in the program frame. A point has no extent to report, so a vertex has none. | P0 |
@@ -259,6 +259,16 @@ A **dense pair kind** holds for every pair of its declared endpoint kinds:
 `distance`, and `angle` between two planar faces. Its rows are the product of the
 sets on its two sides, so it is emitted over a **reference class** under the
 bound below. The emitted pairs are not the full pair set.
+
+`angle` declares faces and edges as endpoint entity kinds. `distance` declares
+the same two: two faces, or a face and an edge. A reference class is always a
+face class, so the emitted `distance` rows are face–face and face–edge pairs;
+an edge–edge pair would need an edge reference class, which P0 does not have
+([`02c` Q1](../implementation/pipeline/02c-build-cad-graph.md#open-questions)).
+The point side a distance answer may name is a task parameter, not a graph
+entity, so no stored row has one; the reference form that would name it is
+recorded as missing in
+[`views/reference-forms.md`](views/reference-forms.md#a-point).
 
 **Pair emission is state-scoped.** Pair rows are emitted only for the solid
 states a task can bind in the release implementation scope: the final state in

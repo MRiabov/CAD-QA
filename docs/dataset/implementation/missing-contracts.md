@@ -13,10 +13,9 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There is 1 open entry: one P0 technical contract. P1 and P2 are empty. It was
-scheduled as a `P0-W1` item and is not written into its owner doc yet.
-`MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66` closed on 2026-11-25;
-`MC-64` closed on 2026-11-27; `MC-67` remains.
+There are no open entries. P1 and P2 are empty. `MC-22`, `MC-49`, `MC-50`,
+`MC-63`, `MC-65`, and `MC-66` closed on 2026-11-25, and `MC-64` and `MC-67`
+closed on 2026-11-27.
 
 ## Decisions needed from the owner
 
@@ -31,39 +30,8 @@ None. `MC-63` closed by re-scoping R-5 to P1; see
 
 ### Technical (P0)
 
-Work order:
-
-1. `MC-67` — pair distance has no endpoint kinds and no producer; `02b` writes
-   the rows from `P0-W3` on.
-
-#### MC-67 — Pair distance declares no endpoint kinds and has no producer
-
-[`graph-content.md`](../requirements/graph-content.md) §4 declares `distance` for
-"two endpoint entities", and
-the measurement type catalog in
-[`graph-persistence.md`](pipeline/extraction/graph-persistence.md) allows
-`graph entity` on both sides. The dense emission rule in §4.1 emits
-`reference class × candidate endpoints of the declared endpoint entity kind`, and
-`angle` names faces or edges; `distance` names no endpoint entity kind, so the
-candidate set cannot be enumerated.
-
-The measurement also has no producer.
-[`graph-completeness.md`](pipeline/extraction/graph-completeness.md#5-measurement-completeness)
-calls `distance` a kernel measurement, but `02b`'s success result carries no pair
-distances and `02c` is Go and does not import CadQuery
-([`python-and-golang.md`](python-and-golang.md)). A release fails
-`extraction_capability_coverage` on `measurement:distance@pair` with no
-pipeline stage able to satisfy it.
-
-**Recommendation:** capture the dense pair distances in `02b`, while CadQuery is
-already imported and warm (`EX-22`); the entity tables and the face attributes
-that draw a reference class exist there, and `02c` copies the rows. Declare the
-entity kinds `distance` applies to in `graph-content.md` §4.1 (face and edge,
-matching `angle`), and record the capture cost against the `DS-ADR-15` 30-second
-execution budget in `P0-W3`. A class over `max_anchor_class_size` emits no rows, as
-the dense rule already says. If the budget does not hold, narrowing `distance` to
-the pairs derivable exactly in Go from stored geometry is a requirement change,
-not a silent omission.
+None. `MC-64` closed in the 2026-11-27 review-ledger pass and `MC-67` in the
+2026-11-27 pair-distance pass.
 
 ## P1
 
@@ -75,6 +43,48 @@ None.
 
 None. `MC-22` closed in the 2026-11-25 geometry-required pass and `MC-49`
 closed in the 2026-11-25 benchmark-program-set pass.
+
+## Closed in the 2026-11-27 pair-distance pass
+
+- `MC-67` — `distance` declares its endpoint entity kinds and has a producer.
+  [`graph-content.md`](../requirements/graph-content.md) §4.1 declares a face and
+  an edge, and because a reference class is always a face class the emitted rows
+  are face–face and face–edge; an edge–edge pair needs an edge reference class,
+  which P0 does not have (`02c` Q1). `02b` captures the dense set while the state
+  and CadQuery are in hand, written as `runtime_pair_distances`
+  ([`02b-execute-cadquery.md`](pipeline/02b-execute-cadquery.md#pair-distances),
+  [`runtime-schema.md`](pipeline/extraction/runtime-schema.md#runtime_pair_distances),
+  `runtime_schema_version` v2), and `02c` copies each row as a measured `distance`
+  measurement with the kernel name as its evidence rule. The cost is measured
+  rather than argued: the full emitted set is 38.5 ms at the median, 185 ms at
+  p90, and 811 ms at the worst of 40 sampled programs, against the 30-second
+  child limit, and the specialized extrema classes are 20–3,000 times faster per
+  pair than the generic dispatcher (`EX-25`). The consumer the entry did not name
+  was also missing: no P0 binding joined the target to a second entity.
+  `task-structure.md` §9 Q3 resolves it — a clue binds its reference set, a pair
+  answer reads the nearest member, and no task narrows a second set.
+
+## Closed in the 2026-11-27 review-ledger pass
+
+- `MC-64` — the review gate has three ledgers. The dataset release task review
+  ledger is the existing sampled matrix in
+  [`devtools/review-pack.md`](devtools/review-pack.md#sampling-matrix). The
+  dataset release absence ledger is exhaustive over every upstream absence: one
+  row per absent program, capability, or capacity, keyed
+  `(pipeline_stage, subject_kind, subject_identity)`, with a
+  `FailureDisposition`, a verdict, and evidence. The dataset release geometry
+  residual ledger is a uniform draw from the pinned dataset release program
+  pool,
+  `min(pool_size, 300)` programs at `bound_p = 0.01` and 95% confidence, each run
+  through the CAD graph kernel-oracle differential. `05` derives the expected
+  absence key set from the failure partitions, the `GraphCompletenessReport`
+  set, and the deficit ledger, and blocks on a missing row, a `pending` row, a
+  `defect`, or an `extractor_gap`; it blocks a short dataset release geometry
+  residual-defect sample or an unexplained mismatch. The manifest records
+  `review_ledger_sha256`, `absence_ledger_sha256`, and
+  `residual_ledger_sha256`, and the three ledgers are internal control
+  documents. `rejection_contact_sheet.py` and `residual_sample.py` write the
+  ledgers.
 
 ## Closed in the 2026-11-25 failure-disposition pass
 
@@ -98,28 +108,6 @@ closed in the 2026-11-25 benchmark-program-set pass.
   disposition during reconciliation and aggregation, and the Go `FailureRecord`
   struct, validation, merge comparison, and Parquet round trip carry the column.
   The decision is `DS-ADR-17`.
-
-## Closed in the 2026-11-27 review-ledger pass
-
-- `MC-64` — the review gate has three ledgers. The dataset release task review
-  ledger is the existing sampled matrix in
-  [`devtools/review-pack.md`](devtools/review-pack.md#sampling-matrix). The
-  dataset release absence ledger is exhaustive over every upstream absence: one
-  row per absent program, capability, or capacity, keyed
-  `(pipeline_stage, subject_kind, subject_identity)`, with a
-  `FailureDisposition`, a verdict, and evidence. The dataset release geometry
-  residual ledger is a uniform draw from the pinned dataset release program
-  pool,
-  `min(pool_size, 300)` programs at `bound_p = 0.01` and 95% confidence, each run
-  through the CAD graph kernel-oracle differential. `05` derives the expected
-  absence key set from the failure partitions, the `GraphCompletenessReport`
-  set, and the deficit ledger, and blocks on a missing row, a `pending` row, a
-  `defect`, or an `extractor_gap`; it blocks a short dataset release geometry
-  residual-defect sample or an unexplained mismatch. The manifest records
-  `review_ledger_sha256`, `absence_ledger_sha256`, and
-  `residual_ledger_sha256`, and the three ledgers are internal control
-  documents. `rejection_contact_sheet.py` and `residual_sample.py` write the
-  ledgers.
 
 ## Closed in the 2026-11-25 extraction-capability-coverage pass
 

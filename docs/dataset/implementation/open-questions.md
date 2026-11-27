@@ -15,7 +15,6 @@ owning document. Absent contracts are tracked separately in
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | Which direction words may a rank clue use, and does a set need a stated order before it can be ranked? |
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | May a provenance clue point at a second set, or is it always one operation or CadQuery profile? |
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | Is `cadquery_workplane` a task target category in the first release? Its answers are a choice label or a frame the program already states, so it does not read the built shape. |
-| [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | May a task narrow more than one set, so that a later step joins two narrowed sets? It was done before as `reference_*_distance`; deferred to P1 or P2, undecided. |
 | [`task-structure.md`](../requirements/task-structure.md#8-open-questions) | — | P1 | When is the target a scalar value rather than the entity? Both definitions describe a measurement answer and no rule chooses between them. |
 
 Every owning document not listed above has no open questions. The detailed

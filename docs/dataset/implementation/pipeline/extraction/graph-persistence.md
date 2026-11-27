@@ -118,7 +118,7 @@ rejects the graph.
 | `volume` | `scalar` | `cubic_millimetre` | `solid_state`, `region` | null |
 | `area` | `scalar` | `square_millimetre` | `face`, `cadquery_profile`, `region` | null |
 | `length` | `scalar` | `millimetre` | `edge`, `cadquery_path_segment` | null |
-| `distance` | `scalar` | `millimetre` | graph entity | graph entity |
+| `distance` | `scalar` | `millimetre` | `face`, `edge` | `face`, `edge` |
 | `angle` | `scalar` | `degree` or `radian` | `face`, `edge`, `cadquery_path_segment` | same category, or null for a path tangent |
 | `bounding_box` | `bounding_box` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |
 | `centroid` | `point` | `millimetre` | `solid_state`, `face`, `edge`, `vertex`, `region` | null |

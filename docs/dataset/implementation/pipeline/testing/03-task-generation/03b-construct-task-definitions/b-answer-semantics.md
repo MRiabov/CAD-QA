@@ -26,8 +26,16 @@ classifier, and the margin. A point inside the clear-case margin is not used.
 compares equal only at that precision; a coordinate compares componentwise; a
 material change compares the signed volume, so a cut answers a negative number.
 
-**TDD pin:** pins the choice pool, answer uniqueness, membership evidence, and
-`same_answer` before `03b` exists.
+`test_03b_distance_reads_the_clue_reference` — a distance task whose clue binds a
+three-face reference set resolves to the smallest stored `distance` between the
+bound target and any member of that set, and its evidence names the target, the
+nearest member, and the measurement row. A distance task whose definition has no
+bound reference set is rejected with that reason, not resolved to zero. A
+reference set holding one member supplies that member. The distance comes from
+the graph, so the resolver never calls the kernel.
+
+**TDD pin:** pins the choice pool, answer uniqueness, membership evidence,
+`same_answer`, and the pair-answer reference reading before `03b` exists.
 
 ## What this does not prove
 

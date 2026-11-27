@@ -7,6 +7,7 @@ READ:
 
 - `NormalizedProgram` → `program_id, program_sha256, canonical_text`
 - `CadQueryAstExtractionResult` → `ast_extraction_result_sha256`, operations
+- `ImplementationScope` → the bindable solid states; the dense pair set is captured per bindable state, so measuring a state no task can bind would spend the execution budget for rows `02c` drops
 - cache → committed result for the computed cache key, when present; the cache
   location and resume rule are in
   [`../../run-contract.md`](../../run-contract.md#8-cache)
@@ -15,7 +16,7 @@ READ:
 
 TRANSFORM:
 
-- cache key = `program_sha256 + ast_extraction_result_sha256 + extractor version + canonicalization version + CadQuery version + OCP version + execution environment + timeout + memory limit`; a hit returns the stored result
+- cache key = `program_sha256 + ast_extraction_result_sha256 + extractor version + canonicalization version + CadQuery version + OCP version + execution environment + timeout + memory limit + implementation scope`; a hit returns the stored result
 - run each program in a child Python process; 30 seconds wall clock and 2 GiB address space; a changed limit is a new execution environment and a new cache key
 - kill on timeout → `timeout`; memory-limit failure → `memory`
 - pin and record the CadQuery and OCP versions
@@ -27,12 +28,13 @@ TRANSFORM:
 - capture one `CadQuerySelectorResult` per evaluated selector: `selector_result_id, selector_id, state_id, selected_entity_ids, count`; zero matches is success; a CadQuery selector exception rejects the program
 - capture one `CadFeatureSolidStateEffectDelta` per operation: `operation_id, before_state_id, after_state_id, volume change, bounding-box change, topology counts`
 - capture one or two `PointProbe` per solid state: `point_probe_id, state_id, point, location (inside | outside), distance_to_face_surface, classifier, margin`; the centroid probe plus a seeded point next to the state surface on either side, with the first and second probes carrying opposite labels when both survive; do not emit a probe within the clear-case margin; never confine a probe to the bounding box
+- capture one `PairDistance` per emitted `distance` pair in each bindable state: `state_id, subject_entity_id, object_entity_id, subject_category, object_category, distance, kernel_call`; the classes are the face surface kind and the bounding-box extreme plane, the candidates are every face and every edge, a class over `max_anchor_class_size` emits nothing, a self-pair is dropped, the pair is unordered with endpoints in canonical `entity_id` order, a touching pair is `0.0`, and a kernel call that does not complete is a `cadquery_exception`
 - set `final_state_id`
 - never persist raw kernel handles or BRep
 
 WRITE:
 
-- `CadQueryRuntimeExtractionSuccess` `(cache_key)` → `program_id, program_sha256, ast_extraction_result_sha256, environment record, operation_recordings, shape_snapshots, workplane_frames, selector_results, effect_deltas, point_probes, final_state_id, runtime_extraction_result_sha256`
+- `CadQueryRuntimeExtractionSuccess` `(cache_key)` → `program_id, program_sha256, ast_extraction_result_sha256, environment record, operation_recordings, shape_snapshots, workplane_frames, selector_results, effect_deltas, point_probes, pair_distances, final_state_id, runtime_extraction_result_sha256`
 - `runtime_*` Parquet tables
 - one runtime result per program in `parts/<program_sha256>/`; a committed
   result, including a tombstone, is not recomputed unless forced

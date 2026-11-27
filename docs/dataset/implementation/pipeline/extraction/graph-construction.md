@@ -181,7 +181,19 @@ The row uses the relation or measurement id from
 [`graph-persistence.md`](graph-persistence.md), which already includes the
 program, the element name, and both endpoints. A measurement row carries the
 value, unit, and tolerance; a relation row carries its `tolerance` and CAD graph
-evidence. The relation `tolerance` is null unless the relation is
+evidence.
+
+`angle` is derived in `02c` from the stored geometry. `distance` is not: `02c`
+copies each `PairDistance` from the runtime extraction result to one
+`measurements.parquet` row with `evidence_kind = measured` and `evidence_rule`
+equal to the row's `kernel_call`
+([`runtime-schema.md`](runtime-schema.md#runtime_pair_distances)). A runtime pair
+the emission rule does not draw is an orphan; a pair the rule draws that the
+runtime result lacks is a missing row, because `02b` captures the same rule over
+the same state. `02c` orders the two endpoints by `node_id` before it forms the
+measurement identity, so a pair two classes both draw, or a pair copied from a
+class whose member was the second side, still gets one id. The relation
+`tolerance` is null unless the relation is
 `coplanar_with` or `coaxial_with`, as
 [`graph-persistence.md`](graph-persistence.md) defines.
 

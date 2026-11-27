@@ -92,7 +92,7 @@ The resolver turns the bound target and the penultimate answer candidate set int
 the answer value and its evidence:
 
 ```text
-resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
+resolve_answer(answer_meaning, bound_target, answer_parameter, reference_set, penultimate_set)
   -> (answer_value, answer_evidence)
 ```
 
@@ -102,7 +102,7 @@ resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
 | Volume | The volume of the bound solid state. | Kernel volume. |
 | Area | The area of the bound face or profile. | Kernel area. |
 | Length | The length of the bound edge or path segment. | Kernel length. |
-| Distance | The shortest distance between the bound pair, or between the point and the entity. | Kernel distance. |
+| Distance | The smallest graph `distance` between the bound target and any member of `reference_set`; a single-member set supplies that member. | The `distance` measurement row for that pair. |
 | Angle | The graph angle for the pair, with the convention in `graph-content.md`. | Graph measurement. |
 | Count | The number of entities in the bound set. | Set size. |
 | Membership | Inside or outside, from the point probe. | Probe classification. |
@@ -114,6 +114,15 @@ resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)
 When the task is multiple choice, `gold_answer` is the pool label whose
 `candidate` equals this answer value, not the answer value itself. The answer
 value stays in `answer_evidence` and in `choice_pool`.
+
+`reference_set` is the bound reference of the task's clue
+([`task-structure.md` §2.2](../../../../requirements/task-structure.md#22-task-clue)),
+and it is null for every meaning that declares no pair. It is not an answer
+parameter: the definition identity already covers the clue's binding, so a pair
+answer adds no identity component. A pair answer with a null `reference_set` is
+rejected, not resolved. The answer evidence names the target, the reference
+member the pair read, and the measurement row, so the answer is reproducible
+from the artifact.
 
 `answer_parameter` is null for every meaning that declares nothing. It carries
 the point for a position or a membership and the category for a topology change.

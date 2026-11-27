@@ -103,15 +103,12 @@ because the code that would otherwise encode the wrong answer is `P0-W2` or
 `P0-W3` work. The shared `FailureRecord` struct follows a contract change in
 the same change, as `MC-65` did with its disposition column.
 
-One item remains open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between the
-audit and 2026-11-25 and are listed below the table; `DA-7` / `MC-63` closed by
+No item remains open. `DA-4`, `DA-15`, `DA-13`, and `DA-5` closed between
+the audit and 2026-11-25 and are listed below; `DA-7` / `MC-63` closed by
 re-scoping R-5 to P1, `MC-66` closed by the must-extract capability set,
-`MC-65` closed by the failure disposition, and `MC-64` closed by the dataset release absence and geometry
-residual ledgers.
-
-| Item | Owner | Why it cannot wait |
-|---|---|---|
-| `MC-67` — pair distance: endpoint kinds and the `02b` capture | `graph-content.md`, `02b-execute-cadquery.md`, `graph-completeness.md` | `distance` declares no endpoint entity kinds and no pipeline stage computes it, so the `measurement:distance@pair` capability cannot be realized |
+`MC-65` closed by the failure disposition, `MC-64` closed by the dataset
+release absence and geometry residual ledgers, and `MC-67` closed by the
+pair-distance contract and its measured capture cost.
 
 Closed since the audit's `P0-W1` table:
 
@@ -292,8 +289,10 @@ Started first of the two concurrent tracks.
   the fingerprint copy instead of a recompute (`DS-ADR-08`), and the pair-emission
   bound per reference class (`DS-REQ-37`, `MC-50`): a dense class is emitted
   whole or not at all, and the bound is measured from the pool.
-- `02b` also captures the dense pair distances (`MC-67`), while CadQuery is warm,
-  and `02c` copies them; the cost is measured against the `DS-ADR-15` budget.
+- `02b` also captures the dense pair distances with the specialized extrema
+  classes, while CadQuery is warm, and `02c` copies them (`EX-25`); the measured
+  cost is 38.5 ms at the median and 811 ms at the worst of 40 sampled programs,
+  inside the `DS-ADR-15` budget.
 - Shard parts for `01d`, `02a`, and `02c`; `02b` stays one unit per part
   (`DS-ADR-07`).
 - Resolve the `02b` point-probe scope: P0 binds one solid state per task, so

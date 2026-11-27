@@ -6,7 +6,7 @@ This document fixes the runtime artifact schema produced by `02b`. Field
 meanings are in the `cadquery/` documents; exact tables and nested models are
 here.
 
-`runtime_schema_version = "cadqa-runtime-v1"`.
+`runtime_schema_version = "cadqa-runtime-v2"`.
 
 ## Common columns
 
@@ -136,6 +136,26 @@ Every AST call operation has exactly one row.
 
 A state has at most two rows. A state with no surviving row supports no
 membership task; that is a deficit, not a missing row.
+
+## `runtime_pair_distances`
+
+| Column | Parquet value category | Null | Meaning |
+|---|---|---|---|
+| `pair_id` | `STRING` | not null | `pair:<state_id>:<subject_entity_id>:<object_entity_id>`. |
+| `state_id` | `STRING` | not null | Containing state. |
+| `subject_entity_id` | `STRING` | not null | Entity on the canonically first side. |
+| `object_entity_id` | `STRING` | not null | Entity on the canonically second side. |
+| `subject_category` | `STRING` enum `face`, `edge` | not null | Entity category of the first endpoint. |
+| `object_category` | `STRING` enum `face`, `edge` | not null | Entity category of the second endpoint. |
+| `distance` | `DOUBLE` | not null | Shortest distance in millimetres; `0.0` when the two touch or intersect. |
+| `kernel_call` | `STRING` | not null | Kernel operation that produced the distance. |
+
+One row per emitted `distance` pair per state, after dropping self-pairs and
+reducing to unordered pairs. A pair that two reference classes both draw is one
+row, because the measurement identity is the pair and the measurement type, not the class.
+The rows are in every bindable state of the implementation scope, which is the
+final state in P0. A pair the emission rule does not draw has no row; that is
+not a missing row.
 
 ## `runtime_effects`
 

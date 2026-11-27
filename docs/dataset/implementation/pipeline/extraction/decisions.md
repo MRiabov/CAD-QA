@@ -349,6 +349,35 @@ change bumps `runtime_schema_version`.
   extraction-graph oracle; removing one is a contract change, not a release
   decision.
 
+## EX-25 — Pair distances use the specialized extrema classes
+
+- **Status:** accepted (2026-11-27).
+- **Context:** [`graph-content.md` §4.1](../../../requirements/graph-content.md#41-emission-rules)
+  declares `distance` over face and edge endpoint kinds, and the distance is a
+  kernel measurement. The generic OCC dispatcher,
+  `BRepExtrema_DistShapeShape`, rebuilds a triangle set and shape maps on every
+  call: measured on the reference host, 395 µs for two planar box faces,
+  42,454 µs for a cylinder's two end caps, and 1,095 µs for a curved pair. The
+  specialized extrema classes — `BRepExtrema_ExtFF`, `_ExtCF`, `_ExtCC` —
+  take the same face and edge sub-shapes directly and are exact: 18 µs, 13 µs,
+  and 553 µs on those pairs, agreeing with the generic path at zero relative
+  error on all 15 box face pairs. Reusing one dispatcher object
+  (`LoadS1`/`LoadS2`/`Perform`) changes nothing, 420 µs against 430 µs, so the
+  cost is the computation and not the setup.
+- **Decision:** `02b` captures the dense `distance` set with the
+  specialized extrema classes, one call per emitted pair, in the state that
+  is already built. It does not use the generic dispatcher, and it needs neither
+  a meshed shape nor a structure reused across calls.
+- **Consequences:** on 40 programs sampled from the program pool, the full
+  emitted set costs 38.5 ms at the median, 185 ms at p90, and 811 ms at the
+  worst program, which is 0.13 % to 2.7 % of the 30-second child limit and about
+  135 s of added CPU across 1,500 programs, spread over shards. `DS-ADR-15`'s
+  bound does not move, because the work sits inside the child that already owns
+  it. A distance row is measured, not derived, so `02c` copies it and the kernel
+  name rather than recomputing the distance. A call that returns no extremum means
+  the two entities touch and is `0.0`; a call that does not complete is a
+  `cadquery_exception` failure, never a sentinel or a guess.
+
 ## Superseded decisions
 
 None.

@@ -483,6 +483,16 @@ A task clue with no reference has no clue reduction form. `In code:`
 
 ---
 
+### Bound reference
+
+The reference set a task clue names, kept with that clue so the answer step can
+read it. A bound reference is not a second task target: no later clue narrows it
+and it never becomes a target. A pair answer reads it existentially, taking the
+nearest member, so a set with several members still yields one number.
+`In code:` `reference_set`.
+
+---
+
 ### Measurement scope
 
 The provenance category of a Measurement — the aspect of the CAD program the fact describes.

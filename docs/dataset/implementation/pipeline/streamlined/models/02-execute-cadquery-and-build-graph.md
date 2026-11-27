@@ -451,6 +451,17 @@ class PointProbe(BaseModel):
     source_span: SourceSpan | None = None
 
 
+class PairDistance(BaseModel):
+    pair_id: str = Field(pattern=r"^pair:")
+    state_id: str
+    subject_entity_id: str
+    object_entity_id: str
+    subject_category: EntityCategory
+    object_category: EntityCategory
+    distance: float = Field(ge=0)
+    kernel_call: str
+
+
 class EffectEvidence(BaseModel):
     before_state_id: str | None = None
     after_state_id: str
@@ -518,6 +529,7 @@ class CadQueryRuntimeExtractionSuccess(BaseModel):
     selector_results: list[CadQuerySelectorResult]
     effect_deltas: list[CadFeatureSolidStateEffectDelta]
     point_probes: list[PointProbe]
+    pair_distances: list[PairDistance]
     runtime_topology: list[RuntimeTopology]
     final_state_id: str
     runtime_extraction_result_sha256: str

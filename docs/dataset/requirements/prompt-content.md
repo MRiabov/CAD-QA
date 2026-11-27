@@ -78,9 +78,16 @@ Examples of a question:
 - "What is the volume of the target solid state?"
 - "What is the signed change in volume caused by the target operation?"
 - "Which CadQuery workplane satisfies these conditions?"
+- "What is the shortest distance between the task target and a face from clue 1?"
 
 The question is not a task clue. It tells the LLM model what task target
 category the answer is about and what to answer.
+
+A pair answer may refer to the reference a task clue names. The question names
+the clue and does not restate its condition: "a face from clue 1" is the phrase
+the clue's reference already uses. "Shortest" makes the reading unambiguous when
+the reference set holds several members, and the answer is the distance to the
+nearest one. A pair answer with no clue reference to point at is not rendered.
 
 ## 4. Task clues
 

@@ -42,7 +42,7 @@ TRANSFORM:
 
 - `resolve_answer(answer_meaning, bound_target, answer_parameter, penultimate_set)` → `answer_value, answer_evidence`
 - identity → the entity shared by the whole answer-equivalent set; evidence = the set and the binding
-- volume → kernel volume of the bound solid state; area → kernel area of the bound face or profile; length → kernel length of the bound edge or path segment; distance → shortest kernel distance between the bound pair, or between the point and the entity; evidence = the kernel measurement
+- volume → kernel volume of the bound solid state; area → kernel area of the bound face or profile; length → kernel length of the bound edge or path segment; distance → the smallest stored `distance` between the bound target and any member of `reference_set`, taking the single member when the set holds one; evidence = the target, the reference member, and the measurement row
 - angle → the graph angle for the pair; evidence = the graph measurement
 - count → the size of the bound set
 - membership → `is_inside(solid_state, point)` from the point probe; answer is inside or outside; a point within the clear-case margin is not used; evidence = the point, its classification, the solid state, the distance to the nearest face, the classifier, and the margin; `answer_parameter` is that same probe point, bound once, and `04` renders the question from it

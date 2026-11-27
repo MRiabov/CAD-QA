@@ -204,6 +204,15 @@ narrowed and how far it narrowed it, and the prompt already has a phrase for the
 set a clue left ("the faces from clue 2"), so that scope adds a binding rather
 than a new clue contract.
 
+A clue that names a reference also **binds** it. The bound set is the reference
+the clue evaluated, and the answer step may read it: a pair answer — `Distance`,
+or `Angle` between two entities — takes the distance, or the angle, between the
+bound target and the nearest member of that set, so a set with several members
+still yields one number and a set with one member supplies that member. An angle
+to a program axis reads the axis the clue already names, not a set. The binding
+never becomes a target and no later clue narrows it, so the task keeps one
+target. A pair answer whose task binds no reference is not generated.
+
 A task may also need a **task answer step** after the task target is identified,
 such as reporting the volume of the selected solid state. A task answer step is
 not a task clue and is not written as one. It belongs in the answer instruction.
@@ -274,7 +283,7 @@ vocabularies cannot drift. The measurement definitions are in
 | Volume | `Volume` of a solid state or region. | none |
 | Area | `Area` of a face, CadQuery profile, or region. | none |
 | Length | `Length` of an edge or path segment. | none |
-| Distance | `Distance` between two entities or an entity and a point. | none |
+| Distance | `Distance` between the bound target and a clue's bound reference set. | none |
 | Angle | `Angle`. | none |
 | Count | `Count`, or a stored count such as `face_count`. | the counted entity kind |
 | Rank | Derived by the task: the ordinal of the target in a reference set ordered by one measurement and direction. It is not a stored measurement. | the ordering measurement and direction |
@@ -497,19 +506,6 @@ answer format, answer meaning, and task reasoning step count that tie them toget
   they are, a P1 rank task is not generated.
 - **May a provenance clue point at a second set?** A provenance clue names one
   operation or one CadQuery profile. Whether it may name a reference set is open.
-- **May a task narrow more than one set?** Today a task has one target, and every
-  clue narrows it, so a reference is either a single condition or an earlier state
-  of that target. The previous generator built tasks with two narrowed sets, the
-  target candidates and a reference entity, joined by a distance or a rank:
-  `parameterized_<target>_reference_<reference kind>_distance` and
-  `..._spatial_relation_chain_extreme` in
-  [`../../_archive/implementation_status.md`](../../_archive/implementation_status.md).
-  One step narrowed one set to fewer candidates; the join was a later step that
-  referenced both. Restoring it needs a step that binds a set, a later step that
-  references it, and a reducer relative to it. The shape to prefer is a wrapper
-  around a step, so a multi-step reference does not reopen every clue contract.
-  Deferred: P1 or P2, undecided. Until it is decided, no task binds a second set,
-  and a reference states one condition (`prompt-content.md` section 4.2).
 - **Is `cadquery_workplane` a task target category in the first release?** As a
   target it supports an identity answer, which is a multiple-choice label, or the
   `CadQuery workplane state` answer at P1: an origin, an x direction, and a
@@ -561,3 +557,15 @@ answer format, answer meaning, and task reasoning step count that tie them toget
   in stable candidate order (`DS-REQ-35`). A scalar target is defined but
   deferred; no P0 task uses it. This keeps the prompt label on the entity
   category and avoids a target kind that changes the release schema.
+
+- **Q3.** *Resolved 2026-11-27: one target, one bound reference.* No P0 task
+  narrows a second set. A clue's reference set is bound by its clue and may be
+  read by a pair answer, and that is all the binding does: it never becomes a
+  target and no later clue narrows it, so the task keeps one target. `Distance`
+  and `Angle` read the bound set existentially, taking the nearest member, so a
+  reference with several members still yields one number. The two-set join the
+  previous generator used (`parameterized_<target>_reference_<...>_distance`
+  and `..._spatial_relation_chain_extreme` in
+  [`../../_archive/implementation_status.md`](../../_archive/implementation_status.md))
+  stays P1 or P2: it needs a step that narrows a set which is not the target, and
+  that step is still undecided.

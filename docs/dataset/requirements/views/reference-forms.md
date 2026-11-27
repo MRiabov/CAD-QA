@@ -151,7 +151,14 @@ or centroid, and no P0 clue can narrow it.
 | Form | Phrase | Example | Usable when |
 |---|---|---|---|
 | Coordinate literal | `(x, y, z)` | Is the point (0, 0, 0) inside the target solid state? | a membership question; the point is the question parameter, and membership is point-in-solid-state only |
-| Point as a distance endpoint | — | — | `missing`: the distance meaning allows a point as one side, and no reference form or question template supplies one |
+| Point as a distance endpoint | — | — | `missing`: a point literal is not a graph entity, so no stored pair row carries one; the graph stores distances between faces and edges only (`graph-content.md` section 4.1) |
+
+### The reference side of a pair answer
+
+A `Distance` or `Angle` answer needs no new reference form. It reads the
+reference set of a task clue, which is one of the forms above, and the question
+points at the clue ("a face from clue 1"). The pair's second side is the clue's
+own reference phrase, not a second condition.
 
 ### Not a form
 

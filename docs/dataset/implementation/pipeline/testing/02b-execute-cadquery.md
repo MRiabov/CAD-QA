@@ -51,6 +51,20 @@ second wall clock, and one that exceeds 2 GiB each produce a failure tombstone
 naming the failure, with no partial success result. A re-run produces the same
 tombstone.
 
+`test_02b_pair_distances` — on the box-with-hole fixture, the `pair_distances`
+set equals the emission rule recomputed from the entity table: face surface kind
+and bounding-box extreme plane classes, every face and edge as candidates, no
+class over `max_anchor_class_size`, no self-pair, and each unordered pair once
+even when two classes draw it. Every value equals a kernel distance oracle within
+kernel noise, and a pair that shares an edge has `distance = 0.0`, not an absent
+row. A class rendered wider than `max_anchor_class_size` contributes no row and
+does not fail the program. A state outside the implementation scope carries no
+pair rows even though it has faces and edges, and a run with a different scope
+is a cache miss.
+
+**TDD pin:** pins the emitted pair set, the class composition, the dedupe across
+classes, and the zero-on-touch rule before `02b` emits the table.
+
 **TDD pin:** pins the seam edge, the probe count and centroid rule, the margin
 filter, and the three failure tombstones before `02b` exists.
 

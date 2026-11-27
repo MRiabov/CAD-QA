@@ -9,7 +9,11 @@ results, or a failure tombstone when execution fails.
 
 ## Input / output
 
-- Input: normalized program text plus `CadQueryAstExtractionResult`.
+- Input: normalized program text, `CadQueryAstExtractionResult`, and the
+  implementation scope, which names the solid states a task can bind. The scope
+  is input because the dense pair set is captured per bindable state, and
+  measuring a state no task can bind would spend the execution budget for rows
+  `02c` would drop (`graph-content.md` §4.1).
 - Output: `CadQueryRuntimeExtractionResult`, either success or a failure tombstone.
 
 ## Execution boundary
@@ -54,6 +58,8 @@ results, or a failure tombstone when execution fails.
 - `effect_deltas`: before/after state pairs and measured deltas;
 - `point_probes`: one or two classified points per solid state, written as
   `runtime_point_probes`;
+- `pair_distances`: one row per emitted `distance` pair in each bindable state,
+  written as `runtime_pair_distances`;
 - `final_state_id`;
 - `runtime_extraction_result_sha256`.
 
@@ -107,6 +113,45 @@ Each `CadFeatureSolidStateEffectDelta` contains:
 - `before_state_id` and `after_state_id`;
 - volume change, bounding-box change, and topology counts.
 
+### Pair distances
+
+`02b` measures the dense `distance` pairs, because the emission rule is defined
+on a reference class of the state's face attributes and the kernel is only
+available in Python. `02c` is Go and cannot import CadQuery, so it can copy the
+rows but not produce them
+([`extraction/graph-construction.md`](extraction/graph-construction.md#pair-rows),
+[`python-and-golang.md`](../python-and-golang.md)).
+
+The captured set is the emission rule of
+[`graph-content.md` §4.1](../../requirements/graph-content.md#41-emission-rules)
+applied to each bindable state:
+
+- the reference classes are the face classes: one per face surface kind and one
+  per bounding-box extreme plane a face lies in, both read from the entity
+  table;
+- the candidate endpoints are every face and every edge of the same state;
+- a class whose member count exceeds `max_anchor_class_size` emits no rows;
+- a pair of one entity with itself is dropped, and the two endpoints are ordered
+  canonically by `entity_id`.
+
+Each row is the exact minimum over the extrema the kernel returns for the pair,
+in millimetres. A pair the kernel reports as touching or intersecting is `0.0`,
+not a missing row. A kernel call that does not complete fails the program with
+`cadquery_exception`; it is never recorded as a guessed or sentinel value. The
+row names the kernel call that produced it, and `02c` copies that name as the
+measurement evidence rule.
+
+`02c` orders the two endpoints by `node_id` before it forms the measurement
+identity, so the identity does not depend on which side happened to be the class
+member ([`graph-persistence.md`](extraction/graph-persistence.md#graph-id-derivation)).
+`02b`'s `entity_id` order makes each unordered pair appear once; it is not the
+stored order.
+
+The cost is measured, not assumed: on the selected program pool the full emitted
+set costs 38.5 ms at the median, 185 ms at p90, and 811 ms at the worst sampled
+program, against the 30-second child limit (`EX-25`). The generic distance
+dispatcher is 20–3,000 times slower per pair and must not be used.
+
 ## Field contracts
 
 The complete runtime algorithm is in
@@ -141,8 +186,8 @@ A failed result is never passed to graph assembly as a measurable state.
 
 The cache key includes the normalized program hash, `ast_extraction_result_sha256`,
 extractor and canonicalization versions, CadQuery and OCP versions, the execution
-environment, timeout, and memory limit. A failure tombstone is reusable for the
-same key. A change to the CadQuery program AST extraction result or canonicalization is a cache miss.
+environment, timeout, memory limit, and the implementation scope. A failure
+tombstone is reusable for the same key. A change to the CadQuery program AST extraction result or canonicalization is a cache miss.
 
 The cache location, lookup, and resume rule are in
 [`../run-contract.md`](../run-contract.md#8-cache). The run directory stores
