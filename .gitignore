@@ -11,6 +11,9 @@ runs/
 .reasonix/
 generator/generator
 
+# generated or exchanged documents
+*.docx
+
 # local research artifacts
 /reports/
 /research_notes/
