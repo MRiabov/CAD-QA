@@ -1,8 +1,9 @@
 # Missing contracts
 
-**Status:** ephemeral audit backlog, 2026-11-20; reopened 2026-11-25. This is
-not a source of truth. Each entry names an absent contract. When the contract is
-written into its owner doc, delete the entry. Open questions remain in
+**Status:** ephemeral audit backlog, 2026-11-20; reopened 2026-11-25 and
+2026-11-27 for the P0-W2 audit. This is not a source of truth. Each entry names
+an absent or contradictory contract. When the contract is written into its owner
+doc, delete the entry. Open questions remain in
 [`open-questions.md`](open-questions.md).
 
 The **Product** sections are the decisions only the owner can make; they are
@@ -13,25 +14,121 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-There are no open entries. P1 and P2 are empty. `MC-22`, `MC-49`, `MC-50`,
-`MC-63`, `MC-65`, and `MC-66` closed on 2026-11-25, and `MC-64` and `MC-67`
-closed on 2026-11-27.
+Seven entries are open, `MC-68`–`MC-74`, all from the 2026-11-27 P0-W2 audit.
+P1 and P2 are empty. `MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66`
+closed on 2026-11-25, and `MC-64` and `MC-67` closed on 2026-11-27. The closed
+entries below are unchanged.
 
 ## Decisions needed from the owner
 
-None.
+1. **Is the external-benchmark overlap check a P0 requirement?**
+   [`PRD.md`](../requirements/PRD.md#74-usability-and-trust) marks R-16 as P1
+   and the plan defers the `ExternalBenchmarkProgramSet` artifact to `P1-W2`,
+   but [`05`](pipeline/05-validate-and-export-release.md#scope) makes the
+   exact-text overlap a blocking P0 check and the
+   [run contract](run-contract.md#91-run) requires `--external-benchmark`
+   whenever `05` runs. Either ship the set at P0 and keep the check, or move
+   the check to P1 and remove the P0 requirement; the current state blocks
+   every P0 export.
 
 ## P0
 
 ### Product (P0)
 
-None. `MC-63` closed by re-scoping R-5 to P1; see
-[`requirements/shortcut-resistance.md`](../requirements/shortcut-resistance.md).
+The external-benchmark scope question above is the only product decision. All
+other open P0 entries are technical.
 
 ### Technical (P0)
 
-None. `MC-64` closed in the 2026-11-27 review-ledger pass and `MC-67` in the
-2026-11-27 pair-distance pass.
+Work order: `MC-72` first, because the M1 golden, the release column, and the
+prompt all depend on the unit vocabulary; then `MC-68` and `MC-69` (golden and
+fixture pool), then `MC-70` (support tables), then `MC-71` (the P0-W2 `05`
+check set). `MC-74` lands with the code it corrects; `MC-73` is P0-W4 work.
+
+- `MC-68` — the P0-W2 end-to-end test does not name the golden record it
+  asserts. [`00-end-to-end.md`](pipeline/testing/00-end-to-end.md#the-test)
+  asserts that "the golden record's definition appears in the release"; the
+  plan's `03b-M1` is one-step volume
+  ([milestones](../../../plans/nov-19/03b-task-construction-design.md#milestones)),
+  while [`golden/box-with-hole.json`](pipeline/testing/golden/box-with-hole.json)
+  is a three-step edge-length task with retired `clue_operand_form` values. The
+  record's own status note says it keeps the old vocabulary until `03b`
+  rebuilds it. The test doc must name the record: either a new one-step
+  `box-volume` record is the skeleton's golden and `box-with-hole` moves to
+  P0-W4, or the skeleton's single row is the `box-with-hole` chain. The first
+  keeps `03b-M1` honest and is the smaller scope. The same pass fixes the stale
+  `answer.tolerance` "canonical JSON text" sentence and the record's
+  `answer_unit` (see `MC-72`).
+
+- `MC-69` — the skeleton fixture pool has no membership contract. The plan runs
+  `01a`–`01e` on "a three-program fixture pool cut from
+  `data/cadevolve_sources.parquet`" and runs `02a`–`02c` on the program in
+  `golden/box-with-hole.json`
+  ([P0-W2](../../../plans/nov-21/dataset-implementation-plan.md#p0-w2--walking-skeleton)).
+  That program is not in the CADEvolve cache: its normalized hash `b406df…` and
+  its `box(10, 20, 5)` text are absent from all 1,998,810 rows. If the pool
+  includes hand-authored fixture programs, `01a` and `01b` need their metadata
+  and `cadevolve_program_family_id`; if it does not, the chain cannot produce
+  the golden row.
+
+- `MC-70` — the five task reasoning step support tables have no producer and
+  two row schemas. [`task-step-support.md`](task-step-support.md#files) gives
+  each row `supported`, `implementation_scope`, and `reason_code`;
+  [`SupportTable`](pipeline/streamlined/models/05-validate-and-export-release.md#supporttable)
+  carries only `{Dimension, Value}`. [`artifacts.md`](artifacts.md) names
+  "Task-step support QA" as the writer, `03a` says it calls the derivation,
+  `05` copies the files, the run contract has no path or input for them, and
+  the plan assigns the fixtures to P0-W3 and the derivation to P0-W5 while the
+  P0-W2 end-to-end test requires `support/`. Decide the writer, the run
+  path/identity, the row schema, and the skeleton's five files, or move the
+  `support/` assertion to the work item that implements the derivation.
+
+- `MC-71` — the P0-W2 `05` check set is undefined.
+  [`05`](pipeline/05-validate-and-export-release.md#scope) runs every
+  `release-checks.yaml` check, its
+  [review gate](pipeline/05-validate-and-export-release.md#review-gate) blocks
+  on the three review ledgers, and the run contract requires
+  `--external-benchmark` whenever `05` runs; the P0-W2 plan says `05` exports
+  without the full check suite and has only the task review ledger; the
+  end-to-end test supplies neither a benchmark set nor the ledgers. Write the
+  W2 scope in `05` and in the test: which of the release checks,
+  `graph_completeness`, the review gate, and the benchmark overlap are
+  enforced. The dataset browser's review-ledger path is also not a `05` input
+  path or a run CLI flag.
+
+- `MC-72` — `answer_unit` has no closed vocabulary. The golden record uses `mm`
+  ([golden/README](pipeline/testing/golden/README.md#35-answer)), the oracles
+  use `millimetre`, `square_millimetre`, `cubic_millimetre`, and `unitless`
+  ([oracles README](pipeline/testing/oracles/task-construction/README.md#5-units-and-canonical-text)),
+  the release contract says only "string or null", and
+  [`prompt-templates.md`](prompt-templates.md#5-label-tables) keys `label.unit`
+  by `mm`, `mm2`, `mm3`, and `deg`. The M1 volume row needs one value and a
+  display mapping. Pin the graph unit names as the release vocabulary and map
+  them in `04`, or add the display keys.
+
+- `MC-73` — pair answers have two shapes.
+  [`task-structure.md`](../requirements/task-structure.md#9-resolved-questions)
+  Q3 and
+  [`b-answer-semantics.md`](pipeline/03-task-generation/03b-construct-task-definitions/b-answer-semantics.md#answer-resolver)
+  put the second entity in the clue's `reference_set`, not `answer_parameter`;
+  the oracles README still proposes `distance_reference` and `angle_reference`
+  parameters
+  ([answer parameters](pipeline/testing/oracles/task-construction/README.md#4-answer-parameters)),
+  and the verified `box-top-front-angle` record uses `angle_reference`.
+  Reconcile the README and the records with Q3; this is P0-W4 work.
+
+- `MC-74` — four typed declarations contradict their contracts.
+  [`ReleaseTable`](pipeline/streamlined/models/04-render-prompt-and-choices.md#output--releasetable)
+  nests `Rows []ReleaseRow` under a `release_id` field, but `release.parquet`
+  is one row per task and has no `release_id` column
+  ([release table columns](../requirements/release-dataset-contract.md#4-release-table-columns)).
+  `PolicyFiles.Tolerance` carries a `version` that the run contract assigns
+  only at the top level, and `ExecutionEnvironment` carries `environment_id`
+  that the run-contract field list omits
+  ([run manifest](run-contract.md#2-run-identity-and-the-run-manifest)). The
+  three review-ledger row schemas have no typed declaration in
+  `streamlined/models/`. Fix the declarations before `04`, `05`, and the run
+  manifest writer copy them.
 
 ## P1
 
