@@ -19,11 +19,22 @@ HOW TO USE THESE ANNOTATIONS
 
 ## Abstract
 
-LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focus on reconstruction, engineering standard following and editing. However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exists. We present a large dataset allowing to train foundational capabilities of LLMs on deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation. To aid in efficient training of LLMs on our dataset, a critical path allowing validated step-by-step solution is presented. We show that frontier models are only 50-80% successful without too assistance, showing headroom in geometrical reasoning. We open-source the dataset at https://huggingface.co/MRiabov/
+**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focus on reconstruction, engineering standard following and editing.
+
+**Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exists.
+
+**Objectives and contribution:** We present a large dataset allowing to train foundational capabilities of LLMs on deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation.
+
+**Methodology:** To aid in efficient training of LLMs on our dataset, a critical path allowing validated step-by-step solution is presented.
+
+**Results, findings and remaining gap:** We show that frontier models are only 50-80% successful without too assistance, showing headroom in geometrical reasoning.
+
+**Availability:** We open-source the dataset at https://huggingface.co/MRiabov/
 
 [to be revised]
 <!--
 ABSTRACT (write last, 200–250 words, no citations)
+- Structured labels: Background, Problem, Objectives/contribution, Methodology, Results/findings/remaining gap, Availability.
 - Keep the CA2 arc (winter/spring 2026): assistant → comprehension failure (invalid geometry, overlaps) → question-answering dataset from CadQuery programs → simple lookups to high-step questions with distractors → three harnesses → accuracy by task reasoning step, clue type, relation family and LLM harness mode → contribution. The 2026 evidence updates the middle of that arc; it does not replace it.
 - Keep the CA2 breadth in the dataset sentence: relationships between boolean operations, faces, vertices and edges; volume, span or location. Do not shrink it to "numeric QA".
 - The three harnesses are part of the identity: no_tools, NumPy shell, full CadQuery. Name all three even though the primary setting has no access to CadQuery.
@@ -43,11 +54,26 @@ ABSTRACT (write last, 200–250 words, no citations)
 
 ## 1. Introduction
 
+### 1.1 Background and motivation
+
 AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [Benchcad 1.0]. Foundational, large datasets including recent in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than a half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only a lookup or knowledge of a particular standard and not deep geometrical reasoning. 
 
 ---
 [Insert a few justifying statements on why the dataset is necessary]
 ---
+
+<!--
+BACKGROUND AND MOTIVATION: what the reader must believe by the end
+- Background: LLMs are being pushed into CAD generation, editing and assistance (Text2CAD, CAD-Recode, CADBench, BenchCAD).
+- Keep CA2's two motivating claims, re-checked against 2026 evidence: (1) LLMs struggle beyond box geometry partly because corpora under-represent other primitives (Elistratov et al., 2026); (2) computing intersections and relations consumes far more reasoning tokens than web or app tasks. Neither is refuted in the window; the step-9 cost ($1.46 no-kernel vs $0.29 with CadQuery) is a concrete token-cost signal.
+- Currency (2026-11-25 scan): 199 arXiv abstracts match CAD in the 93 days to 25 Nov 2026, vs 109 in 2025 (+82.6%) and 89 in 2024 (2.24×). Use it once, as "83% year on year"; the query and counts are in research_notes/CAD AI state of the art/volume_venues_and_field_map.md.
+- The 2026 turn is agentic: CAD Bench V3 runs 13 model-agent systems over 100 FreeCAD tasks; CADWorld runs GUI computer use; EngiWorld spans 26 platforms; RealCADBench uses 12,632 industrial intents. Cite them as evidence of where effort went, not as our baselines.
+- Why it is hard: procedural CAD is a chain of boolean and topology-changing operations; the answer depends on the built shape, not on the text; a selector error is destructive to the whole part.
+- Why it matters: CAD code is cheap to generate and expensive to verify; the field's own results say so — CADWorld 17.5% vs 87.0% expert, EngiWorld 3.6% cross-application, CAD Bench V3 39.69 create-and-edit. An assistant that cannot locate the right face or edge is unusable regardless of syntax correctness.
+- Adjacent evidence that the gap is live, if a motivation is needed: a whole-corpus phrase search for "CAD question answering" / "CAD VQA" returns 1 paper in the 2026 window, and the benchmark census finds 24 new benchmarks in the quarter with none testing multi-hop comprehension. Treat as context; the defensible claim is still "BenchCAD stops at one step", not "nobody measures CAD comprehension".
+-->
+
+### 1.2 Research questions
 
 Our primary research question:
 
@@ -59,10 +85,40 @@ Secondary:
 [TODO. Ideas: 
 efficiency - directly addressed by building a graph and allowing training on it]
 
-Or objectives are:
+<!--
+- Research problem: current models can produce plausible CadQuery, but cannot reliably reason about what the program builds. Our step-9 diagnostic: 36/60 = 60.0% no-kernel vs 53/60 = 88.3% with CadQuery (deepseek-v4.1-flash); the seven kernel-assisted errors are entity-selection errors, not API errors.
+- Research question (from docs/PRD.md): how can the raw capability of an LLM to comprehend CAD code be improved?
+- Secondary questions: how should a dataset be constructed to improve reasoning over 3D code; does synthetic training transfer to other benchmarks; is the resulting reasoning concise?
+-->
+
+### 1.3 Objectives
+
+Our objectives are:
 
 - To create a dataset that allows higher correctness on deep, complex CAD reasoning tasks.
 - To create a dataset that is easy to train efficient reasoning on.
+
+<!--
+- Objectives (docs/PRD.md): build the verifiable instrument; measure base models on it; fine-tune a small open model with graph-derived supervision; test transfer to an independent benchmark.
+-->
+
+### 1.4 Contributions
+
+<!--
+- Keep CA2's three contributions, with one 2026 correction: dataset + open construction method over the CAD ontology; conciseness and critical-path supervision from the graph; labelled curriculum. "First open dataset" becomes "depth above BenchCAD"; the other two stand.
+- Contributions: task schema and CAD graph; deterministic graph-derived generator; tiered 1–10 benchmark with a no-kernel setting; SFT recipe and evaluation protocol; negative results reported as findings.
+-->
+
+### 1.5 Limitations and assumptions
+
+<!--
+- Scope: executable CadQuery programs from CADEvolve; P0 is no kernel, NumPy allowed; kernel access is an upper bound (P2), not the headline.
+- Limitations to preview: BenchCAD already has Code QA, so the gap is depth not task shape; transfer is P1 and unproven; the release is built from public programs, so contamination must be audited.
+- Evaluation caveat worth one sentence: geometry scores are not a proxy for comprehension. DrawScore (2611.24681) shows a 0.9 mm hole shift leaves F-score at 100%; RealCAD (2608.30617) shows DeepCAD parameter accuracy can come from value priors. This is why the instrument grades exact answers against a rule-derived gold, not geometry similarity.
+- Do not claim "no open dataset": BenchCAD Code QA exists. Do not claim "statistically correct" before Evaluation supports it.
+-->
+
+### 1.6 Structure of the report
 
 We will structure our work as follows:
 1. Related work with go over the recent contributions, in particular the state of the art in 3d applications and where they currently fall short, as well as foundational datasets.
@@ -73,25 +129,7 @@ We will structure our work as follows:
 6. Conclusion and Future Work will go will show the future work.
 
 <!--
-INTRODUCTION: what the reader must believe by the end
-- Background: LLMs are being pushed into CAD generation, editing and assistance (Text2CAD, CAD-Recode, CADBench, BenchCAD).
-- Keep CA2's two motivating claims, re-checked against 2026 evidence: (1) LLMs struggle beyond box geometry partly because corpora under-represent other primitives (Elistratov et al., 2026); (2) computing intersections and relations consumes far more reasoning tokens than web or app tasks. Neither is refuted in the window; the step-9 cost ($1.46 no-kernel vs $0.29 with CadQuery) is a concrete token-cost signal.
-- Keep CA2's three contributions, with one 2026 correction: dataset + open construction method over the CAD ontology; conciseness and critical-path supervision from the graph; labelled curriculum. "First open dataset" becomes "depth above BenchCAD"; the other two stand.
-- Currency (2026-11-25 scan): 199 arXiv abstracts match CAD in the 93 days to 25 Nov 2026, vs 109 in 2025 (+82.6%) and 89 in 2024 (2.24×). Use it once, as "83% year on year"; the query and counts are in research_notes/CAD AI state of the art/volume_venues_and_field_map.md.
-- The 2026 turn is agentic: CAD Bench V3 runs 13 model-agent systems over 100 FreeCAD tasks; CADWorld runs GUI computer use; EngiWorld spans 26 platforms; RealCADBench uses 12,632 industrial intents. Cite them as evidence of where effort went, not as our baselines.
-- Why it is hard: procedural CAD is a chain of boolean and topology-changing operations; the answer depends on the built shape, not on the text; a selector error is destructive to the whole part.
-- Why it matters: CAD code is cheap to generate and expensive to verify; the field's own results say so — CADWorld 17.5% vs 87.0% expert, EngiWorld 3.6% cross-application, CAD Bench V3 39.69 create-and-edit. An assistant that cannot locate the right face or edge is unusable regardless of syntax correctness.
-- Research problem: current models can produce plausible CadQuery, but cannot reliably reason about what the program builds. Our step-9 diagnostic: 36/60 = 60.0% no-kernel vs 53/60 = 88.3% with CadQuery (deepseek-v4.1-flash); the seven kernel-assisted errors are entity-selection errors, not API errors.
-- Research question (from docs/PRD.md): how can the raw capability of an LLM to comprehend CAD code be improved?
-- Secondary questions: how should a dataset be constructed to improve reasoning over 3D code; does synthetic training transfer to other benchmarks; is the resulting reasoning concise?
-- Objectives (docs/PRD.md): build the verifiable instrument; measure base models on it; fine-tune a small open model with graph-derived supervision; test transfer to an independent benchmark.
-- Contributions: task schema and CAD graph; deterministic graph-derived generator; tiered 1–10 benchmark with a no-kernel setting; SFT recipe and evaluation protocol; negative results reported as findings.
-- Scope: executable CadQuery programs from CADEvolve; P0 is no kernel, NumPy allowed; kernel access is an upper bound (P2), not the headline.
-- Limitations to preview: BenchCAD already has Code QA, so the gap is depth not task shape; transfer is P1 and unproven; the release is built from public programs, so contamination must be audited.
-- Adjacent evidence that the gap is live, if a motivation is needed: a whole-corpus phrase search for "CAD question answering" / "CAD VQA" returns 1 paper in the 2026 window, and the benchmark census finds 24 new benchmarks in the quarter with none testing multi-hop comprehension. Treat as context; the defensible claim is still "BenchCAD stops at one step", not "nobody measures CAD comprehension".
-- Evaluation caveat worth one sentence: geometry scores are not a proxy for comprehension. DrawScore (2611.24681) shows a 0.9 mm hole shift leaves F-score at 100%; RealCAD (2608.30617) shows DeepCAD parameter accuracy can come from value priors. This is why the instrument grades exact answers against a rule-derived gold, not geometry similarity.
 - Outline: one sentence per later section.
-- Do not claim "no open dataset": BenchCAD Code QA exists. Do not claim "statistically correct" before Evaluation supports it.
 -->
 
 ## 2. Related Work
@@ -103,6 +141,7 @@ LLMs in CAD has seen a surge in research and industry results in Q2 and Q3, prod
 
 <!--
 RELATED WORK: bullets only; write the prose from these
+- Per reviewed paper: approach, method, results, one strength, one limitation; group minor papers by approach.
 - Four streams: (1) CAD reconstruction and generation, (2) CAD comprehension benchmarks, (3) procedural CAD corpora and program evolution, (4) verifiable multi-hop reasoning and small-model fine-tuning.
 - Reuse the CA2 literature review as the skeleton (docs/paper/CA2_Riabov_final.md §2.1–2.4), then update it: BenchCAD invalidated the "no open dataset" claim, so the positioning changes from "first" to "deeper".
 - 2026-11-25 update material: research_notes/CAD AI state of the art/ (six notes: llm_cad_generation, brep_and_geometry_learning, benchmarks_and_evaluation, downstream_engineering_tasks, industry_landscape, volume_venues_and_field_map) and reports/CAD AI state of the art.md. Every arXiv ID below was checked against the notes; do not add an ID that is not in them.
@@ -118,6 +157,8 @@ RELATED WORK: bullets only; write the prose from these
 
 ### 2.1 CAD generation and reconstruction
 
+Recent work has demonstrated major progress in CAD generation and reconstruction, partially driven by large synthetically generated datasets - both Zero-To-CAD and CadEvolve were released as million-scale datasets, where CadEvolve released a dataset of "deliberately as complex shapes as possible" which, in CadEvolve, was used to train a reconstruction model. A plurality of papers have focused on improving Text- and Image-To-Cadquery, saturating reconstruction benchmarks [CADENA, ConCAD], while editing is unsaturated; perhaps due to editing being more complex to scale data-wise.
+
 <!--
 - Text2CAD, CAD-Recode, cadrille, CADENA, CADBench, Text-to-CadQuery, CAD-Editor.
 - 2026 additions to cite: CADFather (2610.09127, coordinated tool use), CADMAGEDDON (2611.22563, 27B Qwen3.8 reconstructing from meshes on one GPU, 0.999/0.993/0.933 IoU on 300-part subsets), VisCAD (2609.03811, 27B trained on ~1M executed CadQuery programs, 0.5540 vs 0.5496 for Gemini-3.1-Pro).
@@ -130,7 +171,17 @@ RELATED WORK: bullets only; write the prose from these
 - Naming caution: several 2026 papers reuse "CAD" in the title with different constructs (generation, reconstruction, editing, agentic authoring). State which construct each cited work measures.
 -->
 
+### 2.2 Geometry comprehension benchmark
+
+Closest spiritually to our dataset are procedurally generated 2d and 3d geometry  reasoning benchmarks such as SiT-Bench (Guo et al., 2026) and Real-3DQA (Ma et al., 2026), which explicitly evaluate models' 3D comprehension abilities from text alone, without visuals. They are similar in task nature, but they do not evaluate or focus on CAD-specific geometry such as selectors, vertices, and boolean operations — only on text descriptions of scenes.
+
 ### 2.2 CAD comprehension benchmarks
+
+BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied, however the dataset focuses on benchmarking simple question answering such as compliance to a standard (e.g. whether a thread size is compliant), whereas our dataset focuses on verification of correct geometrical reasoning, at scale and varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add no comprehension task. QueryCAD is a earlier work evaluating capabilities of LLMs on answering questions based on CAD models, but without CadQuery.
+
+MechReason is a benchmark evaluating reasoning -  multi-view and multi-hop reasoning - of LLMs on Mechanical engineering publications and papers; however it synthesizes QA pairs from mechanical engineering and does not get CAD programs, nor is verifiable via a kernel. 
+
+
 
 <!--
 - BenchCAD 1.0: 17,900 execution-verified CadQuery programs; Vision2Code, Code Edit, Vision QA, Code QA.
@@ -174,7 +225,7 @@ RELATED WORK: bullets only; write the prose from these
 - Verifiability is the design constraint, not a convenience: a benchmark that needs a kernel, a GUI or an LLM judge to score cannot be a training target at our compute. This is the paragraph that justifies the no-kernel setting without claiming kernels are unavailable.
 -->
 
-### 2.5 Research gap
+### 2.5 Research gap and justification
 
 <!--
 - One paragraph: reviewed work either reconstructs a shape, answers a single-fact numeric question about a program, or evaluates generation quality.
@@ -188,7 +239,13 @@ RELATED WORK: bullets only; write the prose from these
 
 ## 3. Research Methodology
 
+<!--
+METHODOLOGY: the scientific procedure, not the software
+-->
+
 Much like software engineering, being proficient in one area, such as SQL queries, doesn't mean an agent is proficient in machine learning; or being proficient in Python, an agent isn't proficient in Rust. Similarly, CAD requires understanding of numerous operations and relations, and underexposure to some will lead to knowledge gaps as highlighted by CADEvolve (an early 2026 paper) (Elistratov, 2026), where agents were not proficient on everything but modelling with boxes. As such, we construct a wide variety of tasks as well as compositions and report success rates on them separately.
+
+### 3.1 Research design, variables and hypotheses
 
 We construct the dataset across multiple axes:
 
@@ -197,30 +254,13 @@ We construct the dataset across multiple axes:
 - Harnesses - given different tools available to the agent (no tools, numpy, CadQuery), how does being able to verify, and with which tools, does success rate increase?
 - Models - we will evaluate a number of models to ensure fairness of evaluation. 
 
-We will evaluate models on completion of the tasks under varying tasks, depths and harnesses, reporting:
-
-- Cost in tokens and quantity of tool calls spent per evaluation,
-- Correctness
-
-<!--
-METHODOLOGY: the scientific procedure, not the software
-- Design: instrument-building plus a controlled training experiment (design science + pre-registered analysis).
-- Unit of analysis: one task = program + target + clues + one answer. One CAD model = one CadQuery program; one family may contain many programs.
-- Instrument construction: CADEvolve -> normalized programs -> CAD graph -> task definitions -> rendered prompts -> validated release.
-- Gold answers are computed by execution or exact derivation; no LLM writes or judges an answer.
-- Hypotheses (docs/PRD.md): H2 reasoning supervision beats answer-only (P0 core); H3 transfer to BenchCAD qa_code (P1); H4 CAD-QA pass rate predicts transfer (P1 mechanism); H1 tool-format SFT raises tool-valid rate (P1 control).
-- Evaluation arms: Base, Answer-only, CAD-QA reasoning, Format-only, General-only counter-arm; hold base, recipe, prompt set and loss-bearing token budget fixed.
-- Primary endpoint: exact structured-answer accuracy on the immutable held-out test at a pre-registered tier.
-- Harness modes: no_tools (P2 upper bound), numpy (P0 primary, no CadQuery), cadquery (P2 realistic upper bound; currently missing).
-- Do not present the 50–70% planning estimate as a target; the base rate is measured first and the threshold set afterwards.
--->
-
-### 3.1 Research design and hypotheses
-
 Our hypotheses are:
 H1. There are limits in which models would show reasoning gaps; different per harness.
 
 <!--
+- Design: instrument-building plus a controlled training experiment (design science + pre-registered analysis).
+- Unit of analysis: one task = program + target + clues + one answer. One CAD model = one CadQuery program; one family may contain many programs.
+- Hypotheses (docs/PRD.md): H2 reasoning supervision beats answer-only (P0 core); H3 transfer to BenchCAD qa_code (P1); H4 CAD-QA pass rate predicts transfer (P1 mechanism); H1 tool-format SFT raises tool-valid rate (P1 control).
 - One instrument, several studies: benchmark validity, baseline measurement, fine-tuning ablation, external transfer.
 - State H1–H4 with role and priority, and the decision each outcome forces.
 - If H1 holds and H2 fails, the finding is "format compliance, not reasoning"; report it.
@@ -231,6 +271,8 @@ H1. There are limits in which models would show reasoning gaps; different per ha
 ### 3.2 Dataset construction procedure
 
 <!--
+- Instrument construction: CADEvolve -> normalized programs -> CAD graph -> task definitions -> rendered prompts -> validated release.
+- Gold answers are computed by execution or exact derivation; no LLM writes or judges an answer.
 - Source selection: CADEvolve metadata, family-safe selection, fetch, normalize (stages 01a–01e).
 - Extraction: AST records what the program says; execution records what the shape is; neither side fills the other (stage 02).
 - Task construction: quota plan, construct definitions, resolve deficits by replanning or expanding data (stage 03).
@@ -241,7 +283,31 @@ H1. There are limits in which models would show reasoning gaps; different per ha
 
 ### 3.3 Evaluation protocol
 
+We evaluated models on completion of the tasks under varying tasks, depths and harnesses, reporting:
+
+- Cost in tokens and quantity of tool calls spent per evaluation,
+- Correctness
+
+Over the combination of:
+- Tasks (clues),
+- Depth (quantity of narrowing steps to derive a model)
+- Models
+- Harnesses
+
+### 3.3.1 Harnesses
+
+To make evaluation of different CAD reasoning skills - evaluating internal reasoning of models:
+
+- without access to tools (the notable advantage of this that stronger models can estimate correct solutions *without* doing a tool call),
+- Numpy-only harness - the importance of this harness is twofold: being able to estimate complex CAD without harness, such as in cases of "on-paper" feasibility analysis, as well as being not limited to cadquery alone - for example not every CAD modelling assistant has shell access to a CAD kernel, but they may have access to shell.
+- CadQuery-enabled harness - CadQuery is the most ubiquitous CadQuery, being popular in the largest recent CAD datasets - Zero-To-CAD, CadEvolve and others. 
+
+
 <!--
+- Evaluation arms: Base, Answer-only, CAD-QA reasoning, Format-only, General-only counter-arm; hold base, recipe, prompt set and loss-bearing token budget fixed.
+- Primary endpoint: exact structured-answer accuracy on the immutable held-out test at a pre-registered tier.
+- Harness modes: no_tools (P2 upper bound), numpy (P0 primary, no CadQuery), cadquery (P2 realistic upper bound; currently missing).
+- Do not present the 50–70% planning estimate as a target; the base rate is measured first and the threshold set afterwards.
 - Immutable split: approximately 70% SFT / 15% RL / 15% eval; eval is split into validation and test; the test portion is the thesis number.
 - Group safety: no CADEvolve program family appears in more than one part; no external benchmark family appears in any training arm.
 - Harness: model -> chat template -> tool declarations -> generation loop -> tool execution -> parser -> scorer.
@@ -277,8 +343,6 @@ H1. There are limits in which models would show reasoning gaps; different per ha
 
 <!--
 DESIGN: what the instrument is, before how it was coded
-- One figure here: the pipeline from CADEvolve to release artifacts.
-- One worked task example: program, rendered prompt, gold answer, answer evidence.
 - Keep requirements-level rules here; keep code paths in Implementation.
 - Vocabulary must match docs/glossary.md and docs/dataset/requirements/terminology.md.
 -->
@@ -315,6 +379,7 @@ DESIGN: what the instrument is, before how it was coded
 ### 4.3 Generator architecture
 
 <!--
+- One figure here: the pipeline from CADEvolve to release artifacts.
 - Five stages with typed artifacts: 01 external ETL, 02 extraction and graph, 03 task generation, 04 render, 05 validate and export.
 - 03 splits into 03a quota allocation, 03b construction, 03c deficit resolution; 03c is a bounded loop back, not a terminal step.
 - Incremental run: immutable Parquet parts, resumable, manifest-pinned inputs and policy hashes; a changed input is a new run directory.
@@ -346,6 +411,12 @@ DESIGN: what the instrument is, before how it was coded
 - The gate is a floor, not a proof: the baseline measures whether a model can still shortcut.
 - Human review: sampled tasks covering every dimension value, up to step 10, before release; unclear wording is a defect.
 - Reproducibility: same inputs and versions give the same dataset; every rejection is reported with a reason.
+-->
+
+### 4.6 Worked example
+
+<!--
+- One worked task example: program, rendered prompt, gold answer, answer evidence.
 -->
 
 ## 5. Implementation
