@@ -23,8 +23,6 @@ LLMs are becoming notably strong in CAD reconstruction, with open, training-read
 
 ## 1. Introduction
 
-### 1.1 Background and motivation
-
 AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [BenchCAD 1.0]. Foundational, large datasets, including recent ones in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which has mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only one lookup or knowledge of a particular standard and not deep geometrical reasoning. 
 
 As such, the field is still lacking a dataset that would allow ready training on: verification of reasoning on more complex CAD reasoning beyond simple question answering pairs, as well as optimization of conciseness on reasoning in such tasks.
@@ -39,29 +37,21 @@ Secondary:
 [TODO. Ideas: 
 efficiency - directly addressed by building a graph and allowing training on it]
 
-### 1.3 Objectives
-
 Our objectives are:
 
 - To create a dataset that allows higher correctness on deep, complex CAD reasoning tasks.
 - To create a dataset that is easy to train efficient reasoning on.
-
-### 1.4 Contributions
 
 Our contributions are:
 - A large dataset allowing training of models on question-answering pairs of deep and progressively complex CAD questions
 - Critical path proof to the questions allowing easy and dense optimization of LLM trajectories on it, 
 - Benchmarking SOTA models and showing where the current state of the art is still lacking.
 
-### 1.5 Limitations and assumptions
-
 The limitations of our studies are in the transfer of our dataset to other benchmarks:
 
 - We evaluate two LLMs only on approximately 750 trajectories each, spanning multiple levels and multiple clue types. Our results are statistically limited by budget.
 - We do not train a model on the dataset, nor measure transfer of improvement to other benchmarks; primarily due to budget.
 - We only train on one CAD engine. There are now numerous BREP kernels including open-source ones [brepbench], but we deem it sufficient as CadQuery is the widely adopted open-source CAD modelling application, being used in most major papers [Zero-to-CAD]. 
-
-### 1.6 Structure of the report
 
 We will structure our work as follows:
 1. Related work will go over the recent contributions, in particular the state of the art in 3D applications, reconstruction and shortcomings, as well as foundational datasets.
