@@ -134,7 +134,9 @@ As other datasets already cover simple question-answering pairs (such as lookup 
 
 ### 3.2 Dataset construction procedure
 
-We use the CADEvolve dataset as it is the largest and most diverse dataset among the publicly available corpora. We normalize programs using AST and CadQuery post-processing to extract a graph of entities and dependencies between them, such as edges, vertices, faces, boolean operations and derive relations between them, such as distances, angles between them. The graph, with later post-processing, allows us to deterministically and verifiably generate questions such as in [figure 1]. We will expand on dataset construction in the design specification section.
+We use the CADEvolve dataset as it is the largest and most diverse dataset among the publicly available corpora. We normalize programs using AST and CadQuery post-processing to extract a graph of entities and dependencies between them, such as edges, vertices, faces, boolean operations and derive relations between them, such as distances, angles between them. The graph, with later post-processing, allows us to deterministically and verifiably generate questions such as in Figure 1. We will expand on dataset construction in the design specification section.
+
+![**Figure 1.** A task generated from a box-with-hole program. The question and its two clues are on the left, the final solid on the right. The target circular edge (orange) is named by both clues: it is an edge of the top face (blue, clue 1) and an edge of the cylindrical face (green, clue 2). The answer, 12.57 mm, is computed by executing the program.](figures/task-example.png)
 
 ### 3.3 Evaluation protocol
 
@@ -187,7 +189,7 @@ In this section, we will describe how the dataset and evaluation procedures were
 
 A task is a single question-answering pair, defined by input geometry and the clues supplied to the model. Given a 3D model as a whole which may have 20,000 entities and relations, the model needs to narrow down to an entity or operation, for example finding the correct face among hundreds of entities.
 
-The model narrows down by clues. For example, in a simple box-with-a-hole program [figure 1], we derive all entities and relations between them, and select clues as follows:
+The model narrows down by clues. For example, in a simple box-with-a-hole program (Figure 1), we derive all entities and relations between them, and select clues as follows:
 
 - Picked result entity: circular edge where the hole meets the top face,
 - Picked property of the edge: length.
