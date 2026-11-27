@@ -39,12 +39,12 @@ Foundational, large datasets, including recent ones in 2026 such as CADEvolve
 (Elistratov et al., 2026), CADENA (Kabisov et al., 2026), Zero-To-CAD (Ataei et
 al., 2026) focus on image- and Text-to-CAD reconstruction, training on which has
 mostly saturated the reconstruction benchmarks, however CAD editing is still
-consistently less than half successful (Yuan et al., 2025; Dong et al., 2026).
-Existing datasets also measure question answering on CAD, in particular
-answering about engineering standards following (engineering standard e.g. ISO)
-from CadQuery code (Zhang et al., 2026), however, they are simple, rudimentary
-question answering, requiring only one lookup or knowledge of a particular
-standard and not deep geometric reasoning.
+consistently less than half successful (Wang, B. et al., 2026; Chen, Xia and
+Mao, 2026). Existing datasets also measure question answering on CAD, in
+particular answering about engineering standards following (engineering standard
+e.g. ISO) from CadQuery code (Zhang et al., 2026), however, they are simple,
+rudimentary question answering, requiring only one lookup or knowledge of a
+particular standard and not deep geometric reasoning.
 
 As such, the field is still lacking a dataset that would allow ready training
 on: verification of reasoning on more complex CAD problems beyond simple
@@ -130,16 +130,14 @@ RELATED WORK: bullets only; write the prose from these
 ### 2.1 CAD generation and reconstruction
 
 Recent work has demonstrated major progress in CAD generation and
-reconstruction, building on the command-sequence representation established by
-DeepCAD (Wu, Xiao and Zheng, 2021) and partly driven by large synthetically
-generated datasets: both Zero-To-CAD and CADEvolve were released as
-million-scale datasets (Ataei et al., 2026; Elistratov et al., 2026), where
-CADEvolve released a dataset of "deliberately as complex shapes as possible",
-which it used to train a reconstruction model. A plurality of papers have
-focused on improving Text- and Image-to-CadQuery, saturating reconstruction
-benchmarks (Khan et al., 2024; Rukhovich et al., 2025; Kolodiazhnyi et al.,
-2026; Kabisov et al., 2026; Zhai et al., 2026), while editing is unsaturated;
-perhaps due to editing being more complex to scale data-wise.
+reconstruction, partially driven by large synthetically generated datasets -
+both Zero-To-CAD and CADEvolve were released as million-scale datasets, where
+CADEvolve released a dataset of "deliberately as complex shapes as possible"
+which, in CADEvolve, was used to train a reconstruction model. A plurality of
+papers have focused on improving Text- and Image-to-CadQuery, saturating
+reconstruction benchmarks (Kabisov et al., 2026; Zhai et al., 2026), while
+editing is unsaturated; perhaps due to editing being more complex to scale
+data-wise.
 
 ### 2.2 Geometry comprehension benchmarks
 
@@ -171,8 +169,7 @@ programs, nor is it verifiable via a kernel.
 ### 2.4 QA datasets and verifiable reasoning 
 
 Verifiable reasoning and evaluation by tool calling have become the de facto
-standard for factual question-answering training (Wei et al., 2022; Wei et al.,
-2025; DeepSeek-AI, 2025), with the advantage of:
+standard for factual question-answering training, with the advantage of:
 
 - Allowing stable training - no noisy LLM-as-a-judge is necessary, with
   verifiable reasoning being ubiquitous in physics, 3D and geometry datasets,
@@ -264,8 +261,8 @@ internal reasoning of models:
   example not every CAD modelling assistant has shell access to a CAD kernel,
   but they may have access to a shell.
 - CadQuery-enabled harness - CadQuery is the most widely used CAD library, being
-  popular in the largest recent CAD datasets - Zero-To-CAD, CADEvolve and others
-  (Ataei et al., 2026; Elistratov et al., 2026).
+  popular in the largest recent CAD datasets - Zero-To-CAD, CADEvolve and
+  others.
 
 ### 3.5 Statistical analysis
 
@@ -479,22 +476,15 @@ References follow the Harvard (author–date) style, as in the CA2 manuscript.
 Every entry resolves to a DOI, a proceedings page or an arXiv identifier.
 
 - Ataei, M., Askari, F., Malekshan, K.R. and Jayaraman, P.K. (2026) 'Zero-to-CAD: Agentic Synthesis of Interpretable CAD Programs at Million-Scale Without Real Data', arXiv preprint arXiv:2604.24479.
-- DeepSeek-AI (2025) 'DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning', *Nature*, 645, pp. 633–638. doi: 10.1038/s41586-025-09422-z.
-- Dong, X., Li, C., Zheng, P., Han, C., Jing, J., Shen, H., Song, Y. and Yang, Z. (2026) 'HistCAD: Constraint-Aware Parametric CAD Histories for Evaluating Editability', arXiv preprint arXiv:2602.19171.
+- Chen, M., Xia, Y. and Mao, H. (2026) 'Parametric CAD Bench v3: Evaluating Agentic Parametric CAD Authoring from Text and Engineering Drawings', arXiv preprint arXiv:2611.02659.
 - Elistratov, M., Barannikov, M., Ivanov, G., Khrulkov, V., Konushin, A., Kuznetsov, A. and Zhemchuzhnikov, D. (2026) 'CADEvolve: Creating Realistic CAD via Program Evolution', arXiv preprint arXiv:2602.16317.
 - Guo, Z., Yang, Z., Li, Y., Zhang, X., Gao, W., Wang, J., Li, C., Liu, X. and Jian, P. (2026) 'Can LLMs See Without Pixels? Benchmarking Spatial Intelligence from Textual Descriptions', arXiv preprint arXiv:2601.03590.
 - Kabisov, S., Savrasov, G., Elistratov, M., Rodriguez, A., Ignatiev, D., Gavrilov, N., Uzdenov, R., Boyko, A.I., Pasechnik, I., Konushin, A. and Kuznetsov, A. (2026) 'CADENA: Stepwise CAD Reverse Engineering', arXiv preprint arXiv:2608.00799.
-- Khan, M.S., Sinha, S., Sheikh, T.U., Stricker, D., Ali, S.A. and Afzal, M.Z. (2024) 'Text2CAD: Generating Sequential CAD Designs from Beginner-to-Expert Level Text Prompts', *Advances in Neural Information Processing Systems*, 37.
 - Kienle, C., Alt, B., Katic, D., Jäkel, R. and Peters, J. (2024) 'QueryCAD: Grounded Question Answering for CAD Models', arXiv preprint arXiv:2409.08704.
-- Kolodiazhnyi, M., Tarasov, D., Zhemchuzhnikov, D., Nikulin, A., Zisman, I., Vorontsova, A., Konushin, A., Kurenkov, V. and Rukhovich, D. (2026) 'cadrille: Multi-modal CAD Reconstruction with Reinforcement Learning', *International Conference on Learning Representations (ICLR)*.
 - Ma, X., Sun, T., Chen, S., Bhalgat, Y., Gu, J., Chang, A.X., Armeni, I., Laina, I., Peng, S. and Prisacariu, V.A. (2026) 'Do 3D Large Language Models Really Understand 3D Spatial Relationships?', *International Conference on Learning Representations (ICLR)*.
-- Rukhovich, D., Dupont, E., Mallis, D., Cherenkova, K., Kacem, A. and Aouada, D. (2025) 'CAD-Recode: Reverse Engineering CAD Code From Point Clouds', *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*. doi: 10.1109/ICCV51701.2025.00914.
+- Wang, B., Zhao, X., Yu, S., Li, X., Yong, S., Yang, C., Chen, T., Du, R., He, H., Zhao, C. and Wu, T. (2026) '3DCodeEdit: Benchmarking Instruction-Guided 3D Program Editing', arXiv preprint arXiv:2610.38231.
 - Wang, J., Liang, B., Hu, C., Zhang, L., Liu, X., Zhang, M., Li, J. and Li, X. (2026) 'SuCo: Sufficiency-guided Continuous Adaptive Reasoning', *International Conference on Machine Learning (ICML)*.
 - Wang, T., An, K., Du, C., Yang, Z., Zhu, Y., Yang, X., Zhu, H., Wang, Z., Qian, F., Yang, Y. and Ren, Q. (2026) 'MechReason: Benchmarking Multi-Image Multi-Hop Reasoning in Mechanical Engineering', arXiv preprint arXiv:2609.16012.
-- Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi, E., Le, Q. and Zhou, D. (2022) 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', *Advances in Neural Information Processing Systems*, 35, pp. 24824–24837.
-- Wei, J., Sun, Z., Papay, S., McKinney, S., Han, J., Fulford, I., Chung, H.W., Passos, A.T., Fedus, W. and Glaese, A. (2025) 'BrowseComp: A Simple Yet Challenging Benchmark for Browsing Agents', arXiv preprint arXiv:2504.12516.
-- Wu, R., Xiao, C. and Zheng, C. (2021) 'DeepCAD: A Deep Generative Network for Computer-Aided Design Models', *Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)*, pp. 6772–6782. doi: 10.1109/ICCV48922.2021.00670.
-- Yuan, Y., Sun, S., Liu, Q. and Bian, J. (2025) 'CAD-Editor: A Locate-then-Infill Framework with Automated Training Data Synthesis for Text-Based CAD Editing', arXiv preprint arXiv:2502.03997.
 - Zhai, C., Cheng, X., Cheng, H., Guan, Z., Fan, M., Tang, Y., Feng, P. and Zeng, L. (2026) 'ConCAD: Constraint-Aware Image-to-CAD Generation with Dual-Granularity Rewards', arXiv preprint arXiv:2609.34494.
 - Zhang, H., Liu, K., Chen, M., Li, L., Yang, S., Peng, C. and Chen, H. (2026) 'BenchCAD: A Comprehensive, Industry-Standard Benchmark for Programmatic CAD', arXiv preprint arXiv:2605.10865.
 
