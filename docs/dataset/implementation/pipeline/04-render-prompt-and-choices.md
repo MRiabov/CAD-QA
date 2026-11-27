@@ -72,15 +72,13 @@ seed plus `task_id` reproduces the task seed.
 ## Prompt copy comes from YAML
 
 LLM-facing wording is data, not Go code. Pipeline stage `04` renders from the
-`generator/config/prompts.yaml`; it does not contain hardcoded question, clue, choice, or
-answer-instruction strings. The file's schema, template IDs, placeholder forms,
-label tables, and validation rules are in
-[`../prompt-templates.md`](../prompt-templates.md).
+`generator/config/prompts.yaml`; it does not contain hardcoded question, clue, or
+choice strings. The file's schema, template IDs, placeholder forms, label tables,
+and validation rules are in [`../prompt-templates.md`](../prompt-templates.md).
 
-- `04` reads the `dataset` namespace. The evaluation harness reads the
-  `evaluation` namespace; the dataset release does not.
-- Templates cover the question, each clue type, choice descriptions, and the
-  answer instruction.
+- `04` reads the `dataset` namespace. The evaluation harness owns its own prompts
+  and does not read this file.
+- Templates cover the question, each clue type, and choice descriptions.
 - Each template has a stable ID and typed placeholders. `04` validates the file
   before rendering. A missing, extra, or untyped placeholder is a release
   defect, not a task rejection.
@@ -94,17 +92,14 @@ label tables, and validation rules are in
 - The frame convention is the first line of `dataset.prompt_shell` and matches
   `prompt-content.md` section 1.1. It is fixed, not a per-task variant.
 - The renderer collapses a run of three or more newlines to two, so an empty
-  `choices` list leaves one blank line before the answer instruction.
-
-Evaluation prompts outside the dataset follow the same rule: they live in
-`prompts.yaml`, not in Python strings. Dataset and evaluation templates use
-separate namespaces in that file.
+  `choices` list leaves one blank line at the end of the prompt.
 
 The prompt template set is part of `RenderConfig`; `io-contracts.md` names the
 input `RenderConfig`. A missing template ID or an invalid placeholder stops the
-render before any release row is written. `04` renders the question, clues,
-choices, and answer instruction first, then fills `dataset.prompt_shell` with
-those rendered parts.
+render before any release row is written. `04` renders the question, clues, and
+choices first, then fills `dataset.prompt_shell` with those rendered parts. The
+harness adds its own system prompt, answer instruction, and submission format;
+`04` never renders them.
 
 ## Language and parallelism
 

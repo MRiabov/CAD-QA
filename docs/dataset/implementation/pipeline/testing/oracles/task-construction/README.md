@@ -2,16 +2,19 @@
 
 **Parent:** [`../README.md`](../README.md).
 
-**Status:** draft, 2026-11-22; rebuilt 2026-11-25. Defines the hand-authored
-gold task format, the first thirteen records, and the coverage gaps. The gold
-queries pass. Every record was rebuilt against the 2026-11-24 requirement
-revisions — categorical features and the measured direction, one-condition
-references, the clue reduction form rename, the provenance workplane removal,
-and the pair-angle relation — and validates against `schema_version` 3. The
-owner reviewed and accepted the set on 2026-11-25. The later center-naming and
-distance-copy change altered two questions, so eleven records are `verified` and
-`box-with-hole-top-face-centroid` and `box-top-bottom-distance` are `proposed`
-until they are re-verified; a record added later also starts as `proposed`.
+**Status:** draft, 2026-11-22; rebuilt 2026-11-25 and 2026-11-27. Defines the
+hand-authored gold task format, the first thirteen records, and the coverage
+gaps. The gold queries pass. Every record was rebuilt against the 2026-11-24
+requirement revisions — categorical features and the measured direction,
+one-condition references, the clue reduction form rename, the provenance workplane
+removal, and the pair-angle relation — and validates against
+`schema_version` 3. The owner reviewed and accepted the set on 2026-11-25 and
+accepted the three re-verified records on 2026-11-27. The later center-naming and
+distance-copy change altered two questions, and the 2026-11-27 pair-answer
+rebuild moved `box-top-bottom-distance` and `box-top-front-angle` onto a
+clue-bound reference (the angle record now runs on the box-with-hole program so
+both of its clues are necessary). All thirteen records are `verified`; a record
+added later starts as `proposed`.
 
 ## 1. What a task-construction oracle is
 
@@ -256,29 +259,33 @@ name the answer entity.
 
 ## 4. Answer parameters
 
-The oracle schema uses five parameter kinds. They are the record's answer to a
-gap in [`03b/b-answer-semantics.md`](../../../03-task-generation/03b-construct-task-definitions/b-answer-semantics.md#answer-resolver):
-the current text says `answer_parameter` carries "the point for a position or a
-membership, the category for a topology change", and is null otherwise.
+The oracle schema's `answer_parameter` has three variants. They are the record's
+answer to a gap in [`03b/b-answer-semantics.md`](../../../03-task-generation/03b-construct-task-definitions/b-answer-semantics.md#answer-resolver):
+`answer_parameter` carries "the point for a position or a membership, and the
+category for a topology change", and is null otherwise.
 
 | Parameter kind | Carries | Why |
 |---|---|---|
 | `membership_point` | The point the probe classifies. | The point is the question parameter and the probe input, bound once. |
 | `position_point` | The point kind (`face_centroid`, `edge_midpoint`, `vertex_point`, `region_centroid`, `solid_state_centroid`). | The coordinates are the answer. Storing them in the parameter would render the answer into the prompt. |
-| `distance_reference` | The second entity of the pair. | A distance has two endpoints; the target names one, the parameter names the other. |
-| `angle_reference` | The second entity of the pair. | An angle has two entities; the target names one, the parameter names the other. |
 | `topology_category` | `face`, `edge`, or `vertex`. | The question declares which count changes. |
 
 The membership and topology-category rows are already in `03b`. The position
 row sharpens an ambiguity: "the point for a position" reads as coordinates,
-which are the answer. The distance and angle rows close an underspecification:
-a pair measurement needs both entities, and the current text leaves the second
-one implicit.
+which are the answer.
 
-This is a proposed contract change. It is recorded here because the oracle
-cannot be written without it; the owner decides whether `03b` adopts it. Until
-then, a constructor that emits coordinates in `answer_parameter` for a position
-task is a defect.
+A `Distance` or `Angle` answer has no parameter and no row in the table. A pair
+answer reads the reference set bound by a task clue
+([`task-structure.md` §2.2](../../../../../requirements/task-structure.md#22-task-clue),
+[`b-answer-semantics.md`](../../../03-task-generation/03b-construct-task-definitions/b-answer-semantics.md#answer-resolver)),
+and the question names that reference
+([`prompt-content.md` §3](../../../../../requirements/prompt-content.md#3-question)):
+it cites the clue by category only when the clue names one set of that category,
+and otherwise names the reference phrase. The answer takes the nearest member,
+so a multi-member set still yields one value. The earlier
+`distance_reference` and `angle_reference` variants were removed on 2026-11-27 when
+`MC-67` resolved the pair endpoint this way. A record that stores the second
+entity in `answer_parameter` is now invalid.
 
 ## 5. Units and canonical text
 
@@ -374,7 +381,7 @@ only valid reading of the task; that is the owner review.
 | [`box-with-hole-top-face-area`](box-with-hole-top-face-area.json) | What is the area of the target face? | `187.4` |
 | [`box-with-hole-top-face-centroid`](box-with-hole-top-face-centroid.json) | What is the area centroid of the target face? | `(0, 0, 2.5)` |
 | [`box-top-bottom-distance`](box-top-bottom-distance.json) | What is the shortest distance between the target face and the face touching the bottom of the axis-aligned bounding box? | `5` |
-| [`box-top-front-angle`](box-top-front-angle.json) | What is the angle between the target face and the face touching the front of the axis-aligned bounding box? | `90` |
+| [`box-top-front-angle`](box-top-front-angle.json) | What is the angle between the target face and the face touching the left of the axis-aligned bounding box? | `90` |
 | [`box-bottom-face-area-by-angle`](box-bottom-face-area-by-angle.json) | What is the area of the target face? | `200` |
 | [`box-with-hole-edge-length`](box-with-hole-edge-length.json) | What is the length of the target edge? | `12.57` |
 | [`box-with-hole-material-change`](box-with-hole-material-change.json) | What volume does the `cutBlind` operation remove? | `-25.13` |
@@ -391,11 +398,11 @@ work item before the release claims that cell.
 | Volume | Number | `box-volume` | Covered |
 | Area | Number | `box-with-hole-top-face-area` | Covered |
 | Length | Number | `box-with-hole-edge-length` | Covered |
-| Distance | Number | `box-top-bottom-distance` | Covered; re-verification pending after the distance copy change |
+| Distance | Number | `box-top-bottom-distance` | Covered |
 | Angle | Number | `box-top-front-angle` | Covered |
 | Count | Integer | `box-face-count` | Covered |
 | Membership | Yes or no | `box-membership-inside`, `box-membership-outside` | Covered, both labels |
-| Position | 3D coordinate | `box-with-hole-top-face-centroid` | Covered; re-verification pending after the center-naming copy change |
+| Position | 3D coordinate | `box-with-hole-top-face-centroid` | Covered |
 | Extent | Bounding box | `box-extent` | Covered |
 | Material change | Number | `box-with-hole-material-change` | Covered |
 | Topology change | Integer | `box-with-hole-topology-change` | Covered |
@@ -419,8 +426,8 @@ Clue types:
 | Clue type | Records | Status |
 |---|---|---|
 | Property | area (measurement range), position (categorical feature), angle (measured direction) | Covered |
-| Relation | edge length (named), bottom-face area (pair angle) | Covered |
-| Comparison | — | **Gap.** |
+| Relation | edge length (named `has_edge`), bottom-face area (pair angle), top-bottom distance (pair angle) | Covered |
+| Comparison | front-face angle (area below the left face) | Covered |
 | Provenance | — | **Gap.** |
 | Aggregation | — | P1 |
 
@@ -428,7 +435,7 @@ Clue reduction forms:
 
 | Form | Records | Status |
 |---|---|---|
-| `filtered` | edge length, bottom-face area | Covered |
+| `filtered` | edge length, bottom-face area, top-bottom distance, front-face angle | Covered |
 | `selected_in_earlier_clue` | — | **Gap.** |
 | `aggregated` | — | P1 |
 | `cross_state` | — | P2 |
@@ -450,8 +457,8 @@ Task reasoning step count:
 | Steps | Records | Status |
 |---|---|---|
 | 1 | volume, count, membership (both labels), extent, material change, topology change | Covered |
-| 2 | area (pair angle), position, distance, angle | Covered |
-| 3 | edge length | Covered |
+| 2 | area (pair angle), position, distance | Covered |
+| 3 | edge length, angle | Covered |
 | 4–5 | — | **Gap.** |
 | 6–10 | — | P1, gated by the dataset PRD section 6.1 |
 

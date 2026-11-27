@@ -14,7 +14,8 @@ Each technical section opens with a work order, most unblocking first. The order
 is dependency order, not importance: an entry can start once its prerequisite
 lands, and the tests run alongside the milestone they cover.
 
-Seven entries are open, `MC-68`–`MC-74`, all from the 2026-11-27 P0-W2 audit.
+Six entries are open, `MC-68`–`MC-72` and `MC-74`, all from the 2026-11-27
+P0-W2 audit. `MC-73` closed in the pair-answer oracle pass.
 P1 and P2 are empty. `MC-22`, `MC-49`, `MC-50`, `MC-63`, `MC-65`, and `MC-66`
 closed on 2026-11-25, and `MC-64` and `MC-67` closed on 2026-11-27. The closed
 entries below are unchanged.
@@ -43,7 +44,7 @@ other open P0 entries are technical.
 Work order: `MC-72` first, because the M1 golden, the release column, and the
 prompt all depend on the unit vocabulary; then `MC-68` and `MC-69` (golden and
 fixture pool), then `MC-70` (support tables), then `MC-71` (the P0-W2 `05`
-check set). `MC-74` lands with the code it corrects; `MC-73` is P0-W4 work.
+check set). `MC-74` lands with the code it corrects.
 
 - `MC-68` — the P0-W2 end-to-end test does not name the golden record it
   asserts. [`00-end-to-end.md`](pipeline/testing/00-end-to-end.md#the-test)
@@ -106,17 +107,6 @@ check set). `MC-74` lands with the code it corrects; `MC-73` is P0-W4 work.
   display mapping. Pin the graph unit names as the release vocabulary and map
   them in `04`, or add the display keys.
 
-- `MC-73` — pair answers have two shapes.
-  [`task-structure.md`](../requirements/task-structure.md#9-resolved-questions)
-  Q3 and
-  [`b-answer-semantics.md`](pipeline/03-task-generation/03b-construct-task-definitions/b-answer-semantics.md#answer-resolver)
-  put the second entity in the clue's `reference_set`, not `answer_parameter`;
-  the oracles README still proposes `distance_reference` and `angle_reference`
-  parameters
-  ([answer parameters](pipeline/testing/oracles/task-construction/README.md#4-answer-parameters)),
-  and the verified `box-top-front-angle` record uses `angle_reference`.
-  Reconcile the README and the records with Q3; this is P0-W4 work.
-
 - `MC-74` — four typed declarations contradict their contracts.
   [`ReleaseTable`](pipeline/streamlined/models/04-render-prompt-and-choices.md#output--releasetable)
   nests `Rows []ReleaseRow` under a `release_id` field, but `release.parquet`
@@ -140,6 +130,20 @@ None.
 
 None. `MC-22` closed in the 2026-11-25 geometry-required pass and `MC-49`
 closed in the 2026-11-25 benchmark-program-set pass.
+
+## Closed in the 2026-11-27 pair-answer oracle pass
+
+- `MC-73` — pair answers have one shape. The oracles README now names the clue's
+  bound reference set as the pair endpoint and lists three answer-parameter
+  variants: membership point, position point, and topology category. The oracle
+  schema rejects `distance_reference` and `angle_reference` and requires a
+  reference-binding clue for a `Distance` or `Angle` answer.
+  `box-top-bottom-distance` and `box-top-front-angle` were rebuilt with a null
+  answer parameter and a clue-bound reference; the angle record also satisfies
+  `DS-REQ-34` on the box-with-hole program. The contract is
+  [`task-structure.md`](../requirements/task-structure.md#9-resolved-questions)
+  §9 Q3 and the [`b-answer-semantics.md`](pipeline/03-task-generation/03b-construct-task-definitions/b-answer-semantics.md#answer-resolver)
+  answer resolver.
 
 ## Closed in the 2026-11-27 pair-distance pass
 
@@ -362,8 +366,9 @@ closed in the 2026-11-25 benchmark-program-set pass.
 - `MC-25` — `prompts.yaml` and its schema are written in `prompt-templates.md`;
   the Go `04` loader test validates the file (`missing` until `04` lands, and
   there is no Python prompt-template contract). The file carries template
-  IDs, typed placeholders, label tables, and dataset and evaluation namespaces;
-  `04` rejects a missing, extra, or untyped placeholder.
+  IDs, typed placeholders, and label tables in one `dataset` namespace; evaluation
+  prompts are harness-owned and outside this file. `04` rejects a missing, extra,
+  or untyped placeholder.
 - `MC-13` — `05-validate-and-export-release/release-checks.md` lists one check
   per requirement statement, with its scope, bound, and first-release
   disposition.

@@ -69,8 +69,9 @@ Python code.
 The Go module and its shared package exist under `generator/`; pipeline stage
 code lands one pipeline stage at a time. Go reads the YAML policy files in `generator/config/`
 (`balance.yaml`, `release-checks.yaml`, `tolerance.yaml`) with `gopkg.in/yaml.v3`
-(`STK-2`); the dataset namespace and the prompt-template contract of `prompts.yaml` are
-Go-owned, and Python keeps `PyYAML` for the evaluation namespace only.
+(`STK-2`); the `dataset` namespace and the prompt-template contract of
+`prompts.yaml` are Go-owned, and Python does not read that file. The evaluation
+harness owns its own prompts.
 
 ## JSON at the boundary
 
@@ -105,15 +106,12 @@ Both languages write the same typed tables. `DS-ADR-03` forbids JSON columns, an
 
 ## Prompt text
 
-All LLM-facing prompt text is data in `prompts.yaml`, not code:
-
-- dataset question, clue, choice, and answer-instruction templates;
-- evaluation-harness instructions.
-
-Go and Python select template IDs and fill typed placeholders. Neither language
-hardcodes prompt copy. The dataset and evaluation sections are separate
-namespaces in the same file. Template changes bump the prompt version and hash.
-The file's schema is in [`prompt-templates.md`](prompt-templates.md).
+All dataset prompt text is data in `prompts.yaml`, not code: question, clue, and
+choice templates. The evaluation harness owns its own system prompt, answer
+instruction, and submit-tool schema. Go selects template IDs and fills typed
+placeholders; Python does not read `prompts.yaml`. Neither language hardcodes
+dataset prompt copy. Template changes bump the prompt version and hash. The
+file's schema is in [`prompt-templates.md`](prompt-templates.md).
 
 ## Parallelism
 

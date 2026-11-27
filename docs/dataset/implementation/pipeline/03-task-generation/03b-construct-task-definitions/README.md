@@ -95,9 +95,9 @@ pool, bind a new target, compute the answer, or decide validity.
   be used when enough choices can be generated.
 
 - **Q5.** *Resolved 2026-10-21.* A task is a duplicate when its canonical task
-  identity is identical. Answer format, multiple-choice choices, prompt wording,
-  and answer instruction are excluded because multiple choice is a presentation
-  wrapper.
+  identity is identical. Answer format, multiple-choice choices, and prompt
+  wording are excluded because multiple choice is a presentation wrapper. The
+  harness answer instruction is not definition content.
 
 ## Not here
 

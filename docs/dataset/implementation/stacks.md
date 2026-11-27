@@ -85,8 +85,8 @@ default; migrating would require that option at every encoder call.
 A third-party CLI framework would add help and completion machinery the
 generator does not use. `gopkg.in/yaml.v3` is the only YAML library in the Go
 module (`STK-2`); the policy loaders call `KnownFields(true)` so an unknown key
-is a load error, then validate the typed policy. Python keeps `PyYAML` for the
-evaluation namespace; the dataset namespace and the prompt-template contract are Go-owned.
+is a load error, then validate the typed policy. The `dataset` namespace and the
+prompt-template contract are Go-owned; Python does not read `prompts.yaml`.
 `golangci-lint` is the single lint entry point and includes
 `staticcheck`, `govet`, `errcheck`, `revive`, `gocritic`, and the other strict
 checks listed in `STK-3`; `--fix` applies the auto-fixable findings. `gofumpt`
@@ -204,8 +204,8 @@ the `vite-plus` skill.
   `generator/config/` with `gopkg.in/yaml.v3`. It is the only YAML library in the Go module. A loader
   rejects unknown fields, then validates the typed policy.
 - **Consequences:** A policy file with an unknown key is a load error, not a
-  silently ignored setting. Python keeps `PyYAML` for the evaluation namespace;
-  the dataset namespace and the prompt-template contract are Go-owned, so the two languages
+  silently ignored setting. The `dataset` namespace and the prompt-template
+  contract are Go-owned; Python does not read `prompts.yaml`, so the two languages
   do not share a YAML loader or a second prompt-template contract.
 
 ### STK-3 — Go uses the standard CLI and a strict lint stack

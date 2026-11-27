@@ -156,9 +156,11 @@ or centroid, and no P0 clue can narrow it.
 ### The reference side of a pair answer
 
 A `Distance` or `Angle` answer needs no new reference form. It reads the
-reference set of a task clue, which is one of the forms above, and the question
-points at the clue ("a face from clue 1"). The pair's second side is the clue's
-own reference phrase, not a second condition.
+reference set of a task clue, which is one of the forms above. The question
+names that reference. It may cite the clue by category ("an edge from clue 1")
+only when the clue names one set of that category; when the target and the
+reference share a category, it names the reference phrase instead. The pair's
+second side is the clue's reference, not a second condition.
 
 ### Not a form
 

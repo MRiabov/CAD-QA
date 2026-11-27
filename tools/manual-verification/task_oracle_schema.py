@@ -490,16 +490,6 @@ class MembershipPointParameter(_OracleModel):
     point: Point3D
 
 
-class DistanceReferenceParameter(_OracleModel):
-    parameter_kind: Literal["distance_reference"] = "distance_reference"
-    subject: EntityDescriptor
-
-
-class AngleReferenceParameter(_OracleModel):
-    parameter_kind: Literal["angle_reference"] = "angle_reference"
-    subject: EntityDescriptor
-
-
 class PositionPointParameter(_OracleModel):
     parameter_kind: Literal["position_point"] = "position_point"
     point_kind: PositionPointKind
@@ -512,8 +502,6 @@ class TopologyCategoryParameter(_OracleModel):
 
 AnswerParameter = Annotated[
     MembershipPointParameter
-    | DistanceReferenceParameter
-    | AngleReferenceParameter
     | PositionPointParameter
     | TopologyCategoryParameter,
     Field(discriminator="parameter_kind"),
@@ -626,6 +614,12 @@ FORMAT_TO_VALUE_KIND: dict[AnswerFormat, ValueKind] = {
 }
 
 
+def _clue_binds_reference(check: ClueCheck) -> bool:
+    """Whether a clue names a reference, which a pair answer reads."""
+
+    return isinstance(check, (NamedRelationCheck, AngleRelationCheck, ComparisonCheck))
+
+
 class TaskOracle(_OracleModel):
     schema_version: int = Field(ge=1)
     oracle_kind: OracleKind
@@ -729,14 +723,14 @@ class TaskOracle(_OracleModel):
             self.answer.parameter, PositionPointParameter
         ):
             raise ValueError("a position answer needs a position point kind")
-        if self.task.answer_meaning == AnswerMeaning.DISTANCE and not isinstance(
-            self.answer.parameter, DistanceReferenceParameter
-        ):
-            raise ValueError("a distance answer needs a reference subject")
-        if self.task.answer_meaning == AnswerMeaning.ANGLE and not isinstance(
-            self.answer.parameter, AngleReferenceParameter
-        ):
-            raise ValueError("an angle answer needs a reference subject")
+        if self.task.answer_meaning in {AnswerMeaning.DISTANCE, AnswerMeaning.ANGLE}:
+            if self.answer.parameter is not None:
+                raise ValueError(
+                    "a pair answer has no answer parameter; it reads the clue's "
+                    "bound reference set"
+                )
+            if not any(_clue_binds_reference(clue.check) for clue in self.clues):
+                raise ValueError("a pair answer needs a clue that binds a reference")
         if self.task.answer_meaning == AnswerMeaning.TOPOLOGY_CHANGE and not isinstance(
             self.answer.parameter, TopologyCategoryParameter
         ):

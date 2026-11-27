@@ -37,13 +37,12 @@ TRANSFORM:
   - relation clue: `dataset.clue.relation`; comparison clue: `dataset.clue.comparison`
   - provenance clue: `dataset.clue.provenance.operation | profile` by the check field
   - choice description: `dataset.choice.description`, once per choice
-  - answer instruction: `dataset.answer_instruction.multiple_choice`, `.number.with_unit`, `.number.unitless`, `.integer`, `.boolean`, `.coordinate`, or `.bounding_box`
-- render the question, the numbered clue list, the choice list, and the answer instruction first; fill `dataset.prompt_shell` in this order: frame line, program text, question, clue list, choice list, answer instruction
+- render the question, the numbered clue list, and the choice list first; fill `dataset.prompt_shell` in this order: frame line, program text, question, clue list, choice list
 - render clues in canonical order in P0; P1 applies a seeded permutation that respects reference dependencies, and clue wording uses presentation positions
 - the frame line is the fixed first line of `dataset.prompt_shell`; it is not a per-task variant
 - multiple choice: render `choice_pool` in its recorded order with its recorded labels; never reorder, relabel, re-bind an entity, or recompute an answer
 - the rendered choice block has one line per pool entry, in pool order, with pool labels; a mismatch stops the render before any row is written; never reorder, relabel, or drop an entry to make it fit
-- collapse a run of three or more newlines to two, so an empty choice list leaves one blank line before the answer instruction
+- collapse a run of three or more newlines to two, so an empty choice list leaves one blank line at the end of the prompt
 - the prompt is answer-free and uses no variable name; a multiple-choice label is not answer data, because every label appears in the list
 
 WRITE:

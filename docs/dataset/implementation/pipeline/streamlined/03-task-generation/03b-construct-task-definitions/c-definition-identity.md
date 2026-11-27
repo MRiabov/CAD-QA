@@ -12,7 +12,7 @@ TRANSFORM:
 - identical canonical identity → duplicate; keep one and record the duplicate
 - prompt identity = `(program_sha256, target category, canonical clue sequence, answer_meaning, answer_format, choice_pool)`; keep one definition per identity; a group that disagrees on the gold answer is `prompt_ambiguous` and none is accepted (`DS-REQ-35`)
 - `task_id = cadqatask:<sha256>` over the canonical task identity; the gold answer is not part of it
-- answer format, choice pool, prompt wording, and answer instruction are not part of `task_id`
+- answer format, choice pool, and prompt wording are not part of `task_id`; the harness answer instruction is not definition content
 
 WRITE:
 

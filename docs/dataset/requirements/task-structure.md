@@ -215,7 +215,8 @@ target. A pair answer whose task binds no reference is not generated.
 
 A task may also need a **task answer step** after the task target is identified,
 such as reporting the volume of the selected solid state. A task answer step is
-not a task clue and is not written as one. It belongs in the answer instruction.
+not a task clue and is not written as one. It belongs in the harness's answer
+instruction, not the dataset prompt.
 
 ### 2.3 Answer format
 
@@ -568,4 +569,7 @@ answer format, answer meaning, and task reasoning step count that tie them toget
   and `..._spatial_relation_chain_extreme` in
   [`../../_archive/implementation_status.md`](../../_archive/implementation_status.md))
   stays P1 or P2: it needs a step that narrows a set which is not the target, and
-  that step is still undecided.
+  that step is still undecided. The question names the bound reference; it cites
+  the clue by category only when that category identifies one set, and otherwise
+  names the reference phrase
+  ([`prompt-content.md`](prompt-content.md#3-question)).

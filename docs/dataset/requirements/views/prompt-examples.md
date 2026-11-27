@@ -8,9 +8,9 @@ document owns no rule.
 
 A prompt example is not a gold record. A [gold record](../../implementation/pipeline/testing/oracles/task-construction/README.md)
 carries the clue chain, narrowing counts, answer-equivalent set, and a gold query.
-A prompt example exists to make the prompt text inspectable end to end: the shell, the
-program, the question, the numbered clues, and the answer instruction, with real
-numbers.
+A prompt example exists to make the dataset prompt inspectable end to end: the
+shell, the program, the question, and the numbered clues, with real numbers. The
+harness adds its own answer instruction and submission format.
 
 Each block below is the prompt exactly as it renders, so it can be pasted as it
 stands without editing. The outer fence is `text` only so the reader sees the
@@ -20,7 +20,7 @@ prompt as text; the inner `python` fence is part of the prompt.
 follow the renderer rule: `the` when the description selects one element of its
 category in the program, `a` when it selects several, plural for a set bound by an
 earlier clue. A non-multiple-choice answer has no choice block, and a task with no
-clue has an empty clue list; both leave a blank line, which is not shown here.
+clue has an empty clue list; both leave a blank line at the end of the prompt.
 
 Every clue is necessary (`task-structure.md` §2.2): each **Counts** line records
 what dropping the clue leaves, so the chain can be checked without rebuilding it.
@@ -52,7 +52,6 @@ result = cq.Workplane("XY").box(10, 20, 5)
 
 What is the volume of the target solid state?
 
-Return exactly one number. Use mm^3; round to 4 significant figures.
 ````
 
 **Answer:** `1000` mm^3. **Counts:** 1 possible answer, no clues.
@@ -70,7 +69,6 @@ result = cq.Workplane("XY").box(10, 20, 5)
 
 Is the point (0, 0, 0) inside the target solid state?
 
-Return exactly one of `true` or `false`.
 ````
 
 **Answer:** `true`. **Counts:** 1 possible answer, no clues. The point is a probe
@@ -96,7 +94,6 @@ What is the area of the target face?
 
 1. The target face has an area between 150 and 190.
 
-Return exactly one number. Use mm^2; round to 4 significant figures.
 ````
 
 **Answer:** `187.4` mm^2, the top annular face. **Counts:** 8 possible answers
@@ -125,7 +122,6 @@ What is the length of the target edge?
 1. The target edge is an edge of the face touching the top of the axis-aligned bounding box.
 2. The target edge is an edge of the cylindrical face.
 
-Return exactly one number. Use mm; round to 4 significant figures.
 ````
 
 **Answer:** `12.57` mm, the circle where the hole meets the top face.
@@ -157,7 +153,6 @@ What is the area centroid of the target face?
 
 1. The target face touches the front of the axis-aligned bounding box.
 
-Return exactly one coordinate tuple `(x, y, z)` in the program frame; round each value to 4 significant figures.
 ````
 
 **Answer:** `(0, -10, 0)`, the front face. **Counts:** 8 possible answers, 1 clue:
@@ -184,7 +179,6 @@ What is the angle between the target face and the face touching the front of the
 
 1. The angle between the outward normal of the target face and +z is less than 1 degree.
 
-Return exactly one number. Use degrees; round to 4 significant figures.
 ````
 
 **Answer:** `90` degrees, between the top face and the front face.
@@ -212,7 +206,6 @@ What is the area of the target face?
 1. The area of the target face is less than the area of the face touching the bottom of the axis-aligned bounding box.
 2. The target face has an area greater than 50.
 
-Return exactly one number. Use mm^2; round to 4 significant figures.
 ````
 
 **Answer:** `100` mm^2, the left and right faces. **Counts:** 6 possible answers,
@@ -251,7 +244,6 @@ What is the area of the target face?
 1. The target face was created by the cutBlind operation.
 2. The target face is planar.
 
-Return exactly one number. Use mm^2; round to 4 significant figures.
 ````
 
 **Answer:** `12.57` mm^2, the hole floor. **Counts:** 8 possible answers, clue 1:
@@ -270,7 +262,7 @@ planar.
 | Not shown | Why |
 |---|---|
 | Multiple choice | The choice block adds no new clue type; the identity case needs five candidates and is the gold-record gap. |
-| A count answer | The integer instruction is one line and adds no prompt structure; the meaning is covered by the gold records. |
+| A count answer | The answer format adds no prompt structure; the meaning is covered by the gold records. |
 | A position clue in a chain | On both programs every bounding-box extreme plane holds one face, so a position clue leaves one answer on its own and a second clue would make it redundant; section 5 shows it alone. |
 | Distance between two entities | The question template takes a reference and is the same shape as the angle one; the gold records cover it. |
 

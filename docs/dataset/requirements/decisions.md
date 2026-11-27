@@ -38,7 +38,8 @@ citation keys and never change meaning.
 - **Decision:** A **task** is one dataset instance: a CadQuery program, a task
   target, a set of task clues, and one answer. A **question** is only the
   interrogative sentence in the prompt. The prompt also contains the program
-  text, the task clues, optional choices, and the answer instruction.
+  text, the task clues, and optional choices; the answer instruction is harness
+  policy and is not dataset content.
 - **Consequences:** Dataset code and documentation use "task" for the instance.
   Prompt documentation uses "question" only for the sentence.
 
@@ -654,16 +655,17 @@ citation keys and never change meaning.
   stacks strip or special-case the system role, and a dataset that ships its task
   as a system prompt trains an LLM model to treat a CAD-QA question as a standing
   instruction rather than a request. The dataset also should not own harness
-  policy: retry rules, tool access, and answer extraction belong to whoever runs
-  the LLM model.
+  policy: retry rules, tool access, answer extraction, and the answer instruction
+  and submission format belong to whoever runs the LLM model.
 - **Decision:** The release `prompt` column is the user message. The dataset
   supplies no system prompt. A harness may add its own, and the dataset card says
   that the dataset does not.
 - **Consequences:** Training blindly on the prompt column uses the normal
   user-turn shape. A harness that adds a system prompt does not change the release
   row, so `prompt_sha256` still identifies the dataset content. The frame
-  convention and the answer instruction stay inside the user message, because they
-  are task context, not harness policy.
+  convention stays inside the user message because it is task context; the answer
+  instruction and submission format do not, because a consumer must be free to
+  change them without rewriting the dataset prompt.
 
 ## DS-REQ-25 — Plausible near-miss distractors are P2
 

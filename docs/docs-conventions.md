@@ -171,13 +171,14 @@ scoped to the module. `pipeline/extraction/` and
 
 ## Prompt text
 
-All LLM-facing prompt text is data, not code. Put it in `generator/config/prompts.yaml`.
-The file's schema is in
+All dataset prompt text is data, not code. Put it in
+`generator/config/prompts.yaml`. The evaluation harness owns its own prompt copy
+and submit-tool schema. The file's schema is in
 [`dataset/implementation/prompt-templates.md`](dataset/implementation/prompt-templates.md).
 
-- The dataset and evaluation harnesses use separate namespaces in that file.
-- Code selects template IDs and fills typed placeholders. Go and Python do not
-  hardcode question, clue, choice, system, or evaluation instruction strings.
+- `prompts.yaml` is dataset-only; evaluation prompts live outside it.
+- Code selects template IDs and fills typed placeholders. Go does not hardcode
+  question, clue, or choice strings; the harness owns its own prompt copy.
 - A template change bumps the prompt version. The rendered prompt hash and the
   `prompts.yaml` hash are recorded in the relevant artifact or run manifest.
 - Prompt templates are answer-free; they never contain gold answers or hidden

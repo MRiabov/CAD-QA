@@ -34,9 +34,9 @@ the user-visible outcome.
 | **Clue reduction form profile** | Internal | The ordered clue type and clue reduction form of every clue in one task. `In code:` `clue_reduction_form_profile`. |
 | **Answer format** | Domain | The form of the answer: multiple choice, number, integer, yes or no, 3D coordinate, bounding box, or structured object. |
 | **Multiple-choice choices** | Domain | The short list of options shown for a multiple-choice answer. |
-| **Answer instruction** | Domain | The part of the prompt that tells the LLM model which answer format to return and in what syntax. |
+| **Answer instruction** | Harness | The instruction a harness adds to state the answer format and submission syntax. It is not dataset content. |
 | **Program text** | Domain | The CadQuery program shown in the prompt. |
-| **Prompt** | Domain | Everything the LLM model sees for one task: program text, question, task clues, optional choices, and answer instruction. |
+| **Prompt** | Domain | The dataset user message for one task: program text, question, task clues, and optional choices. A harness adds its own system prompt, answer instruction, and submission tool. |
 | **Gold answer** | Domain | The correct answer for one task. It is kept out of the prompt. |
 | **Answer data** | Domain | The answer columns in the release dataset: gold answer, scoring fields, and answer evidence. |
 | **CAD graph** | Domain | The typed graph of CAD graph entities, CAD graph relations, and CAD graph measurements for one CadQuery program and the shape it builds. |
@@ -121,7 +121,7 @@ magic word.
 | Clue type | clue + `type` | The category of condition a task clue states. |
 | Answer meaning | answer + meaning | What the answer is about. |
 | Answer format | answer + format | The form of the answer. |
-| Answer instruction | answer + instruction | The prompt part that states the answer format. |
+| Answer instruction | answer + instruction | The harness-owned instruction that states the answer format; not dataset content. |
 | Solid state | solid + state | The shape before or after an operation, or the final shape. |
 | CAD graph | CAD + graph | The graph of CAD entities, relations, and measurements for a CadQuery program and its shape. |
 | Warmup subset | warmup + subset | A labeled subset of easier tasks. |

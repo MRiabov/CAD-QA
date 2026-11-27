@@ -3,10 +3,10 @@
   "oracle_kind": "task-construction",
   "slug": "box-with-hole-top-face-centroid",
   "verification": {
-    "status": "proposed",
-    "verified_by": null,
-    "verified_at": null,
-    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. The 2026-11-25 center-naming pass changed the question copy to name the area centroid, so this record needs owner re-verification in the task browser.",
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-27",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. The 2026-11-25 center-naming pass changed the question copy to name the area centroid. Owner accepted this record after reviewing it in the dataset browser on 2026-11-27.",
     "gold_query": {
       "status": "passed",
       "stdout": "{\"x\":\"0\",\"y\":\"0\",\"z\":\"2.5\"}",

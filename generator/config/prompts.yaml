@@ -17,8 +17,8 @@
 # copy bumps `version`; a comment-only edit changes the file hash but not
 # `version`. A structural change bumps `schema_version` and `version`.
 
-schema_version: 2
-version: cadqa_prompt_v12
+schema_version: 3
+version: cadqa_prompt_v13
 
 namespaces:
   dataset:
@@ -174,14 +174,11 @@ namespaces:
             {{clue_list}}
 
             {{choices}}
-
-            {{answer_instruction}}
         placeholders:
           program_text: code
           question: text
           clue_list: numbered_list
           choices: list
-          answer_instruction: text
 
       dataset.question.identity:
         variants:
@@ -374,73 +371,3 @@ namespaces:
           label: label.choice_label
           description: text
 
-      dataset.answer_instruction.multiple_choice:
-        variants:
-          - "Return exactly one label from the list above, for example `{{example_label}}`."
-          - "Answer with exactly one label from the list above, such as `{{example_label}}`."
-        placeholders:
-          example_label: label.choice_label
-
-      dataset.answer_instruction.number.with_unit:
-        variants:
-          - "Return exactly one number. Use {{unit_label}}; round to {{precision}} significant figures."
-          - "Return exactly one number in {{unit_label}}, rounded to {{precision}} significant figures."
-        placeholders:
-          unit_label: label.unit
-          precision: integer
-
-      dataset.answer_instruction.number.unitless:
-        variants:
-          - "Return exactly one number; round to {{precision}} significant figures."
-          - "Return exactly one number, rounded to {{precision}} significant figures."
-        placeholders:
-          precision: integer
-
-      dataset.answer_instruction.integer:
-        variants:
-          - "Return exactly one integer."
-          - "Return exactly one whole number."
-        placeholders: {}
-
-      dataset.answer_instruction.boolean:
-        variants:
-          - "Return exactly one of `true` or `false`."
-          - "Return exactly one boolean value, `true` or `false`."
-        placeholders: {}
-
-      dataset.answer_instruction.coordinate:
-        variants:
-          - "Return exactly one coordinate tuple `(x, y, z)` in the {{frame_label}}; round each value to {{precision}} significant figures."
-          - "Return exactly one point as `(x, y, z)` in the {{frame_label}}, with each value rounded to {{precision}} significant figures."
-        placeholders:
-          frame_label: label.frame
-          precision: integer
-
-      dataset.answer_instruction.bounding_box:
-        variants:
-          - |
-            Return exactly one bounding box as `{"min": [x, y, z], "max": [x, y, z]}` in the {{frame_label}}; round each value to {{precision}} significant figures.
-          - |
-            Return exactly one bounding box in the {{frame_label}} as `{"min": [x, y, z], "max": [x, y, z]}`, with each value rounded to {{precision}} significant figures.
-        placeholders:
-          frame_label: label.frame
-          precision: integer
-
-  # The evaluation harness owns this namespace. The dataset release does not
-  # read it; the dataset supplies no system prompt. See section 10 of the
-  # schema.
-  evaluation:
-    labels: {}
-
-    templates:
-      evaluation.system.no_cadquery:
-        variants:
-          - "You are answering a CAD reasoning question from a fixed program. Do not import or call CadQuery, `cq`, OCP, OpenCascade, or any other CAD library. Do not execute the program. Reason from the program text and the question."
-          - "Answer the CAD reasoning question using only the program text and the question. Do not import or call CadQuery, `cq`, OCP, OpenCascade, or any other CAD library, and do not execute the program."
-        placeholders: {}
-
-      evaluation.submission.answer:
-        variants:
-          - "Write exactly one answer in the required format. Do not write more than one answer."
-          - "Submit exactly one answer. A second answer is an error."
-        placeholders: {}

@@ -309,7 +309,7 @@ it from there when it needs to recheck uniqueness.
 | `task_id` | string | yes | Stable release key. It must not encode the answer. | `TaskDefinition.task_id` |
 | `split` | enum `train`, `validation`, `test` | yes | Split assignment. The same CADEvolve program family stays in one split. | `TaskDefinition.split` |
 | `subset` | enum `warmup`, `main` | yes | Warmup is the labeled 1-step subset. | `TaskDefinition.subset` |
-| `prompt` | string | yes | Exact LLM model input, including program text, question, task clues, choices, and answer instruction. | Rendered by `04` render prompt and choices |
+| `prompt` | string | yes | Dataset user message: program text, question, task clues, and choices. A harness adds its own system prompt, answer instruction, and submission tool. | Rendered by `04` render prompt and choices |
 | `prompt_sha256` | string | yes | Content hash of `prompt`. | SHA-256 of the `prompt` UTF-8 bytes |
 | `program_id` | string | yes | Stable program key shared by tasks from the same CadQuery program. | `TaskDefinition.program_id` |
 | `program_sha256` | string | yes | Hash of the normalized CadQuery program text. | `TaskDefinition.program_sha256` |
@@ -364,9 +364,11 @@ a changed answer column and two serializers that drifted. `release_table_sha256`
 protects the exported bytes, and `answer_sha256` identifies the answer across
 releases.
 
-Question text, task clues, choice descriptions, and the answer instruction are
-not duplicated as separate columns. They are part of `prompt`, which is the exact
-LLM model input. A structured prompt record can be regenerated for audit if
+Question text, task clues, and choice descriptions are not duplicated as separate
+columns. They are part of `prompt`, which is the dataset user message. A harness
+adds its system prompt, answer instruction, and submission tool from the answer
+metadata without changing the row, so `prompt_sha256` still identifies the
+dataset content. A structured prompt record can be regenerated for audit if
 needed. The `choices` column is not a copy of the rendered choices: it holds the
 label and the answer value, which the prompt does not state.
 
@@ -547,7 +549,7 @@ distinct answers change between two releases" without shipping either table.
 | Section | Content |
 |---|---|
 | What this is | The dataset name, `release_id`, implementation scope, task count, and what a task asks for in one paragraph. |
-| What a task is | The prompt parts, the frame convention, and that `prompt` is the user message with no system prompt supplied by the dataset. |
+| What a task is | The prompt parts, the frame convention, and that `prompt` is the user message with no system prompt or answer instruction supplied by the dataset. |
 | Columns | The release table columns, that `prompt` is the only LLM-facing column, and that the answer columns are for training, scoring, and audit. |
 | Counts and splits | Task count, tasks per task reasoning step count, split counts, warmup count, distinct CAD models, and distinct correct answers. Names the test set (R-14). |
 | Answer conventions | The table below. |

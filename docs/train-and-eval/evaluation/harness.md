@@ -86,6 +86,36 @@ tool call equals the gold answer. Numeric answers compare at `1e-3` relative
 tolerance; `text` also tolerates float-formatting differences in a decomposed
 `cq.Plane` string; everything else is exact after whitespace normalization.
 
+### Answer submission contract
+
+The harness owns the system prompt, the answer instruction, and the submit tool.
+The dataset prompt is the user message and does not contain them
+([`DS-REQ-24`](../../dataset/requirements/decisions.md#ds-req-24--the-dataset-prompt-is-the-user-message)).
+The CAD-QA dataset row supplies `answer_format` and `answer_unit`; the harness
+maps them to one typed submit tool:
+
+| Dataset `answer_format` | Submit tool | Typed arguments |
+|---|---|---|
+| `multiple_choice` | `submit_label` | `{label: str}` |
+| `number` | `submit_number` | `{value: float}` |
+| `integer` | `submit_integer` | `{value: int}` |
+| `boolean` | `submit_boolean` | `{value: bool}` |
+| `coordinate` | `submit_coordinate` | `{value: [x, y, z]}` |
+| `bounding_box` | `submit_bbox` | `{min: [x, y, z], max: [x, y, z]}` |
+| `structured` | `submit_workplane` | the answer schema's fields |
+
+`submit_boolean` is new: the deleted harness had no boolean entry, so a boolean
+CAD-QA dataset row would fail at load or eval
+([`development-context.md`](../../development-context.md)). The new harness must
+add it. A change to a submit tool or to the answer instruction does not change the
+CAD-QA dataset row or `prompt_sha256`.
+
+The tool names and arguments are the harness's contract, not the dataset's. The
+dataset's `answer_format` is the closed set in
+[`release-dataset-contract.md`](../../dataset/requirements/release-dataset-contract.md);
+the harness maps each value to one submit tool and rejects a row whose format has
+no tool.
+
 The `run_code` execution path is `train_and_eval/tool_calls.py::execute_code`,
 which spawns `train_and_eval/run_code_sandbox.py` as an isolated interpreter
 (`python -I -B`). The sandbox blocks a set of module imports (including `os`,

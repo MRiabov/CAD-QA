@@ -2,24 +2,24 @@
 
 **Status:** draft, 2026-11-20. This document defines `generator/config/prompts.yaml`
 artifact and the schema that `04` render prompt and choices validates. It is the
-contract for prompt authors, `04`, and the evaluation harness.
+contract for prompt authors and `04`. The evaluation harness owns its own prompts
+and does not read this file.
 
 ## 1. What the file is
 
-`prompts.yaml` is the only place for LLM-facing copy. It holds the prompt shell,
-question templates, clue templates, choice descriptions, answer instructions,
-label tables, and evaluation-harness instructions. In the generator this document
-specifies, Go and Python code select a template ID and fill typed placeholders;
-they do not contain question, clue, choice, or answer-instruction strings.
+`prompts.yaml` is the only place for dataset prompt copy. It holds the prompt
+shell, question templates, clue templates, choice descriptions, and label tables.
+In the generator this document specifies, Go and Python code select a template ID
+and fill typed placeholders; they do not contain question, clue, or choice
+strings.
 
-The file has two namespaces:
+The file has one namespace, `dataset`: read by `04` render prompt and choices when
+it renders a `TaskDefinition` into a release row. `03b` construct task definitions
+does not read it: the definition carries typed facts, not sentences.
 
-- `dataset`: read by `04` render prompt and choices when it renders a
-  `TaskDefinition` into a release row. `03b` construct task definitions does not
-  read it: the definition carries typed facts, not sentences.
-- `evaluation`: read by the evaluation harness. The dataset release does not read
-  it. The dataset supplies no system prompt (`DS-REQ-24`); the evaluation harness may
-  add its own copy from this namespace.
+The system prompt, the answer instruction, and the submission format are harness
+policy and are not dataset content (`DS-REQ-24`). The evaluation harness owns its
+own prompts and submit-tool schema.
 
 The file is answer-free. It contains no gold answer, answer value, hidden
 identifier, variable name, or task reasoning step count. `05` validate and export
@@ -42,8 +42,8 @@ this contract.
 A minimal file looks like this:
 
 ```yaml
-schema_version: 2
-version: cadqa_prompt_v10
+schema_version: 3
+version: cadqa_prompt_v13
 
 namespaces:
   dataset:
@@ -56,13 +56,6 @@ namespaces:
           - "What is the volume of the target {{target_label}}?"
         placeholders:
           target_label: label.target_category
-  evaluation:
-    labels: {}
-    templates:
-      evaluation.system.no_cadquery:
-        variants:
-          - "Do not use CadQuery or any other CAD library."
-        placeholders: {}
 ```
 
 The top-level mapping has exactly three keys:
@@ -71,7 +64,7 @@ The top-level mapping has exactly three keys:
 |---|---|---|
 | `schema_version` | integer | Bumped when the file's structure or placeholder forms change. |
 | `version` | string | The prompt template version. Bumped when rendered copy changes. |
-| `namespaces` | mapping | Exactly `dataset` and `evaluation`. |
+| `namespaces` | mapping | Exactly `dataset`. The evaluation harness owns its own prompts outside this file. |
 
 Each namespace has exactly two keys:
 
@@ -105,14 +98,14 @@ A template ID is the key under `templates`. It has three parts:
 <namespace>.<group>.<name>
 ```
 
-- `<namespace>` is `dataset` or `evaluation`.
-- `<group>` is the prompt part: `prompt_shell`, `question`, `clue`, `choice`,
-  `answer_instruction`, `system`, or `submission`.
+- `<namespace>` is `dataset`.
+- `<group>` is the dataset prompt part: `prompt_shell`, `question`, `clue`, or
+  `choice`.
 - `<name>` is a stable lower-case name, with dots for a sub-case.
 
 The ID must start with the namespace that contains it. For example,
-`dataset.question.volume` is valid under `namespaces.dataset.templates`, and
-`evaluation.question.volume` is not.
+`dataset.question.volume` is valid under `namespaces.dataset.templates`.
+`evaluation.*` is not valid: evaluation prompts live outside this file.
 
 The ID is stable. A rename is a new template ID and bumps `version`. The ID is
 recorded in the release provenance; a variant is recorded as `id` when the
@@ -126,8 +119,8 @@ ship.
 ## 4. Placeholders
 
 A placeholder is written `{{name}}`. A single `{` or `}` is literal text. The
-double-brace form keeps JSON examples in answer instructions readable: the
-rendered prompt has single braces, and the template does not escape them.
+double-brace form keeps JSON examples in templates readable: the rendered prompt
+has single braces, and the template does not escape them.
 
 Every placeholder used in a variant must be declared in `placeholders`, and every
 declared placeholder must be used in every variant. The validator rejects:
@@ -207,6 +200,13 @@ not the canonical position, for that plural (`TG-7`). A reference never uses a
 position as a proper noun ("the top face"); the touching form above is the
 condition. The template never builds a reference from a graph identifier.
 
+A pair-answer question follows the citation rule in
+[`prompt-content.md`](../requirements/prompt-content.md#3-question): it may use
+`<categories> from clue N` only when the clue names one set of that category.
+When the target and the reference share a category, it uses the reference phrase
+from the list above. The `from clue N` form stays for a clue whose reference is
+an earlier clue's set (`selected_in_earlier_clue`).
+
 ## 5. Label tables
 
 A label table is a mapping from a stable key to a non-empty display string. The
@@ -263,15 +263,6 @@ field. The selection is deterministic; it does not use an LLM.
 | Provenance clue, operation | `dataset.clue.provenance.operation` | `clue_type=provenance`, check has `operation_id`. |
 | Provenance clue, CadQuery profile | `dataset.clue.provenance.profile` | `clue_type=provenance`, check has `profile_id`. |
 | Choice description | `dataset.choice.description` | `answer_format=multiple_choice`; once per choice. |
-| Answer instruction, multiple choice | `dataset.answer_instruction.multiple_choice` | `answer_format=multiple_choice`. |
-| Answer instruction, number with a unit | `dataset.answer_instruction.number.with_unit` | `answer_format=number` and `answer_unit` is not null. |
-| Answer instruction, number without a unit | `dataset.answer_instruction.number.unitless` | `answer_format=number` and `answer_unit` is null. |
-| Answer instruction, integer | `dataset.answer_instruction.integer` | `answer_format=integer`. |
-| Answer instruction, yes or no | `dataset.answer_instruction.boolean` | `answer_format=boolean`. |
-| Answer instruction, 3D coordinate | `dataset.answer_instruction.coordinate` | `answer_format=coordinate`. |
-| Answer instruction, bounding box | `dataset.answer_instruction.bounding_box` | `answer_format=bounding_box`. |
-| Evaluation system prompt | `evaluation.system.no_cadquery` | The evaluation harness, when it adds a system prompt. |
-| Evaluation submission instruction | `evaluation.submission.answer` | The evaluation harness, when it asks for a submission. |
 
 The P0 question IDs are `identity`, `volume`, `area`, `length`, `distance`,
 `angle`, `count`, `membership`, `position`, `extent`, `material_change`, and
@@ -292,8 +283,8 @@ favour. The schema does not change; only the template set and `version` do.
 
 The prompt shell is the only template that contains `code`, `list`, and
 `numbered_list` placeholders for the whole prompt. It places the frame convention,
-the program text, the question, the numbered clue list, the choice list, and the
-answer instruction in that order. The frame convention is the first line and
+the program text, the question, the numbered clue list, and the choice list in
+that order. The frame convention is the first line and
 matches `prompt-content.md` section 1.1. The shell has one variant in P0; a
 layout change is a version change, not a seed-selected wording variant.
 
@@ -330,7 +321,7 @@ multiple-choice choice.
 - a missing or unknown top-level key, namespace key, or template key;
 - a `schema_version` that is not a positive integer;
 - an empty `version`;
-- a namespace other than `dataset` or `evaluation`;
+- a namespace other than `dataset`;
 - a template ID that does not start with its namespace;
 - a duplicate template ID;
 - a template with no variants, or a variant that is empty or not a string;
@@ -339,7 +330,7 @@ multiple-choice choice.
 - a placeholder with no form, or a form outside the closed set;
 - a `label.<table>` form whose table is absent from the namespace;
 - a label table with an empty key or an empty label;
-- a missing required P0 or evaluation template ID.
+- a missing required P0 template ID.
 
 A malformed file is a release defect, not a task defect. `04` stops before it
 writes a release row and names the file, the template ID, and the placeholder.
@@ -365,18 +356,14 @@ file hash identifies the exact artifact; the version identifies the copy
 semantics. A release row's `prompt_sha256` identifies the rendered prompt. The
 three values together make a prompt reproducible.
 
-## 10. Evaluation namespace
+## 10. Evaluation harness
 
-The evaluation namespace follows the same schema, validation, and answer-free
-rule. It is not part of the dataset release. The dataset supplies no system
-prompt (`DS-REQ-24`); the evaluation harness may add one from
-`evaluation.system.no_cadquery`, and it may add a submission instruction from
-`evaluation.submission.answer`.
-
-The evaluation harness owns the evaluation copy. A change to an evaluation
-template bumps `version` but does not change a dataset release row, because the
-dataset namespace and the rendered prompt are unchanged. The manifest's file hash
-changes, so the artifact still names the exact copy that produced the release.
+The evaluation harness owns its system prompt, answer instruction, and submit-tool
+schema; they are not in `prompts.yaml` and not in the dataset release. The
+harness builds them from a row's `answer_format` and `answer_unit`. A change to a
+harness prompt or tool does not change a dataset release row: the dataset prompt
+and `prompt_sha256` stay the same (`DS-REQ-24`). The dataset supplies no system
+prompt.
 
 ## 11. Adding or changing a template
 

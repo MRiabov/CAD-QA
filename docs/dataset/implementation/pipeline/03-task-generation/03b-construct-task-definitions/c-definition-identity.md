@@ -28,8 +28,9 @@ prompt identity (`DS-REQ-35`), so the release does not carry both.
 The canonical task clue sequence preserves dependency order first, then orders
 independent clues broad-to-narrow by the size of the narrowed set, descending,
 with a stable hash as the tie-break (`TG-7`). The gold answer, answer format,
-choices, prompt wording, and answer instruction are not part of `task_id`; they
-are part of the definition or a later presentation step.
+choices, and prompt wording are not part of `task_id`; they are part of the
+definition or a later presentation step. The harness's answer instruction is not
+definition content at all.
 
 Validity checks and the narrowing record use the canonical sequence. A later
 presentation step may render a permutation that respects reference dependencies;

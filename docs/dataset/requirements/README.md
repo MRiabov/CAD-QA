@@ -14,7 +14,7 @@ so a fact lives at exactly one layer and is projected into the others.
 |---|---|---|
 | Graph | [`graph-content.md`](graph-content.md) | The CAD graph: graph entities, relations, measurements, evidence, states, and emission rules, including the closed value sets they use. |
 | Task | [`task-structure.md`](task-structure.md) | The task: task target, task clue semantics, clue reduction form, answer meaning, answer format, task reasoning step count, uniqueness, coverage, and balance. |
-| Prompt | [`prompt-content.md`](prompt-content.md) | The prompt: parts and order, wording of questions and task clues, choices, answer instruction, and what the prompt must not contain. |
+| Prompt | [`prompt-content.md`](prompt-content.md) | The dataset prompt: parts and order, wording of questions and task clues, choices, and what the prompt must not contain. The harness owns the system prompt, answer instruction, and submission format. |
 
 The supporting documents are not a fourth layer.
 
@@ -48,9 +48,10 @@ project it; they do not copy it.
   an answer meaning reads from it. `prompt-content.md` says how it is worded.
 - A task dimension, such as a clue type or an answer format, is defined in
   `task-structure.md`. `prompt-content.md` gives its wording and links back.
-- A prompt part, such as the answer instruction, is defined in
+- A dataset prompt part, such as the choices, is defined in
   `prompt-content.md`. The release table stores the rendered prompt; it does not
-  redefine the part.
+  redefine the part. The harness's system prompt, answer instruction, and
+  submission format are not dataset prompt parts.
 
 When a layer needs another layer's value, it links to the owner and states the
 projection. It does not reproduce the list. A closed vocabulary copied into

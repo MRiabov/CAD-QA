@@ -23,7 +23,7 @@ labels, and placeholders are all declared.
 
 - `prompt` starts with the frame convention line, then the program text verbatim
   inside a fenced block, then the question, then the two clues in canonical
-  order and numbered, then the answer instruction for a number with a unit;
+  order and numbered;
 - `12.57`, the gold answer, does not appear anywhere in `prompt`;
 - `prompt_sha256` equals the SHA-256 the test recomputes over the `prompt` UTF-8
   bytes, with no trailing newline added;
@@ -54,7 +54,7 @@ selected text, not an internal index.
 table byte-identical to the sequential render, merged by `task_id`.
 
 `test_04_newline_collapse` — a task with an empty choice list leaves exactly one
-blank line before the answer instruction, and a rendered part containing three
+blank line at the end of the prompt, and a rendered part containing three
 newlines collapses to two.
 
 **TDD pin:** pins the prompt layout order, the answer-free prompt, the

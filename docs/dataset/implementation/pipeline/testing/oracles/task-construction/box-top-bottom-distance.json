@@ -3,10 +3,10 @@
   "oracle_kind": "task-construction",
   "slug": "box-top-bottom-distance",
   "verification": {
-    "status": "proposed",
-    "verified_by": null,
-    "verified_at": null,
-    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. The 2026-11-25 distance-copy change made the question say shortest distance at the closest points, so this record needs owner re-verification in the task browser.",
+    "status": "verified",
+    "verified_by": "MRiabov",
+    "verified_at": "2026-11-27",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-27 against MC-67: the pair-angle clue binds the bottom face, and the distance answer reads that bound reference set with no answer parameter. Owner accepted this record after reviewing it in the dataset browser on 2026-11-27.",
     "gold_query": {
       "status": "passed",
       "stdout": "5",
@@ -34,19 +34,26 @@
     "native_answer_format": "number",
     "answer_format": "number",
     "geometry_required": true,
-    "uniqueness": "The position clue leaves the top face, and the bottom face is the only face touching the bottom of the axis-aligned bounding box."
+    "uniqueness": "The pair-angle clue leaves the top face, the only face at 180 degrees to the face touching the bottom of the axis-aligned bounding box, and binds that bottom face; the distance reads the bound reference."
   },
   "clues": [
     {
       "order": 1,
-      "clue_type": "property",
-      "clue_reduction_form": null,
-      "statement": "The target face touches the top of the axis-aligned bounding box.",
+      "clue_type": "relation",
+      "clue_reduction_form": "filtered",
+      "statement": "The angle between the target face and the face touching the bottom of the axis-aligned bounding box is 180 degrees.",
       "check": {
-        "predicate_kind": "property",
-        "property_shape": "categorical_feature",
-        "feature": "position",
-        "value": "max_z"
+        "predicate_kind": "relation",
+        "relation_shape": "angle",
+        "measurement": "angle",
+        "comparator": "eq",
+        "threshold": "180",
+        "object": {
+          "category": "face",
+          "filters": {
+            "position": "min_z"
+          }
+        }
       },
       "narrows": {
         "before": 6,
@@ -63,15 +70,7 @@
       "value_text": "0.5"
     },
     "scoring_rule": "numeric_tolerance",
-    "parameter": {
-      "parameter_kind": "distance_reference",
-      "subject": {
-        "category": "face",
-        "filters": {
-          "position": "min_z"
-        }
-      }
-    },
+    "parameter": null,
     "point_probe": null,
     "evidence_kind": "measured",
     "evidence_rule": "distance",
@@ -120,15 +119,17 @@
   "covers": {
     "target_category": "face",
     "clue_types": [
-      "property"
+      "relation"
     ],
-    "clue_reduction_forms": [],
+    "clue_reduction_forms": [
+      "filtered"
+    ],
     "answer_meaning": "distance",
     "answer_format": "number",
     "task_reasoning_step_count": 2
   },
   "excluded": [],
   "notes": [
-    "The top and bottom faces are 5 mm apart; the bottom face is at 180 degrees to the top face."
+    "The top face is at 180 degrees to the bottom face, which the clue binds. The top and bottom faces are 5 mm apart."
   ]
 }

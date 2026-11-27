@@ -5,12 +5,12 @@
   "verification": {
     "status": "verified",
     "verified_by": "MRiabov",
-    "verified_at": "2026-11-25",
-    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-25 against the settled clue-reduction-form, categorical-feature, and measured-direction contract. Owner accepted this record after reviewing the current set in the task browser on 2026-11-25.",
+    "verified_at": "2026-11-27",
+    "rationale": "The task description and answer were written by hand. The gold query executes the program with plain CadQuery and prints the answer; it does not use the CAD graph or the constructor. Rebuilt 2026-11-27 against MC-67 and DS-REQ-34: the comparison clue binds the left face and the direction clue leaves the hole floor, and each clue alone leaves at least two candidates. The angle answer reads the bound reference set with no answer parameter. Owner accepted this record after reviewing it in the dataset browser on 2026-11-27.",
     "gold_query": {
       "status": "passed",
       "stdout": "90",
-      "checked_at": "2026-11-25"
+      "checked_at": "2026-11-27"
     }
   },
   "environment": {
@@ -20,40 +20,61 @@
     "oracle_tool_version": "1"
   },
   "program": {
-    "program_id": "cadqaprog:c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
-    "program_sha256": "c68e7eeee7b9f5c26a3e418976cd6f2056a636742379d3cafaf2bfda433316e3",
-    "text": "import cadquery as cq\n\nresult = cq.Workplane(\"XY\").box(10, 20, 5)\n"
+    "program_id": "cadqaprog:b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "program_sha256": "b406dfd4f70e422e066b9dbf2d1c545d69cb9020a604fcd6872945b57890fb24",
+    "text": "import cadquery as cq\n\nwp = cq.Workplane(\"XY\")\nbox = wp.box(10, 20, 5)\ntop = box.faces(\">Z\")\nplane = top.workplane()\nhole = plane.circle(2)\nresult = hole.cutBlind(-2)\n"
   },
   "task": {
     "target_category": "face",
-    "question": "What is the angle between the target face and the face touching the front of the axis-aligned bounding box?",
+    "question": "What is the angle between the target face and the face touching the left of the axis-aligned bounding box?",
     "state_scope": "final",
-    "possible_answer_count": 6,
-    "task_reasoning_step_count": 2,
+    "possible_answer_count": 8,
+    "task_reasoning_step_count": 3,
     "answer_meaning": "angle",
     "native_answer_format": "number",
     "answer_format": "number",
     "geometry_required": true,
-    "uniqueness": "The direction clue leaves the top face, and the front face is the only face touching the front of the axis-aligned bounding box."
+    "uniqueness": "The comparison clue binds the left face and leaves the four faces smaller than it; the direction clue leaves the hole floor, the only face at less than 45 degrees to +z."
   },
   "clues": [
     {
       "order": 1,
+      "clue_type": "comparison",
+      "clue_reduction_form": "filtered",
+      "statement": "The area of the target face is less than the area of the face touching the left of the axis-aligned bounding box.",
+      "check": {
+        "predicate_kind": "comparison",
+        "measurement": "area",
+        "comparator": "lt",
+        "reference": {
+          "category": "face",
+          "filters": {
+            "position": "min_x"
+          }
+        }
+      },
+      "narrows": {
+        "before": 8,
+        "after": 4
+      }
+    },
+    {
+      "order": 2,
       "clue_type": "property",
       "clue_reduction_form": null,
-      "statement": "The angle between the outward normal of the target face and +z is less than 1 degree.",
+      "statement": "The angle between the outward normal of the target face and +z is less than 45 degrees.",
       "check": {
         "predicate_kind": "property",
         "property_shape": "measurement",
         "measurement": "angle",
         "comparator": "lt",
         "axis": "+z",
-        "threshold": "1",
+        "threshold": "45",
         "range_min": null,
         "range_max": null
       },
       "narrows": {
-        "before": 6,
+        "before": 4,
         "after": 1
       }
     }
@@ -67,15 +88,7 @@
       "value_text": "0.5"
     },
     "scoring_rule": "numeric_tolerance",
-    "parameter": {
-      "parameter_kind": "angle_reference",
-      "subject": {
-        "category": "face",
-        "filters": {
-          "position": "min_y"
-        }
-      }
-    },
+    "parameter": null,
     "point_probe": null,
     "evidence_kind": "measured",
     "evidence_rule": "angle",
@@ -85,7 +98,8 @@
         "subject": {
           "category": "face",
           "filters": {
-            "position": "max_z"
+            "surface_kind": "plane",
+            "centroid_z": "0.5"
           }
         },
         "object": null,
@@ -96,7 +110,7 @@
         "subject": {
           "category": "face",
           "filters": {
-            "position": "min_y"
+            "position": "min_x"
           }
         },
         "object": null,
@@ -108,7 +122,8 @@
         "subject": {
           "category": "face",
           "filters": {
-            "position": "max_z"
+            "surface_kind": "plane",
+            "centroid_z": "0.5"
           }
         },
         "value": "90"
@@ -117,22 +132,25 @@
   },
   "gold_query": {
     "language": "python",
-    "code": "top_normal = result.faces(\">Z\").val().normalAt()\nfront_normal = result.faces(\"<Y\").val().normalAt()\ncosine = max(-1.0, min(1.0, top_normal.dot(front_normal)))\nprint(canon(math.degrees(math.acos(cosine))))",
+    "code": "floor = result.faces(cq.selectors.NearestToPointSelector((0, 0, 0.5))).val()\nleft = result.faces(\"<X\").val()\nfloor_normal = floor.normalAt(floor.Center())\nleft_normal = left.normalAt(left.Center())\ncosine = max(-1.0, min(1.0, floor_normal.dot(left_normal)))\nprint(canon(math.degrees(math.acos(cosine))))",
     "expected_stdout": "90",
-    "sha256": "d73b6f8ad77cbdcc1256211b4f69ab66285d5b00c6f1c334d86e26b495cd785a"
+    "sha256": "aad199a8070f5f3bbfb7266ceb76ee171d516e741ef578de248ff2d6a081921c"
   },
   "covers": {
     "target_category": "face",
     "clue_types": [
+      "comparison",
       "property"
     ],
-    "clue_reduction_forms": [],
+    "clue_reduction_forms": [
+      "filtered"
+    ],
     "answer_meaning": "angle",
     "answer_format": "number",
-    "task_reasoning_step_count": 2
+    "task_reasoning_step_count": 3
   },
   "excluded": [],
   "notes": [
-    "The top and front faces meet at 90 degrees."
+    "Eight faces: six box faces, the cylindrical hole, and the hole floor. Dropping the comparison clue leaves the two faces at 0 degrees to +z (top and hole floor), so it is necessary; dropping the direction clue leaves the four faces smaller than the left face, so it is necessary. The hole floor's normal is +z and the left face's is -x, so the angle is 90 degrees."
   ]
 }

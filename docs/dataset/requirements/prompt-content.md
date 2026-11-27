@@ -11,7 +11,7 @@ not repeat their closed value sets.
 ## 1. Prompt parts
 
 The prompt is delivered as the user message. It has a frame convention line and
-up to five parts, in this order:
+up to four parts, in this order:
 
 1. **Program text**: the complete CadQuery program, unchanged except for
    normalization.
@@ -20,16 +20,17 @@ up to five parts, in this order:
    reasoning order.
 4. **Choices**: a short list of multiple-choice options, only when the answer
    format is multiple choice.
-5. **Answer instruction**: the required answer format and an exact example of
-   its syntax.
 
 The question is only the interrogative sentence; the task that contains it is
 defined in [`task-structure.md`](task-structure.md).
 
 The prompt does not contain the answer or any hidden identifier.
 
-The dataset supplies no system prompt. A harness may add one; that is harness
-policy, not dataset content (`DS-REQ-24`).
+The prompt contains only what the task needs. The system prompt, the answer
+instruction, and the submission format are harness policy: a harness adds them
+from the answer metadata (`answer_format` and `answer_unit`), and they are not
+part of the dataset prompt (`DS-REQ-24`). The dataset card carries the answer
+conventions a consumer needs.
 
 ### 1.1 Frame conventions
 
@@ -78,16 +79,22 @@ Examples of a question:
 - "What is the volume of the target solid state?"
 - "What is the signed change in volume caused by the target operation?"
 - "Which CadQuery workplane satisfies these conditions?"
-- "What is the shortest distance between the task target and a face from clue 1?"
+- "What is the shortest distance between the task target and the face touching
+  the bottom of the axis-aligned bounding box?"
 
 The question is not a task clue. It tells the LLM model what task target
 category the answer is about and what to answer.
 
-A pair answer may refer to the reference a task clue names. The question names
-the clue and does not restate its condition: "a face from clue 1" is the phrase
-the clue's reference already uses. "Shortest" makes the reading unambiguous when
-the reference set holds several members, and the answer is the distance to the
-nearest one. A pair answer with no clue reference to point at is not rendered.
+A pair answer reads the reference a task clue binds. The question names that
+reference. It may cite the clue by category — "an edge from clue 1" — only when
+the clue names exactly one set of that category; the category then identifies
+the reference. A clue that narrows one category and binds the same category
+names two sets of it, so a category citation cannot say which set it means; the
+question names the reference phrase instead, such as "the face touching the
+bottom of the axis-aligned bounding box". The question does not restate the
+clue's condition. "Shortest" or "nearest" makes the reading unambiguous when
+the bound reference set holds several members. A pair answer with no bound
+reference is not rendered.
 
 ## 4. Task clues
 
@@ -118,8 +125,9 @@ prose paragraphs.
 9. A task clue must not repeat the program text. Refer to the entity the program
    builds, not to its variable name.
 10. If the answer is a measurement of the task target, do not write that
-    measurement as a task clue. Put it in the answer instruction.
-11. A clue states a number without a unit when the answer instruction supplies
+    measurement as a task clue. It is the answer; the answer conventions state
+    it.
+11. A clue states a number without a unit when the answer conventions supply
     one; an angle clue says degrees.
 
 ### 4.2 Task clue types
@@ -250,24 +258,15 @@ A choice is not padding. For P0 and P1, if there are not enough real candidates
 to fill the minimum, the task is not generated. For P2, if there are not enough
 plausible distractors, the task is not generated.
 
-## 6. Answer instruction
+## 6. Answer conventions are not prompt content
 
-The answer instruction tells the LLM model exactly what to return. It must match
-the answer format.
-
-| Answer format | Instruction |
-|---|---|
-| Multiple choice | "Return exactly one label from the list above, for example `A`." |
-| Number | "Return exactly one number. Use <unit>; round to 4 significant figures." |
-| Integer | "Return exactly one integer." |
-| Yes or no | "Return exactly one of `true` or `false`." |
-| 3D coordinate | "Return exactly one coordinate tuple `(x, y, z)` in the program frame; round each value to 4 significant figures." |
-| Bounding box | "Return exactly one bounding box as `{\"min\": [x, y, z], \"max\": [x, y, z]}` in the program frame; round each value to 4 significant figures." |
-| Structured object | "Return exactly one JSON object with fields <field list>." |
-
-The answer instruction always states the frame when it matters. The default
-numeric precision is 4 significant figures.
-It never gives the answer, and it never explains how to find the task target.
+The dataset prompt does not state the answer format, an example of its syntax, or
+how to submit an answer. Those are harness policy (`DS-REQ-24`): a harness builds
+its answer instruction and submit tool from the row's `answer_format` and
+`answer_unit`. The release dataset card states the conventions a consumer needs —
+units, precision, the angle and distance conventions, and the signed material
+change ([`release-dataset-contract.md`](release-dataset-contract.md#8-dataset-card)).
+The `answer_format` and `answer_unit` columns are the machine-readable form.
 
 ## 7. What the prompt must not contain
 
@@ -306,8 +305,6 @@ Directions use the program frame: +x is right, +y is back, +z is up.
     result = cq.Workplane("XY").cylinder(2, 2)
 
 What is the volume of the target solid state?
-
-Return exactly one number. Use mm^3; round to 4 significant figures.
 ````
 
 Answer: `25.13` (a cylinder of radius 2 and height 2 has volume 8π, rounded to 4
@@ -315,8 +312,9 @@ significant figures).
 
 The question names the task target category and asks for the measurement. The
 program has one solid state producing operation, so the question identifies the
-final solid state directly and the task has no task clue. The answer instruction
-asks for the number. The prompt does not say "the answer is 8 pi".
+final solid state directly and the task has no task clue. The harness adds the
+answer instruction and submission format; the prompt does not say "the answer is
+8 pi".
 
 ## 9. Review checklist
 
@@ -326,7 +324,7 @@ Before a prompt is accepted:
 - every task clue is one condition;
 - every task clue has a matching task clue step;
 - the task clue order is the intended reasoning order;
-- the answer instruction matches the answer format;
+- the prompt contains no answer instruction or submission syntax;
 - the prompt does not leak the answer;
 - the prompt does not use internal terms;
 - the prompt is readable by a careful human without the answers;
