@@ -19,7 +19,7 @@ HOW TO USE THESE ANNOTATIONS
 
 ## Abstract
 
-**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focusing on reconstruction, engineering standard following and editing. **Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exist. **Objectives and contribution:** We present a large dataset that allows training foundational capabilities of LLMs in deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation. **Methodology:** To aid in efficient training of LLMs on our dataset, we present a critical path that allows validated step-by-step solutions. **Results, findings and remaining gap:** We show that frontier models are only 50–80% successful without tool assistance, showing headroom in geometrical reasoning. **Availability:** We open-source the dataset at https://huggingface.co/MRiabov/
+**Background:** LLMs are becoming notably strong in CAD reconstruction, with open, training-ready datasets focusing on reconstruction, engineering standard following and editing. **Problem:** However, no training-ready datasets focused on deep reasoning of LLMs on complex, messy shapes exist. **Objectives and contribution:** We present a large dataset that allows training foundational capabilities of LLMs in deep geometric reasoning, generated and validated through a CAD kernel, not requiring expensive expert validation. **Methodology:** To aid in efficient training of LLMs on our dataset, we attach a minimum required reasoning steps that allows validated step-by-step solutions. **Results, findings and remaining gap:** We show that frontier models are only 50–80% successful without tool assistance, showing headroom in geometrical reasoning. **Availability:** We open-source the dataset at https://huggingface.co/MRiabov/[...].
 
 <!--
 [to be revised]
@@ -106,8 +106,8 @@ The limitations of our studies are in the transfer of our dataset to other bench
 ### 1.6 Structure of the report
 
 We will structure our work as follows:
-1. Related work will go over the recent contributions, in particular the state of the art in 3D applications and where they currently fall short, as well as foundational datasets.
-2. Research methodology will go over the [.] 
+1. Related work will go over the recent contributions, in particular the state of the art in 3D applications, reconstruction and shortcomings, as well as foundational datasets.
+2. Research methodology will outline the structure of the dataset and evaluation 
 3. Design specification will go over what the dataset is expected to be and the dataset validity procedures that are in place; it will also go over evaluation procedures.
 4. Implementation will briefly describe the implementation structure of the dataset,
 5. Evaluation will focus on evaluating the state of the art and showing deficiencies of existing models,
@@ -188,7 +188,8 @@ MechReason is a benchmark evaluating multi-view and multi-hop reasoning of LLMs 
 
 Verifiable reasoning and evaluation by tool calling have become the de-facto standard for factual question-answering training, with the advantage of:
 
-- Allowing stable training - no noisy LLM-as-a-judge is necessary, with verifiable reasoning being ubiquitous in physics, 3D and geometry datasets
+- Allowing stable training - no noisy LLM-as-a-judge is necessary, with verifiable reasoning being ubiquitous in physics, 3D and geometry datasets,
+- Allowing conciseness training - numerous studies such as [https://arxiv.org/html/2606.17687v1] focus on removing redundant reasoning and thus cost and latency by following the minimum required reasoning to achieve the objective. 
 
 <!--
 - RLVR and verifier work: the verifier is the objective, so a noisy or divergent scorer is optimised; query-verifier audits report self-agreement as low as 53.8% and two configurations disagreeing on 49.9% of pairs.
