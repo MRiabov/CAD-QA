@@ -218,25 +218,31 @@ In order to validate the quality of our dataset, we enforce after-construction v
 
 ## 5. Implementation
 
-<!--
-IMPLEMENTATION: only the final stage; no code listings, no user manual
-- Name the outputs: generator CLI, Parquet artifacts, release directory, harness.
-- Name tools and languages: Go module, Python worker, CadQuery/OCP, PyArrow/Parquet, uv, pytest.
-- State what exists and what does not; do not present planned work as done.
-- One table of artifact -> status (exists / verified / missing) is enough.
--->
+The code is split into two independent sections with separate documentation and codebases - dataset generation and evaluation. Dataset generation is modelled as Directed Acyclic Graph (DAG) data extraction and transformation pipeline. For developer and reader convenience and interpretability, stages follow alphanumeric naming: "02c Build CAD Graph", which we will omit in this paper. Extensive documentation across stages is available.
+
+For developer convenience and speed of dataset generation, we split the dataset generation into two languages, Go and Python, with Go running most of the data transforms (this is useful when running transforms over 2m entities in graph involving substantial geometry computation and persistence), and a number of python workers doing CadQuery and other processes dependent on Python.
+
+The implementation follows this structure: 
+
+1. Ingest and preprocess CadEvolve dataset
+2. Extract the AST and CadQuery into graphs the task building and verification can later rely on
+3. Generate the tasks (in intermediate representation) from the graph
+4. Render the prompts from the representation and compose the final dataset.
+
 
 ### 5.1 Extraction
 
+[I think this section is to be removed]
 <!--
-- 02a parses and validates an allowlisted CadQuery subset, assigns stable operation and entity IDs, rewrites the program for recording.
-- 02b executes the instrumented program once in a child process, captures runtime values, classifies geometry, emits a failure tombstone on failure.
-- 02c joins AST and runtime by program_id and operation_id; no partial graph is persisted.
+- `02a extract CadQuery AST` parses and validates an allowlisted CadQuery subset, assigns stable operation and entity IDs, rewrites the program for recording.
+- `02b execute CadQuery` runs the instrumented program once in a child process, captures runtime values, classifies geometry, emits a failure tombstone on failure.
+- `02c build CAD graph` joins AST and runtime by program_id and operation_id; no partial graph is persisted.
 - Pins: CadQuery/OCP versions are part of the run manifest; a version change is a new run.
 - Failure model: per-program fail-fast, recorded as a row; no exception aborts the run.
 -->
 
 ### 5.2 Graph assembly
+[I think this section is to be removed]
 
 <!--
 - Persist entities, relations and measurements as typed tables; derive deterministic UUIDv5 graph IDs.
@@ -246,24 +252,27 @@ IMPLEMENTATION: only the final stage; no code listings, no user manual
 -->
 
 ### 5.3 Task generation
+[I think this section is to be removed]
 
 <!--
-- 03a builds family profiles, allocates quotas against the release targets, assigns split and attempt budgets; global allocation is serial.
-- 03b constructs definitions per shard, resolves target binding, clue predicates and the gold answer, applies uniqueness, answer-equivalence, necessity, leakage and shortcut checks.
-- 03c handles deficits by reassigning programs or expanding the corpus, bounded by budget; accepted misses are recorded.
+- `03a allocate task quotas` builds family profiles, allocates quotas against the release targets, assigns split and attempt budgets; global allocation is serial.
+- `03b construct task definitions` builds definitions per shard, resolves target binding, clue predicates and the gold answer, applies uniqueness, answer-equivalence, necessity, leakage and shortcut checks.
+- `03c resolve deficits` reassigns programs or expands the corpus, bounded by budget; accepted misses are recorded.
 - Construction is parallel per shard; accepted definitions merge in deterministic order.
 -->
 
 ### 5.4 Prompt rendering, validation and export
+[I think this section is to be removed]
 
 <!--
-- 04 renders prompts and multiple-choice candidates from typed task definitions; every LLM-facing string is data in generator/config/prompts.yaml, never hardcoded.
+- `04 render prompt and choices` turns typed task definitions into prompts and multiple-choice candidates; every LLM-facing string is data in generator/config/prompts.yaml, never hardcoded.
 - A template change bumps the prompt version and hash; the prompt is the user message, no system prompt is shipped.
-- 05 runs release checks (counts, coverage, balance, leakage, answer evidence, support tables) and writes release.parquet, manifest, Dataset card, failures, support.
+- `05 validate and export release` runs release checks (counts, coverage, balance, leakage, answer evidence, support tables) and writes release.parquet, manifest, Dataset card, failures, support.
 - No partial release: a failed row fails the release build, not the published artifact.
 -->
 
 ### 5.5 Evaluation harness
+[I think this section is to be removed]
 
 <!--
 - Local tool-call harness: submit_* tools per answer format, run_code for NumPy mode, parser, exact-match scorer.
