@@ -1,4 +1,4 @@
-# CAD-QA: A Dataset Verifying Geometry Reasoning over Complex Procedural CAD Programs
+# Deep-3D-CAD-QA: A Dataset Verifying Geometry Reasoning over Complex Procedural CAD Programs
 
 Maksym Riabov · 25194372 · MSc Research Project · School of Computing, National College of Ireland
 Supervisor: Syed Abidi
@@ -56,24 +56,9 @@ ABSTRACT (write last, 200–250 words, no citations)
 
 ### 1.1 Background and motivation
 
-AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [Benchcad 1.0]. Foundational, large datasets including recent in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than a half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only a lookup or knowledge of a particular standard and not deep geometrical reasoning. 
+AI for CAD starts seeing a surge in industry in Q3 2026, with reconstruction capabilities being near-saturated on complex benchmarks [Benchcad 1.0]. Foundational, large datasets including recent in 2026 such as CADEvolve (Elistratov et al., 2026), CADENA (https://arxiv.org/abs/2608.00799), Zero-To-CAD focus on image- and Text-to-CAD reconstruction, training on which mostly saturated the reconstruction benchmarks, however CAD editing is still consistently less than a half successful [citation*S* required]. Existing datasets also measure QA answering on CAD, in particular answering about engineering standards following (engineering standard e.g. ISO) from CadQuery code [benchcad citation?], however, they are simple, rudimentary question answering, requiring only one lookup or knowledge of a particular standard and not deep geometrical reasoning. 
 
----
-[Insert a few justifying statements on why the dataset is necessary]
----
-
-<!--
-BACKGROUND AND MOTIVATION: what the reader must believe by the end
-- Background: LLMs are being pushed into CAD generation, editing and assistance (Text2CAD, CAD-Recode, CADBench, BenchCAD).
-- Keep CA2's two motivating claims, re-checked against 2026 evidence: (1) LLMs struggle beyond box geometry partly because corpora under-represent other primitives (Elistratov et al., 2026); (2) computing intersections and relations consumes far more reasoning tokens than web or app tasks. Neither is refuted in the window; the step-9 cost ($1.46 no-kernel vs $0.29 with CadQuery) is a concrete token-cost signal.
-- Currency (2026-11-25 scan): 199 arXiv abstracts match CAD in the 93 days to 25 Nov 2026, vs 109 in 2025 (+82.6%) and 89 in 2024 (2.24×). Use it once, as "83% year on year"; the query and counts are in research_notes/CAD AI state of the art/volume_venues_and_field_map.md.
-- The 2026 turn is agentic: CAD Bench V3 runs 13 model-agent systems over 100 FreeCAD tasks; CADWorld runs GUI computer use; EngiWorld spans 26 platforms; RealCADBench uses 12,632 industrial intents. Cite them as evidence of where effort went, not as our baselines.
-- Why it is hard: procedural CAD is a chain of boolean and topology-changing operations; the answer depends on the built shape, not on the text; a selector error is destructive to the whole part.
-- Why it matters: CAD code is cheap to generate and expensive to verify; the field's own results say so — CADWorld 17.5% vs 87.0% expert, EngiWorld 3.6% cross-application, CAD Bench V3 39.69 create-and-edit. An assistant that cannot locate the right face or edge is unusable regardless of syntax correctness.
-- Adjacent evidence that the gap is live, if a motivation is needed: a whole-corpus phrase search for "CAD question answering" / "CAD VQA" returns 1 paper in the 2026 window, and the benchmark census finds 24 new benchmarks in the quarter with none testing multi-hop comprehension. Treat as context; the defensible claim is still "BenchCAD stops at one step", not "nobody measures CAD comprehension".
--->
-
-### 1.2 Research questions
+As such, the field is still lacking a dataset that would allow ready training on: verification of reasoning on more complex CAD reasoning beyond simple question answering pairs, as well as optimization of conciseness on reasoning in such tasks.
 
 Our primary research question:
 
@@ -104,12 +89,22 @@ Our objectives are:
 
 ### 1.4 Contributions
 
+Our contributions are:
+- A large dataset allowing training of models on question-answering pairs of deep and progressively complex CAD questions
+- Critical path proof to the questions allowing easy and dense optimization of LLM trajectories on it, 
+- Benchmarking SOTA models and showing where the current state of the art is still lacking.
 <!--
 - Keep CA2's three contributions, with one 2026 correction: dataset + open construction method over the CAD ontology; conciseness and critical-path supervision from the graph; labelled curriculum. "First open dataset" becomes "depth above BenchCAD"; the other two stand.
 - Contributions: task schema and CAD graph; deterministic graph-derived generator; tiered 1–10 benchmark with a no-kernel setting; SFT recipe and evaluation protocol; negative results reported as findings.
 -->
 
 ### 1.5 Limitations and assumptions
+
+The limitations of our studies are in transfer of our dataset to other benchmarks:
+
+- We evaluate two LLMs only on approximately 750 trajectories each, spanned over multiple levels and multiple clue types. Our results are statistically limited by budget.
+- We do not train a model on the dataset or transfer of improvement on our dataset to other benchmarks; primarily due to budget.
+- We only train on one CAD engine. There are now numerous BREP kernels including open-source ones [brepbench], but we deem it sufficient as CadQuery is the widely adapted open source CAD modelling application, being used in most major papers [Zero-to-CAD] 
 
 <!--
 - Scope: executable CadQuery programs from CADEvolve; P0 is no kernel, NumPy allowed; kernel access is an upper bound (P2), not the headline.
@@ -175,7 +170,7 @@ Recent work has demonstrated major progress in CAD generation and reconstruction
 
 Closest spiritually to our dataset are procedurally generated 2d and 3d geometry  reasoning benchmarks such as SiT-Bench (Guo et al., 2026) and Real-3DQA (Ma et al., 2026), which explicitly evaluate models' 3D comprehension abilities from text alone, without visuals. They are similar in that they evaluate models on procedurally generated geometry, but they do not evaluate or focus on CAD-specific geometry such as selectors, vertices, and boolean operations — only on text descriptions of scenes.
 
-### 2.2 CAD comprehension benchmarks
+### 2.3 CAD comprehension benchmarks
 
 BenchCAD 1.0 has evaluated CAD generation across 4 benchmarks - Vision2Code, Code Edit, Vision QA, Code QA; so Code QA was already studied, however the dataset focuses on benchmarking simple question answering such as compliance to a standard (e.g. whether a thread size is compliant), whereas our dataset focuses on verification of correct geometrical reasoning, at scale and varying depth. BenchCAD 2.0/2.1 are reconstruction only (assemblies, PCB wiring) and add no comprehension task. QueryCAD is a earlier similar work evaluating capabilities of LLMs on answering factual questions based on CAD models, but without CadQuery; again, without depth.
 
@@ -199,19 +194,11 @@ MechReason is a benchmark evaluating multi-view and multi-hop reasoning - of LLM
 - Do not say "CAD QA does not exist": the window scan finds one paper, not zero. Say "almost none, and none multi-step".
 -->
 
-### 2.3 Procedural CAD corpora
+### 2.4 QA datasets and verifiable reasoning 
 
-<!--
-- DeepCAD and the program-evolution dataset provide procedural CAD programs at scale.
-- CADEvolve is the source corpus here: program families and predicted ABC/ShapeNet mesh families give a group-safe split unit.
-- Why procedural programs are the right substrate: gold answers can be computed by executing the program and reading the built shape; no human annotation is needed.
-- The substrate is now contested in a useful way: 2026 work shows B-rep encoders "collapse catastrophically" when the same solid is re-partitioned (2609.11573), so a program text is not the same object as a B-rep representation. Our gold is program-derived and execution-checked, which sidesteps the representation-luck problem; say that if a reviewer asks.
-- Limitation: program quality varies; execution failures and degenerate shapes are expected and must be recorded as rows, not exceptions. The 2026 scan also finds no new ABC or MFCAD++ release, so shared-split and contamination risk persist.
-- Contamination is a named risk, not a footnote: BenchCAD's 17,900-program base overlaps the public CadQuery corpus, so any transfer evaluation on BenchCAD qa_code must exclude its families from every training arm (docs/research/papers/cad/2026-benchcad.md).
-- Do not describe CADEvolve as "the" corpus; it is the selected one, and the generator method should be corpus-agnostic.
--->
+Verifiable reasoning and evaluation by tool calling has become de-facto standard for factual question-answering training, having the advantage of:
 
-### 2.4 Verifiable reasoning and small-model fine-tuning
+- Allowing stable training - no noisy LLM-as-a-judge is necessary; with verifiable reasoning being ubiquitous in physics, 3d and geometry datasets
 
 <!--
 - RLVR and verifier work: the verifier is the objective, so a noisy or divergent scorer is optimised; query-verifier audits report self-agreement as low as 53.8% and two configurations disagreeing on 49.9% of pairs.
